@@ -1,0 +1,8 @@
+CREATE OR REPLACE TRIGGER TR_SQ_PUB_URL_ID
+BEFORE INSERT ON PUBLICATION_URL
+FOR EACH ROW
+BEGIN
+    SELECT sq_publication_url_id.NEXTVAL 
+    INTO :new.publication_url_id
+    FROM dual;
+END;

@@ -1,0 +1,31 @@
+create table locality20150526 as select * from locality;
+
+
+
+
+alter table cf_temp_specevent add wkt_polygon clob;
+alter table LOCALITY add wkt_polygon clob;
+
+build functions/md5hash.sql
+rebuild bulkloader
+
+
+
+-- set permissions for /Reports/georef.cfm
+CREATE or replace FUNCTION getHaversineDistanc
+
+
+-- see Reports/georef.cfm
+
+create table colln_coords_summary (
+	guid_prefix varchar2(255),
+	number_of_specimens number,
+	number_of_georeferences number,
+	specimens_with_georeference number,
+	gref_with_calc_georeference number,
+	georeferences_with_error number,
+	georeferences_with_elevation number,
+	calc_error_lt_1 number,
+	calc_error_lt_10 number,
+	calc_error_gt_10 number,
+	calc_elev_fits number);

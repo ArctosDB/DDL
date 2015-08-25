@@ -1,0 +1,1 @@
+ALTER TABLE cf_users ADD block_suggest NUMBER(1);

@@ -1,0 +1,50 @@
+#! /bin/sh 
+# path: /opt/coldfusion8/runtime/bin
+# filename: runSqlldr
+# executed by cfexecute:
+# /Bulkloader/bulkloaderLoader.cfm
+# removes ^M from control file and loads data from external file into db
+
+# this requires it's own Oracle user
+# create user bulk_user identified by "generic_1.password"
+# grant connect to bulk_user
+# grant insert on bulkloader_stage to bulk_user
+
+
+# Set variables
+ORACLE_HOME=/opt/oracle/11.1.0/client_1
+export ORACLE_HOME
+#NLS_LANG=AMERICAN_AMERICA.UTF8
+#export NLS_LANG
+NLS_LANG=AMERICAN_AMERICA.WE8ISO8859P1
+export NLS_LANG
+
+
+ORACLE_SID=arctos
+export ORACLE_SID
+
+UAMP=generic_1.password
+
+BULKDIR=/usr/local/apache2/htdocs/Bulkloader
+BDCTL=$BULKDIR/bulkData.ctl
+BDTMP=$BULKDIR/bulkData.tmp
+BDLOG=$BULKDIR/bulkData.log
+
+# line feeds and carriage returns are now processed by cf.
+# chr(10) aka \n aka line feed; unix and macs likes these.
+# chr(13) aka \r aka ^M aka carriage return; windows like these
+## Remove ^Ms from data file.
+#mv $BDCTL $BDTMP
+#sed -e 's/^M//g' -e '/^$/d' $BDTMP > $BDCTL
+#awk '{sub(/\r/,""); print}' $BDTMP > $BDCTL
+# perl replaces awk in replacing carriage returns.
+#perl -pi -e 's/\r/\n/g' $BDCTL 
+# replace all line feeds with nothing
+#perl -pi -e 's/\n//g' $BDCTL 
+# replace all carriage returns with line feeds
+#perl -pi -e 's/\r/\n/g' $BDCTL 
+#dos2unix $BDCTL
+#rm -f $BDTMP
+
+# Run sqlldr to load data from external file into db.
+echo $UAMP | $ORACLE_HOME/bin/sqlldr bulk_user@$ORACLE_SID control=$BDCTL log=$BDLOG

@@ -1,0 +1,418 @@
+
+
+<table>
+<tbody>
+<tr>
+<td>Field Name
+<span class="blrequired">required</span>
+<span class="blcondreq">conditionally required</span>
+<span class="bloptional">not required</span></td>
+<td>Data Type/Vocabulary</td>
+<td>Description/Example</td>
+</tr>
+<tr>
+<td><span class="bloptional">Collection_Object_Id</span></td>
+<td>any unique number</td>
+<td>Temporary record identifier; Does NOT carry over to any internal primary keys.</td>
+</tr>
+<tr>
+<td><span class="bloptional">Cat_Num</span></td>
+<td>set by collection</td>
+<td>Existing catalog number, or leave blank to assign sequential numbers on upload.</td>
+</tr>
+<tr>
+<td><span class="blrequired">Began_Date</span></td>
+<td>ISO8601 date</td>
+<td><a href="/documentation/places/collecting-event/#began_date">[ doc ]</a> Earliest date the specimen could have been collected.</td>
+</tr>
+<tr>
+<td><span class="blrequired">Ended_Date</span></td>
+<td>ISO8601 date</td>
+<td><a href="/documentation/places/collecting-event/#began_date">[ doc ]</a> Latest date the specimen could have been collected.</td>
+</tr>
+<tr>
+<td><span class="blrequired">Verbatim_Date</span></td>
+<td>text; any string</td>
+<td><a href="/documentation/places/collecting-event/#verbatim_date">[ doc ]</a> Examples: 'winter 2002'; '1 Nov 2002'; 'Nov 2002'.</td>
+</tr>
+<tr>
+<td><span class="blrequired">VERIFICATIONSTATUS</span></td>
+<td>text; <a href="http://arctos.database.museum/info/ctDocumentation.cfm?table=ctVERIFICATIONSTATUS" target="_blank">CTVERIFICATIONSTATUS</a></td>
+<td></td>
+</tr>
+<tr>
+<td><span class="blrequired">SPECIMEN_EVENT_TYPE</span></td>
+<td>text; <a href="http://arctos.database.museum/info/ctDocumentation.cfm?table=ctSPECIMEN_EVENT_TYPE" target="_blank">CTSPECIMEN_EVENT_TYPE</a></td>
+<td>Type of specimen-event relationship</td>
+</tr>
+<tr>
+<td><span class="blrequired">Event_Assigned_By_Agent</span></td>
+<td>text; <a href="#agent">agent name</a></td>
+<td> Agent asserting specimen-to-event relationship; often coordinate determiner.</td>
+</tr>
+<tr>
+<td><span class="blrequired">Event_Assigned_Date</span></td>
+<td>date</td>
+<td>Date on which the specimen-event relationship is made</td>
+</tr>
+<tr>
+<td><span class="bloptional">Coll_Event_Remarks</span></td>
+<td>text; any string</td>
+<td>Remarks about Collecting Event.</td>
+</tr>
+<tr>
+<td><span class="blrequired">Higher_Geog</span></td>
+<td>text; <a href="http://arctos.database.museum/showLocality.cfm" target="_blank">pre-existing</a></td>
+<td><a href="/documentation/places/higher-geography/">[ doc ]</a> Higher Geography <em>exactly</em> as it appears in table Geog_Auth_Rec. New values must be added to the database prior to bulk-loading.</td>
+</tr>
+<tr>
+<td><span class="blcondreq">Maximum_Elevation</span></td>
+<td>integer &gt; minimum_elevation</td>
+<td><a href="/documentation/places/locality/#elevation">[ doc ]</a> Maximum elevation from which the specimen could have come. Used in conjunction with Minimum_Elevation and Orig_Elev_Units.</td>
+</tr>
+<tr>
+<td><span class="blcondreq">Minimum_Elevation</span></td>
+<td>integer &lt; maximum_elevation</td>
+<td><a href="/documentation/places/locality/#elevation">[ doc ]</a> Minimum elevation from which the specimen could have come. Used in conjunction with Maximum_Elevation and Orig_Elev_Units.</td>
+</tr>
+<tr>
+<td><span class="blcondreq">Orig_Elev_Units</span></td>
+<td>text; <a href="http://arctos.database.museum/info/ctDocumentation.cfm?table=ctorig_elev_units" target="_blank">ctorig_elev_units</a></td>
+<td><a href="/documentation/places/locality/#elevation">[ doc ]</a> Used in conjunction with Maximum_Elevation and Minimum_Elevation. (Code table controlled.)</td>
+</tr>
+<tr>
+<td><span class="blrequired">Spec_Locality</span></td>
+<td>text; any string</td>
+<td><a href="/documentation/places/locality/#specific_locality">[ doc ]</a> Specific locality from which a specimen originates.</td>
+</tr>
+<tr>
+<td><span class="bloptional">Locality_Remarks</span></td>
+<td>text; any string</td>
+<td>Remarks associated with Locality.</td>
+</tr>
+<tr>
+<td colspan="3">Begin coordinate fields. All coordinate data are optional unless Orig_Lat_Long_Units is specified, and leaving Orig_Lat_Long_Units NULL will cause all other coordinate data to be ignored.</td>
+</tr>
+<tr>
+<td><span class="blrequired">Orig_Lat_Long_Units</span></td>
+<td>text; <a href="http://arctos.database.museum/info/ctDocumentation.cfm?table=ctlat_long_units" target="_blank">ctlat_long_units</a></td>
+<td><a href="/documentation/places/coordinates/#original_units">[ doc ]</a> Lat/Long units as given by the determining agent and before any transformations.</td>
+</tr>
+<tr>
+<td><span class="blrequired">Datum</span></td>
+<td>text; <a href="http://arctos.database.museum/info/ctDocumentation.cfm?table=ctdatum" target="_blank">ctdatum</a></td>
+<td><a href="/documentation/places/coordinates/#datum">[ doc ]</a> Map datum used to determine Lat/Long. Required if coordinates are given.</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>GEOREFERENCE_SOURCE</td>
+<td>text; any string</td>
+<td><a href="/documentation/places/coordinates/#source">[ doc ]</a> A code indicating the reference from which a Lat/Long was determined.</td>
+</tr>
+<tr>
+<td><span class="blrequired">GEOREFERENCE_PROTOCOL</span></td>
+<td>text; <a href="http://arctos.database.museum/info/ctDocumentation.cfm?table=ctGEOREFMETHOD" target="_blank">CTGEOREFMETHOD</a></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><span class="blcondreq">Max_Error_Distance</span></td>
+<td>number</td>
+<td><a href="/documentation/places/coordinates/#maximum_error">[ doc ]</a> The maximum possible error in distance between the recorded Lat_Long and the actual Lat_Long of the specific locality. Required if Max_Error_Units provided.</td>
+</tr>
+<tr>
+<td><span class="blcondreq">Max_Error_Units</span></td>
+<td>text; <a href="http://arctos.database.museum/info/ctDocumentation.cfm?table=CTLAT_LONG_ERROR_UNITS" target="_blank">ctlat_long_error_units</a></td>
+<td><a href="/documentation/places/coordinates/#maximum_error">[ doc ]</a> The units in which the Max_Error_Distance are recorded. Required if Max_Error_Distance provided.</td>
+</tr>
+<tr>
+<td colspan="4"><em>Geographic coordinates may be entered in decimal degrees<sup>1</sup>, degrees-minutes-seconds<sup>2</sup>, or in degrees with decimal minutes<sup>3</sup>.</em><a href="/documentation/places/coordinatesg/#original_units">[ doc ]</a></td>
+</tr>
+<tr>
+<td><span class="blcondreq">Dec_Lat<sup>1</sup></span></td>
+<td>number</td>
+<td>Decimal latitude.</td>
+</tr>
+<tr>
+<td><span class="blcondreq">Dec_Long<sup>1</sup></span></td>
+<td>number</td>
+<td>Decimal longitude.</td>
+</tr>
+<tr>
+<td><span class="blcondreq">LatDeg<sup>2 and 3</sup></span></td>
+<td>positive number</td>
+<td>Degrees Latitude (Integer, 90 or less.)</td>
+</tr>
+<tr>
+<td><span class="blcondreq">LatMin<sup>2</sup></span></td>
+<td>positive number</td>
+<td>Minutes Latitude (Integer, less than 60.)</td>
+</tr>
+<tr>
+<td><span class="blcondreq">LatSec<sup>2</sup></span></td>
+<td>positive number</td>
+<td>Seconds Latitude (Decimal fraction, less than 60.)</td>
+</tr>
+<tr>
+<td><span class="blcondreq">LatDir<sup>2 and 3</sup></span></td>
+<td>text; N or S</td>
+<td>Latitude Direction: "N" or "S" (North or South).</td>
+</tr>
+<tr>
+<td><span class="blcondreq">LongDeg<sup>2 and 3</sup></span></td>
+<td>positive number</td>
+<td>Degrees Longitude (Integer, 180 or less.)</td>
+</tr>
+<tr>
+<td><span class="blcondreq">LongMin<sup>2</sup></span></td>
+<td>positive number</td>
+<td>Minutes Longitude (Integer, less than 60.)</td>
+</tr>
+<tr>
+<td><span class="blcondreq">LongSec<sup>2</sup></span></td>
+<td>positive number</td>
+<td>Seconds Longitude (Decimal fraction, less than 60.)</td>
+</tr>
+<tr>
+<td><span class="blcondreq">LongDir<sup>2 and 3</sup></span></td>
+<td>text</td>
+<td>Longitude Direction: "E" or "W" (East or West).</td>
+</tr>
+<tr>
+<td><span class="blcondreq">Dec_Lat_Min<sup>3</sup></span></td>
+<td>positive number</td>
+<td>Decimal Latitude Minutes (Used with LatDeg, decimal fraction, less than 60.)</td>
+</tr>
+<tr>
+<td><span class="blcondreq">dec_long_min<sup>3</sup></span></td>
+<td>positive number</td>
+<td>Decimal Longitude Minutes (Used with LongDeg, decimal fraction, less than 60.)</td>
+</tr>
+<tr>
+<td colspan="3">-- end coordinate fields --</td>
+</tr>
+<tr>
+<td><span class="blrequired">Verbatim_Locality</span></td>
+<td>text; any string</td>
+<td><a href="/documentation/places/collecting-event/#verbatim_locality">[ doc ]</a> The locality, entered as closely as possible to the original text provided by the collector. (Not necessarily the same as <a href="/documentation/places/locality/#specific_locality">specific locality</a>.)</td>
+</tr>
+<tr>
+<td><span class="blrequired">Collecting_Source</span></td>
+<td>text; <a href="http://arctos.database.museum/info/ctDocumentation.cfm?table=ctcollecting_source" target="_blank">ctcollecting_source</a></td>
+<td><a href="/documentation/places/collecting-event/#collecting_source">[ doc ]</a> Source from which the specimen was received. Example: "wild caught"</td>
+</tr>
+<tr>
+<td><a name="habitat"></a><span class="bloptional">Habitat</span></td>
+<td>text; any string</td>
+<td><a href="/documentation/places/specimen-event/#habitat">[ doc ]</a> A description of habitat at the time of the collecting event.</td>
+</tr>
+<tr>
+<td><a name="associated_species"></a><span class="bloptional">Associated_Species</span></td>
+<td>text; any string</td>
+<td>A description of other species occurring at the collecting event. Use relationships to other specimens when possible.</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><span class="bloptional">Coll_Object_Remarks</span></td>
+<td>text; any string</td>
+<td>Remarks about the cataloged item.</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><span class="blrequired">Id_Made_By_Agent</span></td>
+<td>text; <a href="#agent">agent name</a></td>
+<td><a href="/documentation/identification/#id_by">[ doc ]</a> Determiner, or agent who identified the specimen.</td>
+</tr>
+<tr>
+<td><span class="bloptional">Identification_Remarks</span></td>
+<td>text; any string</td>
+<td><a href="/documentation/identification/#id_remarks">[ doc ]</a> Remarks associated with this identification.</td>
+</tr>
+<tr>
+<td><span class="blrequired">Made_Date</span></td>
+<td>ISO8601 date</td>
+<td><a href="/documentation/identification/#id_date">[ doc ]</a> Date that the taxonomic determination (or identification) was made.</td>
+</tr>
+<tr>
+<td><span class="blrequired">Nature_of_Id</span></td>
+<td>text; <a href="http://arctos.database.museum/info/ctDocumentation.cfm?table=ctnature_of_id" target="_blank">ctnature_of_id</a></td>
+<td><a href="/documentation/identification/#nature_of_id">[ doc ]</a> How identification was determined. (Code-table controlled.)</td>
+</tr>
+<tr>
+<td><span class="blrequired">Taxon_Name</span></td>
+<td>text; <a href="#taxa">taxon name</a></td>
+<td><a href="/documentation/identification/#id_formula">[ doc ]</a> Scientific Name assigned by identifying agent.</td>
+</tr>
+<tr>
+<td><span class="bloptional">Other_Id_Num_x</span></td>
+<td>text; any string</td>
+<td>Other identifying numbers (ie, original field number).</td>
+</tr>
+<tr>
+<td><span class="blcondreq">Other_Id_Num_Type_x</span></td>
+<td>text; <a href="http://arctos.database.museum/info/ctDocumentation.cfm?table=ctcoll_other_id_type" target="_blank">ctcoll_other_id_type</a></td>
+<td>Used in conjunction with Other_Id_Num. (Code-table controlled.)</td>
+</tr>
+<tr>
+<td><span class="blcondreq">Other_Id_References_x</span></td>
+<td>text; <a href="http://arctos.database.museum/info/ctDocumentation.cfm?table=CTID_REFERENCES" target="_blank">ctid_references</a></td>
+<td>Establish relationships to other specimens. (Code-table controlled.)</td>
+</tr>
+<tr>
+<td><span class="blrequired">Collector_Agent_x</span></td>
+<td>text; <a href="#agent">agent name</a></td>
+<td>Collector or preparator name as it appears in Arctos. At least one collector_agent is required.</td>
+</tr>
+<tr>
+<td><span class="blrequired">Collector_Role_x</span></td>
+<td><a href="http://arctos.database.museum/info/ctDocumentation.cfm?table=CTCOLLECTOR_ROLE" target="_blank">[ ctcollector_role ]</a></td>
+<td>Collector Role.</td>
+</tr>
+<tr>
+<td><a name="part"></a><span class="blrequired">Part_Name_x</span></td>
+<td>text; <a href="http://arctos.database.museum/info/ctDocumentation.cfm?table=ctspecimen_part_name" target="_blank">ctspecimen_part_name</a></td>
+<td><a href="/documentation/parts/#part_name">[ doc ]</a> At least one part is required.</td>
+</tr>
+<tr>
+<td><span class="blrequired">Part_lot_count_x</span></td>
+<td>number</td>
+<td><a href="/documentation/parts/#lot">[ doc ]</a> A part_lot_count is required for all non-null parts.</td>
+</tr>
+<tr>
+<td><span class="blrequired">Part_Condition_x</span></td>
+<td>text; any string</td>
+<td><a href="/documentation/parts/#condition">[ doc ]</a> A description of the latest documented condition.</td>
+</tr>
+<tr>
+<td><span class="blrequired">Part_disposition_x</span></td>
+<td>text; <a href="http://arctos.database.museum/info/ctDocumentation.cfm?table=CTCOLL_OBJ_DISP">ctcoll_obj_disp</a></td>
+<td><a href="/documentation/parts/#disposition">[ doc ]</a> A Part_disposition is required for all non-null parts. Example: "in collection"</td>
+</tr>
+<tr>
+<td><span class="bloptional">Part_Barcode_x</span></td>
+<td>text; any barcode</td>
+<td><a href="/documentation/container/#barcode">[ doc ]</a> Barcode on the part as it will be read by a barcode scanner.</td>
+</tr>
+<tr>
+<td><span class="bloptional">Part_Container_Label_x</span></td>
+<td>text; any string</td>
+<td><a href="/documentation/container/#label">[ doc ]</a> Label on the container (ie, Nunc tube). The human-readable printing on the container.</td>
+</tr>
+<tr>
+<td><span class="bloptional">Part_Remark_x</span></td>
+<td>text</td>
+<td>Remark about the part.</td>
+</tr>
+<tr>
+<td><span class="blrequired">Accn</span></td>
+<td>text; accn number</td>
+<td><a href="/documentation/accession/#accession_number">[ doc ]</a> Accession Number assigned upon acceptance of specimens. Format is accn number without collection information, but see <a href="http://arctosdb.org/documentation/transaction/accession/#dataentry">cross-collection considerations.</a></td>
+</tr>
+<tr>
+<td><a name="enteredby"></a><span class="blcondreq">EnteredBy</span></td>
+<td>text; <a href="#agent">agent name</a></td>
+<td><a href="/documentation/agent/#names">[ doc ]</a> Agent entering the data into this table. Must match agent_name of type login. NULLable if entered_by_agent_id provided.</td>
+</tr>
+<tr>
+<td>ENTERED_AGENT_ID</td>
+<td>number; <a href="#pkey">key</a></td>
+<td>EnterdBy's agent_id. Increased performance over EnteredBy.</td>
+</tr>
+<tr>
+<td><span class="blcondreq">Collection_Cde</span></td>
+<td>text; <a href="http://arctos.database.museum/info/ctDocumentation.cfm?table=CTCOLLECTION_CDE">ctcollection_cde</a></td>
+<td><a href="/documentation/cataloged_item/#collection_code">[ doc ]</a> Collection type under which the specimen will be cataloged. In combination with institution_acronym, resolves to collection_id.</td>
+</tr>
+<tr>
+<td><span class="blcondreq">institution_acronym</span></td>
+<td>text</td>
+<td><a href="/documentation/cataloged_item/#institution_acronym">[ doc ]</a> UAM, MVZ, MSB, MCZ, etc.</td>
+</tr>
+<tr>
+<td><span class="blcondreq">collection_id</span></td>
+<td>number, <a href="#pkey">key</a></td>
+<td>Primary key of table Collection. Use instead of collection_cde + institution_acronym for increased performance.</td>
+</tr>
+<tr>
+<td><span class="bloptional">Loaded</span></td>
+<td>text; any string</td>
+<td>This is where errors are stored after Bulkloader processing. <a href="https://arctosdb.wordpress.com/how-to/create/#load">More Info</a></td>
+</tr>
+<tr>
+<td><a name="flags"></a><span class="bloptional">Flags</span></td>
+<td>text; <a href="http://arctos.database.museum/info/ctDocumentation.cfm?table=ctflags">ctflags</a></td>
+<td>Flag indicating the specimen needs further work.</td>
+</tr>
+<tr>
+<td><a name="attribute"></a><span class="bloptional">Attribute</span></td>
+<td>text; <a href="http://arctos.database.museum/info/ctDocumentation.cfm?table=ctattribute_type">ctattribute_type</a></td>
+<td><a href="/documentation/attributes/#name">[ doc ]</a> Attribute name. (Code-table controlled.)</td>
+</tr>
+<tr>
+<td><span class="bloptional">Attribute_value</span></td>
+<td>text; various</td>
+<td><a href="/documentation/attributes/#value">[ doc ]</a> Value of the attribute. Leaving this NULL will cause the bulkloader to ignore the attribute entry regardless of other values.</td>
+</tr>
+<tr>
+<td><span class="bloptional">Attribute_units</span></td>
+<td>text; <a href="http://arctos.database.museum/info/ctDocumentation.cfm?table=ctlength_units">L</a>,<a href="http://arctos.database.museum/info/ctDocumentation.cfm?table=ctweight_units">W</a>, etc.</td>
+<td><a href="/documentation/attributes/#units">[ doc ]</a> Units on attribute_value, where appropriate.</td>
+</tr>
+<tr>
+<td><span class="bloptional">attribute_remarks</span></td>
+<td>text; any string</td>
+<td><a href="/documentation/attributes/#remark">[ doc ]</a> Remarks about the attribute.</td>
+</tr>
+<tr>
+<td><span class="bloptional">attribute_date</span></td>
+<td>ISO8601 date</td>
+<td><a href="/documentation/attributes/#date">[ doc ]</a> Date the attribute was determined.</td>
+</tr>
+<tr>
+<td><span class="bloptional">attribute_det_meth</span></td>
+<td>text; any string</td>
+<td><a href="/documentation/attributes/#method">[ doc ]</a> How the attribute was determined.</td>
+</tr>
+<tr>
+<td><span class="bloptional">attribute_determiner</span></td>
+<td>text; <a href="#agent">agent name</a></td>
+<td><a href="/documentation/attributes/#determiner">[ doc ]</a> Agent who determined the attribute.</td>
+</tr>
+<tr>
+<td><span class="bloptional">locality_id</span></td>
+<td>number; <a href="#pkey">key</a></td>
+<td>A primary key from table locality may be used in place of locality information. A value here will over-ride anything entered into higher_geog, spec_locality, coordinates, etc.</td>
+</tr>
+<tr>
+<td><span class="bloptional">collecting_event_id</span></td>
+<td>number; <a href="#pkey">key</a></td>
+<td>A primary key from table collecting_event may be used in place of collecting_event information. A value here will over-ride anything entered into higher_geog, spec_locality, coordinates, dates, method, etc.</td>
+</tr>
+</tbody>
+</table>

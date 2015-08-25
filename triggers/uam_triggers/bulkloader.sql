@@ -1,0 +1,890 @@
+
+CREATE OR REPLACE TRIGGER TR_bulkloader_BIU
+BEFORE INSERT OR UPDATE ON bulkloader
+FOR EACH ROW
+BEGIN
+ IF :new.orig_lat_long_units = 'deg. min. sec.' THEN
+            :new.c$lat := :new.LATDEG + (:new.LATMIN / 60) + (nvl(:new.LATSEC,0) / 3600);
+            IF :new.LATDIR = 'S' THEN
+                :new.c$lat := :new.c$lat * -1;
+            END IF;
+            :new.c$long := :new.LONGDEG + (:new.LONGMIN / 60) + (nvl(:new.LONGSEC,0) / 3600);
+            IF :new.LONGDIR = 'W' THEN
+                :new.c$long := :new.c$long * -1;
+            END IF;
+        ELSIF :new.orig_lat_long_units = 'degrees dec. minutes' THEN
+            :new.c$lat := :new.LATDEG + (:new.dec_lat_min / 60);
+            if :new.LATDIR = 'S' THEN
+                :new.c$lat := :new.c$lat * -1;
+            end if;
+            :new.c$long := :new.LONGDEG + (:new.DEC_LONG_MIN / 60);
+            IF :new.LONGDIR = 'W' THEN
+                :new.c$long := :new.c$long * -1;
+            END IF;
+       ELSIF :new.orig_lat_long_units = 'decimal degrees' THEN
+           :new.c$lat := :new.DEC_LAT;
+           :new.c$long := :new.DEC_LONG;
+       ELSE
+            :new.c$lat := NULL;
+            :new.c$long := NULL;
+       END IF; 
+       exception when others then
+           :new.loaded:='coordinate value error';
+  END;
+/     
+
+
+
+
+CREATE OR REPLACE TRIGGER ti_bulk_cid before INSERT OR UPDATE ON bulkloader FOR EACH ROW 
+    DECLARE 
+        cid INTEGER;
+        ismgr INTEGER;
+        c INTEGER;
+    BEGIN
+	    SELECT 
+            COUNT(*)
+        INTO   
+            ismgr
+        FROM   
+            dba_role_privs
+        WHERE  
+            UPPER(grantee) = Sys_context ('USERENV', 'SESSION_USER')
+        AND 
+            granted_role   = 'MANAGE_COLLECTION';
+     
+        IF :new.collection_id IS NULL THEN
+                SELECT NVL(collection_id, 0)
+                INTO   :NEW.collection_id
+                FROM   collection
+                WHERE  guid_prefix = :new.guid_prefix;
+                
+                IF ( :NEW.collection_id = 0 ) THEN
+                        Raise_application_error(-20002, 
+                            'invalid guid_prefix (' || :new.guid_prefix || ') 
+						');
+                END IF;
+        END IF;
+        IF :new.collection_object_id IS NULL THEN
+                SELECT bulkloader_pkey.nextval
+                INTO   :NEW.collection_object_id
+                FROM   dual;
+        
+        END IF;
+        IF :NEW.entered_agent_id IS NULL THEN
+                SELECT COUNT(*) INTO c FROM agent_name WHERE  agent_name_type = 'login' AND agent_name = :NEW.enteredby;
+                IF c>0 THEN
+                    SELECT agent_id INTO :NEW.entered_agent_id FROM agent_name  WHERE  agent_name_type = 'login' AND agent_name= :NEW.enteredby;
+                ELSE
+                    Raise_application_error(-20002, 'enteredby ('|| :NEW.enteredby || ') is invalid');
+                END IF;
+        END IF;
+        IF inserting THEN
+                SELECT systimestamp
+                INTO   :NEW.enteredtobulkdate
+                FROM   dual;
+                IF ismgr                      = 0
+                        AND :NEW.loaded IS NULL THEN
+                        Raise_application_error(-20002, 'You may not insert records with loaded=NULL.' );
+                END IF;
+        END IF;
+        IF updating THEN
+                IF :NEW.enteredtobulkdate != :OLD.enteredtobulkdate THEN
+                        Raise_application_error(-20002, 'You may not change enteredtobulkdate');
+                END IF;
+                IF :NEW.enteredby != :OLD.enteredby THEN
+                        Raise_application_error(-20002, 'You may not change enteredby');
+                END IF;
+                IF ismgr                     = 0 THEN
+                        IF :NEW.loaded IS NULL THEN
+                                Raise_application_error(-20002, 'You may not NULL loaded, and you may not update records with loaded=NULL.' );
+                        END IF;
+                        SELECT COUNT(*)
+                        INTO   c
+                        FROM   dual
+                        WHERE  UPPER(:NEW.enteredby) = Sys_context ('USERENV', 'SESSION_USER');
+                        
+                        IF c = 0 THEN
+                                Raise_application_error(-20001, 'You may only update your own records.');
+                        END IF;
+                END IF;
+        END IF;
+        -- NULL out unused coordinates based on current format
+        IF :new.orig_lat_long_units IS NULL THEN
+            :new.latdeg := NULL;
+            :new.latmin := NULL;
+            :new.latsec := NULL;
+            :new.latdir := NULL;
+            :new.longdeg := NULL;
+            :new.longmin := NULL;
+            :new.longsec := NULL;
+            :new.longdir := NULL;
+            :new.dec_lat_min := NULL;
+            :new.dec_long_min := NULL;
+            :new.DEC_LAT := NULL;
+            :new.DEC_LONG := NULL;
+            :new.UTM_NS := NULL;
+            :new.UTM_EW := NULL;
+            :new.UTM_ZONE := NULL;
+        ELSIF :NEW.orig_lat_long_units = 'deg. min. sec.' THEN
+            :new.dec_lat_min := NULL;
+            :new.dec_long_min := NULL;
+            :new.DEC_LAT := NULL;
+            :new.DEC_LONG := NULL;
+            :new.UTM_NS := NULL;
+            :new.UTM_EW := NULL;
+            :new.UTM_ZONE := NULL;
+        ELSIF :NEW.orig_lat_long_units = 'degrees dec. minutes' THEN
+            :new.latmin := NULL;
+            :new.latsec := NULL;
+            :new.longmin := NULL;
+            :new.longsec := NULL;
+            :new.DEC_LAT := NULL;
+            :new.DEC_LONG := NULL;
+            :new.UTM_NS := NULL;
+            :new.UTM_EW := NULL;
+            :new.UTM_ZONE := NULL;
+       ELSIF :NEW.orig_lat_long_units = 'decimal degrees' THEN
+           	:new.latdeg := NULL;
+            :new.latmin := NULL;
+            :new.latsec := NULL;
+            :new.latdir := NULL;
+            :new.longdeg := NULL;
+            :new.longmin := NULL;
+            :new.longsec := NULL;
+            :new.longdir := NULL;
+            :new.dec_lat_min := NULL;
+            :new.dec_long_min := NULL;
+            :new.UTM_NS := NULL;
+            :new.UTM_EW := NULL;
+            :new.UTM_ZONE := NULL;
+       ELSIF :NEW.orig_lat_long_units = 'UTM' THEN
+            :new.latdeg := NULL;
+            :new.latmin := NULL;
+            :new.latsec := NULL;
+            :new.latdir := NULL;
+            :new.longdeg := NULL;
+            :new.longmin := NULL;
+            :new.longsec := NULL;
+            :new.longdir := NULL;
+            :new.dec_lat_min := NULL;
+            :new.dec_long_min := NULL;
+            :new.DEC_LAT := NULL;
+            :new.DEC_LONG := NULL;
+       END IF;   
+END;
+/
+show err
+
+
+/* 
+ * 20150721 DLM: added guid_prefix, removed collection_cde, institution_acronym
+ * 
+ * 2014/09/18 LKV: These columns have been removed from BULKLOADER table, but still remain in BULKLOADER_DELETES as legacy columns:
+        LAT_LONG_REF_SOURCE
+        GEOREFMETHOD
+        DETERMINED_BY_AGENT
+        DETERMINED_DATE
+        LAT_LONG_REMARKS
+        HABITAT_DESC
+        COLL_OBJ_DISPOSITION
+        CONDITION
+        DISPOSITION_REMARKS
+        PART_MODIFIER_1
+        PRESERV_METHOD_1
+        PART_MODIFIER_2
+        PRESERV_METHOD_2
+        PART_MODIFIER_3
+        PRESERV_METHOD_3
+        PART_MODIFIER_4
+        PRESERV_METHOD_4
+        PART_MODIFIER_5
+        PRESERV_METHOD_5
+        PART_MODIFIER_6
+        PRESERV_METHOD_6
+        PART_MODIFIER_7
+        PRESERV_METHOD_7
+        PART_MODIFIER_8
+        PRESERV_METHOD_8
+        PART_MODIFIER_9
+        PRESERV_METHOD_9
+        PART_MODIFIER_10
+        PRESERV_METHOD_10
+        PART_MODIFIER_11
+        PRESERV_METHOD_11
+        PART_MODIFIER_12
+        PRESERV_METHOD_12
+        RELATIONSHIP
+        RELATED_TO_NUMBER
+        RELATED_TO_NUM_TYPE
+        COLL_OBJECT_HABITAT
+        EXTENT
+        GPSACCURACY
+
+These columns exist in BULKLOADER table, but were not included in the after delete trigger (TD_BULKLOADER).
+Added to the trigger as of 2014/09/18. LKV.
+
+        COLLECTING_EVENT_ID
+        COLLECTION_ID
+        ENTERED_AGENT_ID
+        ENTEREDTOBULKDATE
+        GEOLOGY_ATTRIBUTE_1
+        GEO_ATT_VALUE_1
+        GEO_ATT_DETERMINER_1
+        GEO_ATT_DETERMINED_DATE_1
+        GEO_ATT_DETERMINED_METHOD_1
+        GEO_ATT_REMARK_1
+        GEOLOGY_ATTRIBUTE_2
+        GEO_ATT_VALUE_2
+        GEO_ATT_DETERMINER_2
+        GEO_ATT_DETERMINED_DATE_2
+        GEO_ATT_DETERMINED_METHOD_2
+        GEO_ATT_REMARK_2
+        GEOLOGY_ATTRIBUTE_3
+        GEO_ATT_VALUE_3
+        GEO_ATT_DETERMINER_3
+        GEO_ATT_DETERMINED_DATE_3
+        GEO_ATT_DETERMINED_METHOD_3
+        GEO_ATT_REMARK_3
+        GEOLOGY_ATTRIBUTE_4
+        GEO_ATT_VALUE_4
+        GEO_ATT_DETERMINER_4
+        GEO_ATT_DETERMINED_DATE_4
+        GEO_ATT_DETERMINED_METHOD_4
+        GEO_ATT_REMARK_4
+        GEOLOGY_ATTRIBUTE_5
+        GEO_ATT_VALUE_5
+        GEO_ATT_DETERMINER_5
+        GEO_ATT_DETERMINED_DATE_5
+        GEO_ATT_DETERMINED_METHOD_5
+        GEO_ATT_REMARK_5
+        GEOLOGY_ATTRIBUTE_6
+        GEO_ATT_VALUE_6
+        GEO_ATT_DETERMINER_6
+        GEO_ATT_DETERMINED_DATE_6
+        GEO_ATT_DETERMINED_METHOD_6
+        GEO_ATT_REMARK_6
+        OTHER_ID_REFERENCES_1
+        OTHER_ID_REFERENCES_2
+        OTHER_ID_REFERENCES_3
+        OTHER_ID_REFERENCES_4
+        OTHER_ID_REFERENCES_5
+        UTM_ZONE
+        UTM_EW
+        UTM_NS
+
+*/
+
+
+CREATE OR REPLACE TRIGGER TD_BULKLOADER
+AFTER DELETE ON BULKLOADER
+REFERENCING OLD AS OLD NEW AS NEW
+FOR EACH ROW
+-- create a table to hold deleted records with:
+-- drop table bulkloader_deletes;
+-- create table bulkloader_deletes as select * from bulkloader;
+-- delete from bulkloader_deletes;
+-- build the guts of this trigger with:
+-- select column_name||',' as cname from user_tab_cols where table_name = 'BULKLOADER' order by INTERNAL_COLUMN_ID;
+-- paste in after insert into bulkloader_deletes ("
+-- then remove last comma and ) VALUES (" then
+-- select ':old.' || column_name ||',' as cname from user_tab_cols where table_name = 'BULKLOADER' order by INTERNAL_COLUMN_ID;
+-- then remove last comma again
+DECLARE NOTHING INTEGER;
+BEGIN
+	INSERT INTO BULKLOADER_DELETES (
+		COLLECTION_OBJECT_ID,
+		CAT_NUM,
+		COLLECTING_EVENT_ID,
+		COLLECTION_ID,
+		ENTERED_AGENT_ID,
+		ENTEREDTOBULKDATE,
+		HIGHER_GEOG,
+		BEGAN_DATE,
+		ENDED_DATE,
+		VERBATIM_DATE,
+		SPEC_LOCALITY,
+		VERBATIM_LOCALITY,
+		DATUM,
+		MAXIMUM_ELEVATION,
+		MINIMUM_ELEVATION,
+		ORIG_ELEV_UNITS,
+		LOCALITY_REMARKS,
+		HABITAT,
+		COLL_EVENT_REMARKS,
+		ORIG_LAT_LONG_UNITS,
+		MAX_ERROR_DISTANCE,
+		MAX_ERROR_UNITS,
+		VERIFICATIONSTATUS,
+		DEC_LAT,
+		DEC_LONG,
+		DEC_LAT_MIN,
+		DEC_LONG_MIN,
+		LATDEG,
+		LATMIN,
+		LATSEC,
+		LATDIR,
+		LONGDEG,
+		LONGMIN,
+		LONGSEC,
+		LONGDIR,
+		TAXON_NAME,
+		ID_MADE_BY_AGENT,
+		IDENTIFICATION_REMARKS,
+		MADE_DATE,
+		NATURE_OF_ID,
+		COLLECTOR_AGENT_1,
+		COLLECTOR_ROLE_1,
+		COLLECTOR_AGENT_2,
+		COLLECTOR_ROLE_2,
+		COLLECTOR_AGENT_3,
+		COLLECTOR_ROLE_3,
+		COLLECTOR_AGENT_4,
+		COLLECTOR_ROLE_4,
+		COLLECTOR_AGENT_5,
+		COLLECTOR_ROLE_5,
+		COLLECTOR_AGENT_6,
+		COLLECTOR_ROLE_6,
+		COLLECTOR_AGENT_7,
+		COLLECTOR_ROLE_7,
+		COLLECTOR_AGENT_8,
+		COLLECTOR_ROLE_8,
+		ACCN,
+		ENTEREDBY,
+		guid_prefix,
+		LOADED,
+		FLAGS,
+		COLL_OBJECT_REMARKS,
+		OTHER_ID_NUM_1,
+		OTHER_ID_NUM_TYPE_1,
+		OTHER_ID_NUM_2,
+		OTHER_ID_NUM_TYPE_2,
+		OTHER_ID_NUM_3,
+		OTHER_ID_NUM_TYPE_3,
+		OTHER_ID_NUM_4,
+		OTHER_ID_NUM_5,
+		OTHER_ID_NUM_TYPE_4,
+		OTHER_ID_NUM_TYPE_5,
+		PART_NAME_1,
+		PART_CONDITION_1,
+		PART_BARCODE_1,
+		PART_CONTAINER_LABEL_1,
+		PART_LOT_COUNT_1,
+		PART_NAME_2,
+		PART_CONDITION_2,
+		PART_BARCODE_2,
+		PART_CONTAINER_LABEL_2,
+		PART_LOT_COUNT_2,
+		PART_NAME_3,
+		PART_CONDITION_3,
+		PART_BARCODE_3,
+		PART_CONTAINER_LABEL_3,
+		PART_LOT_COUNT_3,
+		PART_NAME_4,
+		PART_CONDITION_4,
+		PART_BARCODE_4,
+		PART_CONTAINER_LABEL_4,
+		PART_LOT_COUNT_4,
+		PART_NAME_5,
+		PART_CONDITION_5,
+		PART_BARCODE_5,
+		PART_CONTAINER_LABEL_5,
+		PART_LOT_COUNT_5,
+		PART_NAME_6,
+		PART_CONDITION_6,
+		PART_BARCODE_6,
+		PART_CONTAINER_LABEL_6,
+		PART_LOT_COUNT_6,
+		PART_NAME_7,
+		PART_CONDITION_7,
+		PART_BARCODE_7,
+		PART_CONTAINER_LABEL_7,
+		PART_LOT_COUNT_7,
+		PART_NAME_8,
+		PART_CONDITION_8,
+		PART_BARCODE_8,
+		PART_CONTAINER_LABEL_8,
+		PART_LOT_COUNT_8,
+		PART_NAME_9,
+		PART_CONDITION_9,
+		PART_BARCODE_9,
+		PART_CONTAINER_LABEL_9,
+		PART_LOT_COUNT_9,
+		PART_NAME_10,
+		PART_CONDITION_10,
+		PART_BARCODE_10,
+		PART_CONTAINER_LABEL_10,
+		PART_LOT_COUNT_10,
+		PART_NAME_11,
+		PART_CONDITION_11,
+		PART_BARCODE_11,
+		PART_CONTAINER_LABEL_11,
+		PART_LOT_COUNT_11,
+		PART_NAME_12,
+		PART_CONDITION_12,
+		PART_BARCODE_12,
+		PART_CONTAINER_LABEL_12,
+		PART_LOT_COUNT_12,
+		ATTRIBUTE_1,
+		ATTRIBUTE_VALUE_1,
+		ATTRIBUTE_UNITS_1,
+		ATTRIBUTE_REMARKS_1,
+		ATTRIBUTE_DATE_1,
+		ATTRIBUTE_DET_METH_1,
+		ATTRIBUTE_DETERMINER_1,
+		ATTRIBUTE_2,
+		ATTRIBUTE_VALUE_2,
+		ATTRIBUTE_UNITS_2,
+		ATTRIBUTE_REMARKS_2,
+		ATTRIBUTE_DATE_2,
+		ATTRIBUTE_DET_METH_2,
+		ATTRIBUTE_DETERMINER_2,
+		ATTRIBUTE_3,
+		ATTRIBUTE_VALUE_3,
+		ATTRIBUTE_UNITS_3,
+		ATTRIBUTE_REMARKS_3,
+		ATTRIBUTE_DATE_3,
+		ATTRIBUTE_DET_METH_3,
+		ATTRIBUTE_DETERMINER_3,
+		ATTRIBUTE_4,
+		ATTRIBUTE_VALUE_4,
+		ATTRIBUTE_UNITS_4,
+		ATTRIBUTE_REMARKS_4,
+		ATTRIBUTE_DATE_4,
+		ATTRIBUTE_DET_METH_4,
+		ATTRIBUTE_DETERMINER_4,
+		ATTRIBUTE_5,
+		ATTRIBUTE_VALUE_5,
+		ATTRIBUTE_UNITS_5,
+		ATTRIBUTE_REMARKS_5,
+		ATTRIBUTE_DATE_5,
+		ATTRIBUTE_DET_METH_5,
+		ATTRIBUTE_DETERMINER_5,
+		ATTRIBUTE_6,
+		ATTRIBUTE_VALUE_6,
+		ATTRIBUTE_UNITS_6,
+		ATTRIBUTE_REMARKS_6,
+		ATTRIBUTE_DATE_6,
+		ATTRIBUTE_DET_METH_6,
+		ATTRIBUTE_DETERMINER_6,
+		ATTRIBUTE_7,
+		ATTRIBUTE_VALUE_7,
+		ATTRIBUTE_UNITS_7,
+		ATTRIBUTE_REMARKS_7,
+		ATTRIBUTE_DATE_7,
+		ATTRIBUTE_DET_METH_7,
+		ATTRIBUTE_DETERMINER_7,
+		ATTRIBUTE_8,
+		ATTRIBUTE_VALUE_8,
+		ATTRIBUTE_UNITS_8,
+		ATTRIBUTE_REMARKS_8,
+		ATTRIBUTE_DATE_8,
+		ATTRIBUTE_DET_METH_8,
+		ATTRIBUTE_DETERMINER_8,
+		ATTRIBUTE_9,
+		ATTRIBUTE_VALUE_9,
+		ATTRIBUTE_UNITS_9,
+		ATTRIBUTE_REMARKS_9,
+		ATTRIBUTE_DATE_9,
+		ATTRIBUTE_DET_METH_9,
+		ATTRIBUTE_DETERMINER_9,
+		ATTRIBUTE_10,
+		ATTRIBUTE_VALUE_10,
+		ATTRIBUTE_UNITS_10,
+		ATTRIBUTE_REMARKS_10,
+		ATTRIBUTE_DATE_10,
+		ATTRIBUTE_DET_METH_10,
+		ATTRIBUTE_DETERMINER_10,
+		MIN_DEPTH,
+		MAX_DEPTH,
+		DEPTH_UNITS,
+		COLLECTING_METHOD,
+		ASSOCIATED_SPECIES,
+		LOCALITY_ID,
+		COLLECTING_SOURCE,
+		PART_DISPOSITION_1,
+		PART_DISPOSITION_2,
+		PART_DISPOSITION_3,
+		PART_DISPOSITION_4,
+		PART_DISPOSITION_5,
+		PART_DISPOSITION_6,
+		PART_DISPOSITION_7,
+		PART_DISPOSITION_8,
+		PART_DISPOSITION_9,
+		PART_DISPOSITION_10,
+		PART_DISPOSITION_11,
+		PART_DISPOSITION_12,
+		PART_REMARK_1,
+		PART_REMARK_2,
+		PART_REMARK_3,
+		PART_REMARK_4,
+		PART_REMARK_5,
+		PART_REMARK_6,
+		PART_REMARK_7,
+		PART_REMARK_8,
+		PART_REMARK_9,
+		PART_REMARK_10,
+		PART_REMARK_11,
+		PART_REMARK_12,
+		GEOREFERENCE_SOURCE,
+		GEOREFERENCE_PROTOCOL,
+		EVENT_ASSIGNED_BY_AGENT,
+		EVENT_ASSIGNED_DATE,
+		SPECIMEN_EVENT_REMARK,
+		SPECIMEN_EVENT_TYPE,
+		COLLECTING_EVENT_NAME,
+		LOCALITY_NAME,
+		GEOLOGY_ATTRIBUTE_1,
+		GEO_ATT_VALUE_1,
+		GEO_ATT_DETERMINER_1,
+		GEO_ATT_DETERMINED_DATE_1,
+		GEO_ATT_DETERMINED_METHOD_1,
+		GEO_ATT_REMARK_1,
+		GEOLOGY_ATTRIBUTE_2,
+		GEO_ATT_VALUE_2,
+		GEO_ATT_DETERMINER_2,
+		GEO_ATT_DETERMINED_DATE_2,
+		GEO_ATT_DETERMINED_METHOD_2,
+		GEO_ATT_REMARK_2,
+		GEOLOGY_ATTRIBUTE_3,
+		GEO_ATT_VALUE_3,
+		GEO_ATT_DETERMINER_3,
+		GEO_ATT_DETERMINED_DATE_3,
+		GEO_ATT_DETERMINED_METHOD_3,
+		GEO_ATT_REMARK_3,
+		GEOLOGY_ATTRIBUTE_4,
+		GEO_ATT_VALUE_4,
+		GEO_ATT_DETERMINER_4,
+		GEO_ATT_DETERMINED_DATE_4,
+		GEO_ATT_DETERMINED_METHOD_4,
+		GEO_ATT_REMARK_4,
+		GEOLOGY_ATTRIBUTE_5,
+		GEO_ATT_VALUE_5,
+		GEO_ATT_DETERMINER_5,
+		GEO_ATT_DETERMINED_DATE_5,
+		GEO_ATT_DETERMINED_METHOD_5,
+		GEO_ATT_REMARK_5,
+		GEOLOGY_ATTRIBUTE_6,
+		GEO_ATT_VALUE_6,
+		GEO_ATT_DETERMINER_6,
+		GEO_ATT_DETERMINED_DATE_6,
+		GEO_ATT_DETERMINED_METHOD_6,
+		GEO_ATT_REMARK_6,
+		OTHER_ID_REFERENCES_1,
+		OTHER_ID_REFERENCES_2,
+		OTHER_ID_REFERENCES_3,
+		OTHER_ID_REFERENCES_4,
+		OTHER_ID_REFERENCES_5,
+		UTM_ZONE,
+		UTM_EW,
+		UTM_NS)
+	VALUES (
+		:OLD.COLLECTION_OBJECT_ID,
+		:OLD.CAT_NUM,
+		:OLD.COLLECTING_EVENT_ID,
+		:OLD.COLLECTION_ID,
+		:OLD.ENTERED_AGENT_ID,
+		:OLD.ENTEREDTOBULKDATE,
+		:OLD.HIGHER_GEOG,
+		:OLD.BEGAN_DATE,
+		:OLD.ENDED_DATE,
+		:OLD.VERBATIM_DATE,
+		:OLD.SPEC_LOCALITY,
+		:OLD.VERBATIM_LOCALITY,
+		:OLD.DATUM,
+		:OLD.MAXIMUM_ELEVATION,
+		:OLD.MINIMUM_ELEVATION,
+		:OLD.ORIG_ELEV_UNITS,
+		:OLD.LOCALITY_REMARKS,
+		:OLD.HABITAT,
+		:OLD.COLL_EVENT_REMARKS,
+		:OLD.ORIG_LAT_LONG_UNITS,
+		:OLD.MAX_ERROR_DISTANCE,
+		:OLD.MAX_ERROR_UNITS,
+		:OLD.VERIFICATIONSTATUS,
+		:OLD.DEC_LAT,
+		:OLD.DEC_LONG,
+		:OLD.DEC_LAT_MIN,
+		:OLD.DEC_LONG_MIN,
+		:OLD.LATDEG,
+		:OLD.LATMIN,
+		:OLD.LATSEC,
+		:OLD.LATDIR,
+		:OLD.LONGDEG,
+		:OLD.LONGMIN,
+		:OLD.LONGSEC,
+		:OLD.LONGDIR,
+		:OLD.TAXON_NAME,
+		:OLD.ID_MADE_BY_AGENT,
+		:OLD.IDENTIFICATION_REMARKS,
+		:OLD.MADE_DATE,
+		:OLD.NATURE_OF_ID,
+		:OLD.COLLECTOR_AGENT_1,
+		:OLD.COLLECTOR_ROLE_1,
+		:OLD.COLLECTOR_AGENT_2,
+		:OLD.COLLECTOR_ROLE_2,
+		:OLD.COLLECTOR_AGENT_3,
+		:OLD.COLLECTOR_ROLE_3,
+		:OLD.COLLECTOR_AGENT_4,
+		:OLD.COLLECTOR_ROLE_4,
+		:OLD.COLLECTOR_AGENT_5,
+		:OLD.COLLECTOR_ROLE_5,
+		:OLD.COLLECTOR_AGENT_6,
+		:OLD.COLLECTOR_ROLE_6,
+		:OLD.COLLECTOR_AGENT_7,
+		:OLD.COLLECTOR_ROLE_7,
+		:OLD.COLLECTOR_AGENT_8,
+		:OLD.COLLECTOR_ROLE_8,
+		:OLD.ACCN,
+		:OLD.ENTEREDBY,
+		:OLD.guid_prefix,
+		:OLD.LOADED,
+		:OLD.FLAGS,
+		:OLD.COLL_OBJECT_REMARKS,
+		:OLD.OTHER_ID_NUM_1,
+		:OLD.OTHER_ID_NUM_TYPE_1,
+		:OLD.OTHER_ID_NUM_2,
+		:OLD.OTHER_ID_NUM_TYPE_2,
+		:OLD.OTHER_ID_NUM_3,
+		:OLD.OTHER_ID_NUM_TYPE_3,
+		:OLD.OTHER_ID_NUM_4,
+		:OLD.OTHER_ID_NUM_5,
+		:OLD.OTHER_ID_NUM_TYPE_4,
+		:OLD.OTHER_ID_NUM_TYPE_5,
+		:OLD.PART_NAME_1,
+		:OLD.PART_CONDITION_1,
+		:OLD.PART_BARCODE_1,
+		:OLD.PART_CONTAINER_LABEL_1,
+		:OLD.PART_LOT_COUNT_1,
+		:OLD.PART_NAME_2,
+		:OLD.PART_CONDITION_2,
+		:OLD.PART_BARCODE_2,
+		:OLD.PART_CONTAINER_LABEL_2,
+		:OLD.PART_LOT_COUNT_2,
+		:OLD.PART_NAME_3,
+		:OLD.PART_CONDITION_3,
+		:OLD.PART_BARCODE_3,
+		:OLD.PART_CONTAINER_LABEL_3,
+		:OLD.PART_LOT_COUNT_3,
+		:OLD.PART_NAME_4,
+		:OLD.PART_CONDITION_4,
+		:OLD.PART_BARCODE_4,
+		:OLD.PART_CONTAINER_LABEL_4,
+		:OLD.PART_LOT_COUNT_4,
+		:OLD.PART_NAME_5,
+		:OLD.PART_CONDITION_5,
+		:OLD.PART_BARCODE_5,
+		:OLD.PART_CONTAINER_LABEL_5,
+		:OLD.PART_LOT_COUNT_5,
+		:OLD.PART_NAME_6,
+		:OLD.PART_CONDITION_6,
+		:OLD.PART_BARCODE_6,
+		:OLD.PART_CONTAINER_LABEL_6,
+		:OLD.PART_LOT_COUNT_6,
+		:OLD.PART_NAME_7,
+		:OLD.PART_CONDITION_7,
+		:OLD.PART_BARCODE_7,
+		:OLD.PART_CONTAINER_LABEL_7,
+		:OLD.PART_LOT_COUNT_7,
+		:OLD.PART_NAME_8,
+		:OLD.PART_CONDITION_8,
+		:OLD.PART_BARCODE_8,
+		:OLD.PART_CONTAINER_LABEL_8,
+		:OLD.PART_LOT_COUNT_8,
+		:OLD.PART_NAME_9,
+		:OLD.PART_CONDITION_9,
+		:OLD.PART_BARCODE_9,
+		:OLD.PART_CONTAINER_LABEL_9,
+		:OLD.PART_LOT_COUNT_9,
+		:OLD.PART_NAME_10,
+		:OLD.PART_CONDITION_10,
+		:OLD.PART_BARCODE_10,
+		:OLD.PART_CONTAINER_LABEL_10,
+		:OLD.PART_LOT_COUNT_10,
+		:OLD.PART_NAME_11,
+		:OLD.PART_CONDITION_11,
+		:OLD.PART_BARCODE_11,
+		:OLD.PART_CONTAINER_LABEL_11,
+		:OLD.PART_LOT_COUNT_11,
+		:OLD.PART_NAME_12,
+		:OLD.PART_CONDITION_12,
+		:OLD.PART_BARCODE_12,
+		:OLD.PART_CONTAINER_LABEL_12,
+		:OLD.PART_LOT_COUNT_12,
+		:OLD.ATTRIBUTE_1,
+		:OLD.ATTRIBUTE_VALUE_1,
+		:OLD.ATTRIBUTE_UNITS_1,
+		:OLD.ATTRIBUTE_REMARKS_1,
+		:OLD.ATTRIBUTE_DATE_1,
+		:OLD.ATTRIBUTE_DET_METH_1,
+		:OLD.ATTRIBUTE_DETERMINER_1,
+		:OLD.ATTRIBUTE_2,
+		:OLD.ATTRIBUTE_VALUE_2,
+		:OLD.ATTRIBUTE_UNITS_2,
+		:OLD.ATTRIBUTE_REMARKS_2,
+		:OLD.ATTRIBUTE_DATE_2,
+		:OLD.ATTRIBUTE_DET_METH_2,
+		:OLD.ATTRIBUTE_DETERMINER_2,
+		:OLD.ATTRIBUTE_3,
+		:OLD.ATTRIBUTE_VALUE_3,
+		:OLD.ATTRIBUTE_UNITS_3,
+		:OLD.ATTRIBUTE_REMARKS_3,
+		:OLD.ATTRIBUTE_DATE_3,
+		:OLD.ATTRIBUTE_DET_METH_3,
+		:OLD.ATTRIBUTE_DETERMINER_3,
+		:OLD.ATTRIBUTE_4,
+		:OLD.ATTRIBUTE_VALUE_4,
+		:OLD.ATTRIBUTE_UNITS_4,
+		:OLD.ATTRIBUTE_REMARKS_4,
+		:OLD.ATTRIBUTE_DATE_4,
+		:OLD.ATTRIBUTE_DET_METH_4,
+		:OLD.ATTRIBUTE_DETERMINER_4,
+		:OLD.ATTRIBUTE_5,
+		:OLD.ATTRIBUTE_VALUE_5,
+		:OLD.ATTRIBUTE_UNITS_5,
+		:OLD.ATTRIBUTE_REMARKS_5,
+		:OLD.ATTRIBUTE_DATE_5,
+		:OLD.ATTRIBUTE_DET_METH_5,
+		:OLD.ATTRIBUTE_DETERMINER_5,
+		:OLD.ATTRIBUTE_6,
+		:OLD.ATTRIBUTE_VALUE_6,
+		:OLD.ATTRIBUTE_UNITS_6,
+		:OLD.ATTRIBUTE_REMARKS_6,
+		:OLD.ATTRIBUTE_DATE_6,
+		:OLD.ATTRIBUTE_DET_METH_6,
+		:OLD.ATTRIBUTE_DETERMINER_6,
+		:OLD.ATTRIBUTE_7,
+		:OLD.ATTRIBUTE_VALUE_7,
+		:OLD.ATTRIBUTE_UNITS_7,
+		:OLD.ATTRIBUTE_REMARKS_7,
+		:OLD.ATTRIBUTE_DATE_7,
+		:OLD.ATTRIBUTE_DET_METH_7,
+		:OLD.ATTRIBUTE_DETERMINER_7,
+		:OLD.ATTRIBUTE_8,
+		:OLD.ATTRIBUTE_VALUE_8,
+		:OLD.ATTRIBUTE_UNITS_8,
+		:OLD.ATTRIBUTE_REMARKS_8,
+		:OLD.ATTRIBUTE_DATE_8,
+		:OLD.ATTRIBUTE_DET_METH_8,
+		:OLD.ATTRIBUTE_DETERMINER_8,
+		:OLD.ATTRIBUTE_9,
+		:OLD.ATTRIBUTE_VALUE_9,
+		:OLD.ATTRIBUTE_UNITS_9,
+		:OLD.ATTRIBUTE_REMARKS_9,
+		:OLD.ATTRIBUTE_DATE_9,
+		:OLD.ATTRIBUTE_DET_METH_9,
+		:OLD.ATTRIBUTE_DETERMINER_9,
+		:OLD.ATTRIBUTE_10,
+		:OLD.ATTRIBUTE_VALUE_10,
+		:OLD.ATTRIBUTE_UNITS_10,
+		:OLD.ATTRIBUTE_REMARKS_10,
+		:OLD.ATTRIBUTE_DATE_10,
+		:OLD.ATTRIBUTE_DET_METH_10,
+		:OLD.ATTRIBUTE_DETERMINER_10,
+		:OLD.MIN_DEPTH,
+		:OLD.MAX_DEPTH,
+		:OLD.DEPTH_UNITS,
+		:OLD.COLLECTING_METHOD,
+		:OLD.ASSOCIATED_SPECIES,
+		:OLD.LOCALITY_ID,
+		:OLD.COLLECTING_SOURCE,
+		:OLD.PART_DISPOSITION_1,
+		:OLD.PART_DISPOSITION_2,
+		:OLD.PART_DISPOSITION_3,
+		:OLD.PART_DISPOSITION_4,
+		:OLD.PART_DISPOSITION_5,
+		:OLD.PART_DISPOSITION_6,
+		:OLD.PART_DISPOSITION_7,
+		:OLD.PART_DISPOSITION_8,
+		:OLD.PART_DISPOSITION_9,
+		:OLD.PART_DISPOSITION_10,
+		:OLD.PART_DISPOSITION_11,
+		:OLD.PART_DISPOSITION_12,
+		:OLD.PART_REMARK_1,
+		:OLD.PART_REMARK_2,
+		:OLD.PART_REMARK_3,
+		:OLD.PART_REMARK_4,
+		:OLD.PART_REMARK_5,
+		:OLD.PART_REMARK_6,
+		:OLD.PART_REMARK_7,
+		:OLD.PART_REMARK_8,
+		:OLD.PART_REMARK_9,
+		:OLD.PART_REMARK_10,
+		:OLD.PART_REMARK_11,
+		:OLD.PART_REMARK_12,
+		:OLD.GEOREFERENCE_SOURCE,
+		:OLD.GEOREFERENCE_PROTOCOL,
+		:OLD.EVENT_ASSIGNED_BY_AGENT,
+		:OLD.EVENT_ASSIGNED_DATE,
+		:OLD.SPECIMEN_EVENT_REMARK,
+		:OLD.SPECIMEN_EVENT_TYPE,
+		:OLD.COLLECTING_EVENT_NAME,
+		:OLD.LOCALITY_NAME,
+		:OLD.GEOLOGY_ATTRIBUTE_1,
+		:OLD.GEO_ATT_VALUE_1,
+		:OLD.GEO_ATT_DETERMINER_1,
+		:OLD.GEO_ATT_DETERMINED_DATE_1,
+		:OLD.GEO_ATT_DETERMINED_METHOD_1,
+		:OLD.GEO_ATT_REMARK_1,
+		:OLD.GEOLOGY_ATTRIBUTE_2,
+		:OLD.GEO_ATT_VALUE_2,
+		:OLD.GEO_ATT_DETERMINER_2,
+		:OLD.GEO_ATT_DETERMINED_DATE_2,
+		:OLD.GEO_ATT_DETERMINED_METHOD_2,
+		:OLD.GEO_ATT_REMARK_2,
+		:OLD.GEOLOGY_ATTRIBUTE_3,
+		:OLD.GEO_ATT_VALUE_3,
+		:OLD.GEO_ATT_DETERMINER_3,
+		:OLD.GEO_ATT_DETERMINED_DATE_3,
+		:OLD.GEO_ATT_DETERMINED_METHOD_3,
+		:OLD.GEO_ATT_REMARK_3,
+		:OLD.GEOLOGY_ATTRIBUTE_4,
+		:OLD.GEO_ATT_VALUE_4,
+		:OLD.GEO_ATT_DETERMINER_4,
+		:OLD.GEO_ATT_DETERMINED_DATE_4,
+		:OLD.GEO_ATT_DETERMINED_METHOD_4,
+		:OLD.GEO_ATT_REMARK_4,
+		:OLD.GEOLOGY_ATTRIBUTE_5,
+		:OLD.GEO_ATT_VALUE_5,
+		:OLD.GEO_ATT_DETERMINER_5,
+		:OLD.GEO_ATT_DETERMINED_DATE_5,
+		:OLD.GEO_ATT_DETERMINED_METHOD_5,
+		:OLD.GEO_ATT_REMARK_5,
+		:OLD.GEOLOGY_ATTRIBUTE_6,
+		:OLD.GEO_ATT_VALUE_6,
+		:OLD.GEO_ATT_DETERMINER_6,
+		:OLD.GEO_ATT_DETERMINED_DATE_6,
+		:OLD.GEO_ATT_DETERMINED_METHOD_6,
+		:OLD.GEO_ATT_REMARK_6,
+		:OLD.OTHER_ID_REFERENCES_1,
+		:OLD.OTHER_ID_REFERENCES_2,
+		:OLD.OTHER_ID_REFERENCES_3,
+		:OLD.OTHER_ID_REFERENCES_4,
+		:OLD.OTHER_ID_REFERENCES_5,
+		:OLD.UTM_ZONE,
+		:OLD.UTM_EW,
+		:OLD.UTM_NS);
+END;
+/
+
+sho err;
+
+
+CREATE OR REPLACE TRIGGER BULK_NO_NULL_LOADED
+BEFORE UPDATE OR INSERT ON BULKLOADER
+FOR EACH ROW
+DECLARE hasrole NUMBER;
+BEGIN
+    IF :NEW.loaded IS NULL THEN
+    	select COUNT(*) INTO hasrole
+        from dba_role_privs
+        where upper(grantee) = SYS_CONTEXT ('USERENV','SESSION_USER')
+        and upper(granted_role) = 'MANAGE_COLLECTION';
+        
+        IF hasrole = 0 THEN
+            raise_application_error(
+                -20001,
+                'You do not have permission to set loaded to NULL.');
+        END IF;
+    END IF;
+END;

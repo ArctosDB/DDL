@@ -1,0 +1,30 @@
+/*
+select dbms_metadata.get_ddl(
+		'INDEX',
+		index_name) 
+from user_indexes 
+where table_name like 'GREF%'
+order by table_name,
+		uniqueness,
+		index_name
+*/
+
+-- GREF_REFSET_NG
+CREATE UNIQUE INDEX PK_GREF_REFSET_NG
+	ON GREF_REFSET_NG (ID)
+	TABLESPACE UAM_IDX_1;
+
+-- GREF_ROI_NG
+CREATE UNIQUE INDEX PK_GREF_ROI_NG
+	ON GREF_ROI_NG (ID)
+	TABLESPACE UAM_IDX_1;
+
+-- GREF_ROI_VALUE_NG
+CREATE UNIQUE INDEX PK_GREF_ROI_VALUE_NG
+	ON GREF_ROI_VALUE_NG (ID)
+	TABLESPACE UAM_IDX_1;
+
+-- GREF_USER
+CREATE UNIQUE INDEX PK_GREF_USER
+	ON GREF_USER (ID)
+	TABLESPACE UAM_IDX_1;
