@@ -10,6 +10,8 @@ CREATE OR REPLACE function to_meters(meas IN number, unit in varchar2 )
 			in_m := meas;
 		elsif upper(unit) = 'FT' OR upper(unit) = 'FEET' OR upper(unit) = 'FOOT' then
 			in_m := meas * .3048;
+		elsif upper(unit) = 'IN' OR upper(unit) = 'INCHES' OR upper(unit) = 'INCH' then
+			in_m := meas * .0254;
 		elsif upper(unit) = 'KM' OR upper(unit) = 'KILOMETER' OR upper(unit) = 'KILOMETERS' then
 			in_m := meas * 1000;
 		elsif upper(unit) = 'MM' OR upper(unit) = 'MILLIMETER' OR upper(unit) = 'MILLIMETERS' then
