@@ -1,3 +1,13 @@
+
+-- to keep the media thing working:
+
+create view taxonomy as select * from taxon_name;
+create public synonym taxonomy for taxonomy;
+grant select on taxonomy to public;
+
+
+
+-- old n busted
 CREATE TABLE TAXONOMY (
 	TAXON_NAME_ID NUMBER NOT NULL,
 	PHYLCLASS VARCHAR2(20),
