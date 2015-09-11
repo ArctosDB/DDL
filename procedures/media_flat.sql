@@ -53,45 +53,6 @@ DROP TABLE media_flat;
     create unique index iu_medflt_mid on media_flat (media_id) tablespace uam_idx_1;
     
     
-    INSERT INTO media_flat (
-        media_id,
-        media_type,
-        media_uri,
-        preview_uri,
-        mime_type,
-        license
-    )  (
-        SELECT 
-            media.media_id,
-            media_type,
-            media_uri,
-            preview_uri,
-            mime_type,
-            decode(uri,
-    			null,'unlicensed',
-    			'<a href="'||uri||'">'||display||'</a>'
-    		)
-        FROM 
-            media,
-            media_relations,
-            ctmedia_license 
-        WHERE
-            media.media_id=media_relations.media_id AND
-            media_relations.media_relationship LIKE '% media' AND
-            media.MEDIA_LICENSE_ID=ctmedia_license.MEDIA_LICENSE_ID (+) and 
-            media.media_id NOT IN (SELECT media_id FROM media_flat)
-        group by
-            media.media_id,
-            media_type,
-            media_uri,
-            preview_uri,
-            mime_type,
-            decode(uri,
-    			null,'unlicensed',
-    			'<a href="'||uri||'">'||display||'</a>'
-    		)
-       );
-       
        
 CREATE OR REPLACE TRIGGER TR_ins_media_FLAT
 AFTER INSERT or update or delete ON media
@@ -194,7 +155,21 @@ alter table media_flat add alt_text varchar2(255);
 alter table media_flat add descr varchar2(4000);
 alter table media_flat drop column media_title varchar2(4000);
 alter table media_flat drop column media_title;
+alter table media_flat add LATEST_DATE varchar2(255);
+alter table media_flat add EARLIEST_DATE varchar2(255);
 set escape "\";
+
+
+
+
+
+
+
+
+
+
+
+
 
 set define off;
 
@@ -447,7 +422,7 @@ BEGIN
                             loan.transaction_id=trans.transaction_id AND
                             trans.collection_id=collection.collection_id AND
                             loan.transaction_id=r.related_primary_key;
-                    when 'taxonomy' then
+                    when 'taxon_name' then
                         select 
                             r.media_relationship || '==<a href="/name/' || scientific_name || '">' || scientific_name  || '</a>',
                             scientific_name,
@@ -639,6 +614,18 @@ END;
 /
 sho err;
 
+
+
+
+
+
+
+
+
+
+
+
+
 exec set_media_flat;
 
 exec set_media_flat;
@@ -706,6 +693,28 @@ BEGIN
 DBMS_SCHEDULER.DROP_JOB('J_SET_MEDIA_FLAT',true);
 END;
 /
+
+BEGIN
+DBMS_SCHEDULER.DROP_JOB('J_MEDIA_FLAT',true);
+END;
+/
+
+
+
+BEGIN
+DBMS_SCHEDULER.DROP_JOB('SET_MEDIA_KEYWORDS_JOB',true);
+END;
+/
+
+BEGIN
+DBMS_SCHEDULER.DROP_JOB('MIA_MEDIA_KEYWORDS_JOB',true);
+END;
+/
+
+
+
+
+
 
 
 BEGIN
