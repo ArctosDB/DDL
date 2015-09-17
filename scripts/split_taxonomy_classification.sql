@@ -102,9 +102,3 @@ update collection set PREFERRED_TAXONOMY_SOURCE='MVZ Mammals' where guid_prefix=
 insert into taxon_term (select * from temp_tterm);
 alter trigger trg_pushtaxontermtoflat enable;
 commit;
-
--- check stuff out
-
-
-
-
