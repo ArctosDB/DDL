@@ -23,6 +23,3 @@ begin
 END;
 /
 sho err
-
-delete from blacklist_subnet where subnet='1.1';
-insert into blacklist_subnet(subnet) values ('1.1');

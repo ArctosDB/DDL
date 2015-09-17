@@ -1,5 +1,3 @@
-
-
 CREATE OR REPLACE TRIGGER trg_blacklist_ckblist
 BEFORE INSERT or update ON blacklist
 FOR EACH ROW declare 
@@ -27,10 +25,3 @@ begin
 END;
 /
 sho err
-
-delete from blacklist where ip='1.1.1.1';
-insert into blacklist(ip) values ('1.1.1.1');
-
-
-
-
