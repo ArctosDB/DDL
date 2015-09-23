@@ -1,12 +1,13 @@
 CREATE OR REPLACE TRIGGER trg_taxon_name_biu
 BEFORE UPDATE OR INSERT ON taxon_name
 FOR EACH ROW
+declare
+	sts varchar2(255);
 BEGIN
-    :new.scientific_name := trim(:new.scientific_name);
-    IF :NEW.SCIENTIFIC_NAME=LOWER(:NEW.SCIENTIFIC_NAME) THEN
-    	Raise_application_error(-20013,:NEW.SCIENTIFIC_NAME || ' does not look like a valid name; use the contact form if it is.');
+	select isValidTaxonName(:new.scientific_name) into sts from dual;
+	if sts != 'valid' then
+    	Raise_application_error(-20013,'Save rejected: ' || sts);
     END IF;
-
 END;
 /
 
