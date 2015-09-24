@@ -40,7 +40,7 @@ CREATE OR REPLACE FUNCTION isValidTaxonName (name  in varchar)
 		-- dot - more below
 		-- dash, because botany
 		-- (), because ICZN subgenera - more below
-		if regexp_like(name,'[^A-Za-z üë×ö.-\(\)]') then
+		if regexp_like(name,'[^A-Za-z -.üë×ö\(\)]') then
 			return 'Invalid characters.';
 		end if;
 		-- no taxa is a single character
@@ -73,8 +73,7 @@ CREATE OR REPLACE FUNCTION isValidTaxonName (name  in varchar)
 		end if;
 		-- limit abbreviations to botanist-sanctioned terms
 		-- set up botanical abbreviations list
-		botabbr:='agamosp.|agamovar.|convar.|f.|lus.|modif.|monstr.|mut.|nm.|nothof.|nothosubsp.|nothovar.|prol.'; 
-		botabbr:=botabbr || '|subf.|subhybr.|subsp.|subsubvar.|subf.|subvar.|var.';
+		botabbr:='agamosp.|agamovar.|convar.|f.|lus.|modif.|monstr.|mut.|nm.|nothof.|nothosubsp.|nothovar.|prol.|subf.|subhybr.|subsp.|subsubvar.|subf.|subvar.|var.';
 		if name like '%.%' then
 			-- only allow dots in botanical abbreviations
 			temp:=regexp_replace(name, botabbr, '');
@@ -83,17 +82,6 @@ CREATE OR REPLACE FUNCTION isValidTaxonName (name  in varchar)
 				return 'Invalid abbreviation.';
 			end if;
 		end if;
-		
-		
-				-- check for "Name" or "Name morestuff" not NaMe or Name Othername
-		/*
-		if substr(name,1,1) != '×' and (lower(substr(name,2)) != substr(name,2) or upper(substr(name,1,1)) != substr(name,1,1)) then
-			return 'Names must be Proper case.';
-		end if;
-  		*/
-		
-		
-		
 		if REGEXP_COUNT(name,' ') = 4 then
 			-- valid only in botanical name of the form
 			-- Gen sp irank. ssp
@@ -108,28 +96,20 @@ CREATE OR REPLACE FUNCTION isValidTaxonName (name  in varchar)
 		end if;
 		
 		
-		
-		
-		
 		if name like '%(%' then
 			-- ICZN subgenus. Allow
 			---- Genus (Subgenus) 
 			-- or
 			---- Genus (Subgenus) epithet
-			if not regexp_like (name,'^[A-Z][a-z]+ \([A-Z][a-z]+\)( [a-z]+){0,1}') then
-			
-			--select isValidTaxonName('Some (Thing) Boo') from dual;
-
-				return 'regexthingee';
+			if not regexp_like (name,'^[A-Z][a-z]+ \([A-Z][a-z]+\)( [a-z]{2,})?$') then
+				return 'Invalid subgenus notation.';
 			end if;
 		else
 			-- the only way to have two uppercase is as a subgenus
 			if REGEXP_COUNT(name,'[A-Z]') >1 then
-				return 'Too many Upper Case';
+				return 'Too many uppercase characters';
 			end if;
 		end if;
-		
-
 		-- if we made it here we can't find any problems
 		return 'valid';
 	end;
@@ -144,11 +124,3 @@ GRANT execute ON isValidTaxonName TO PUBLIC;
 -- select scientific_name from taxon_name where isValidTaxonName(scientific_name) != 'valid' order by scientific_name;
 --select isValidTaxonName('Some name var. bla lus. boo') from dual;
 
---good
-select isValidTaxonName('Some (Thing)') from dual;
--- bad
-select isValidTaxonName('Some (thing)') from dual;
--- good
-select isValidTaxonName('Some (Thing) boo') from dual;
--- bad
-select isValidTaxonName('Some (Thing) Boo') from dual;
