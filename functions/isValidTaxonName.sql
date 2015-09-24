@@ -8,54 +8,69 @@ CREATE OR REPLACE FUNCTION isValidTaxonName (name  in varchar)
 	BEGIN
 		-- keep this here so we have ONE place to maintain the code, call it from triggers/application/whatever
 		-- put cheap stuff first, try to find errors before running more-expensive checks
+		-- Goals: 
+		---- 1) Do NOT block anything that is someone's idea of a taxon name
+		---- 2) Do block anything that is NOT someone's idea of a taxon name
 
 		-- our one and only official not-taxonomy
 		if name='unidentifiable' then
 			return 'valid';
 		end if;
-			
+		-- nope	
+		if name like '%  %' then
+			return 'Double spaces detected';
+		end if;
+		-- nope
+		if name != trim(name) then
+			return 'Leading or trailing spaces detected';
+		end if;
+		-- nope
+		IF name=LOWER(name) THEN
+			return 'Names should not be all lower-case';
+		END IF;
+		-- nope
+		IF name=UPPER(name) THEN
+			return 'Names should not be all upper-case';
+		END IF;
+		-- allowable:
+		-- upper and lower a-z
+		-- spaces
+		-- umlauts, because botany
+		-- hybrid sign
+		-- dot - more below
+		-- dash, because botany
+		-- (), because ICZN subgenera - more below
+		if regexp_like(name,'[^A-Za-z üë×ö.-\(\)]') then
+			return 'Invalid characters.';
+		end if;
 		-- no taxa is a single character
 		if length(trim(name)) = 1 then
 			return 'Too short.';
 		end if;
+		-- hybrids are IDs, not names.
 		if lower(name) like '% x %' then
 			return 'Looks like a hybrid.';
 		end if;
+		-- no taxon contains the "word" sp.
 		if lower(name) like '% sp %' or lower(name) like '% sp' then
 			return '"sp" is not a valid name-part';
 		end if;
+		-- no taxon contains the "word" ssp.
 		if lower(name) like '% ssp %' or lower(name) like '% ssp' then
 			return '"ssp" is not a valid name-part';
 		end if;
+		-- no taxon contains the "word" or
 		if lower(name) like '% or %' then
 			return '"or" is not a valid name-part';
 		end if;
+		-- no taxon contains the "word" and
 		if lower(name) like '% and %' then
 			return '"and" is not a valid name-part';
 		end if;
-		
-		-- check for "Name" or "Name morestuff" not NaMe or Name Othername
-		if substr(name,1,1) != '×' and (lower(substr(name,2)) != substr(name,2) or upper(substr(name,1,1)) != substr(name,1,1)) then
-			return 'Names must be Proper case.';
+		-- 5 terms is never valid
+		if REGEXP_COUNT(name,' ') > 4 then
+			return 'Too many terms.';
 		end if;
-  		if name like '%  %' then
-			return 'Double spaces detected';
-		end if;
-		if name != trim(name) then
-			return 'Leading or trailing spaces detected';
-		end if;
-		IF name=LOWER(name) THEN
-			return 'Names should not be all lower-case';
-		END IF;
-		IF name=UPPER(name) THEN
-			return 'Names should not be all upper-case';
-		END IF;
-		if regexp_like(name,'[^A-Za-z üë×ö.-]') then
-			return 'Invalid characters.';
-		end if;
-  
-		
-		
 		-- limit abbreviations to botanist-sanctioned terms
 		-- set up botanical abbreviations list
 		botabbr:='agamosp.|agamovar.|convar.|f.|lus.|modif.|monstr.|mut.|nm.|nothof.|nothosubsp.|nothovar.|prol.'; 
@@ -68,13 +83,18 @@ CREATE OR REPLACE FUNCTION isValidTaxonName (name  in varchar)
 				return 'Invalid abbreviation.';
 			end if;
 		end if;
-				
-		-- 5 terms is never valid
-		if REGEXP_COUNT(name,' ') > 4 then
-			return 'Too many terms.';
-		end if;
 		
-		if REGEXP_COUNT(name,' ') >= 4 then
+		
+				-- check for "Name" or "Name morestuff" not NaMe or Name Othername
+		/*
+		if substr(name,1,1) != '×' and (lower(substr(name,2)) != substr(name,2) or upper(substr(name,1,1)) != substr(name,1,1)) then
+			return 'Names must be Proper case.';
+		end if;
+  		*/
+		
+		
+		
+		if REGEXP_COUNT(name,' ') = 4 then
 			-- valid only in botanical name of the form
 			-- Gen sp irank. ssp
 			-- add any unabbreviated infraspecific ranks to the list created above
@@ -90,6 +110,26 @@ CREATE OR REPLACE FUNCTION isValidTaxonName (name  in varchar)
 		
 		
 		
+		
+		if name like '%(%' then
+			-- ICZN subgenus. Allow
+			---- Genus (Subgenus) 
+			-- or
+			---- Genus (Subgenus) epithet
+			if not regexp_like (name,'^[A-Z][a-z]+ \([A-Z][a-z]+\)( [a-z]+){0,1}') then
+			
+			--select isValidTaxonName('Some (Thing) Boo') from dual;
+
+				return 'regexthingee';
+			end if;
+		else
+			-- the only way to have two uppercase is as a subgenus
+			if REGEXP_COUNT(name,'[A-Z]') >1 then
+				return 'Too many Upper Case';
+			end if;
+		end if;
+		
+
 		-- if we made it here we can't find any problems
 		return 'valid';
 	end;
@@ -100,9 +140,15 @@ sho err;
 CREATE OR REPLACE PUBLIC SYNONYM isValidTaxonName FOR isValidTaxonName;
 GRANT execute ON isValidTaxonName TO PUBLIC;
 
-
 -- select isValidTaxonName(scientific_name),scientific_name from taxon_name where isValidTaxonName(scientific_name) != 'valid' order by scientific_name;
-
 -- select scientific_name from taxon_name where isValidTaxonName(scientific_name) != 'valid' order by scientific_name;
+--select isValidTaxonName('Some name var. bla lus. boo') from dual;
 
---select 	isValidTaxonName('Some name var. bla lus. boo') from dual;
+--good
+select isValidTaxonName('Some (Thing)') from dual;
+-- bad
+select isValidTaxonName('Some (thing)') from dual;
+-- good
+select isValidTaxonName('Some (Thing) boo') from dual;
+-- bad
+select isValidTaxonName('Some (Thing) Boo') from dual;
