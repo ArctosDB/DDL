@@ -1,1 +1,4 @@
+alter table flat add ispublished number;
+
+-- rebuild CREATE OR REPLACE PROCEDURE UPDATE_FLAT (collobjid IN NUMBER) IS
 
