@@ -1,0 +1,37 @@
+20151001 - implemented in production
+
+alter table flat add ispublished varchar2(10);
+
+CREATE OR REPLACE PROCEDURE UPDATE_FLAT (collobjid IN NUMBER) IS....
+
+CREATE or replace view pre_filtered_flat AS....
+
+
+
+ update flat set ispublished='yes' where typestatus is not null;
+  update flat set ispublished='no' where typestatus is null;
+  
+  
+  
+
+alter table filtered_flat drop column ispublished;
+
+alter table filtered_flat add ispublished varchar2(10);
+
+exec DBMS_COMPARISON.DROP_COMPARISON('compare_filtered_flat');
+
+	BEGIN
+		DBMS_COMPARISON.CREATE_COMPARISON ( 
+			comparison_name => 'compare_filtered_flat'
+  			, schema_name     => 'UAM'
+  			, object_name     => 'pre_filtered_flat'
+  			, dblink_name     => null
+  			, remote_schema_name=>'UAM'
+  			, remote_object_name=>'filtered_flat'
+  		);
+	END;
+ 	/
+ 	
+  exec refresh_filtered_flat;
+select ispublished, count(*) from flat group by ispublished;
+select ispublished, count(*) from filtered_flat group by ispublished;
