@@ -91,6 +91,32 @@ BEGIN
 	        IF :new.locked_position = 1 THEN
 	            raise_application_error(-20000, 'The position you are trying to move is locked.');
 	        END IF;
+	        
+	        if pt = 'herbarium folder' and :new.container_type != 'herbarium sheet' then
+	            raise_application_error(-20000, 'Herbarium folders may contain only herbarium sheets.');
+	        END IF;
+	        
+	        if pt = 'herbarium sheet' and :new.container_type != 'collection object' then
+	            raise_application_error(-20000, 'Herbarium sheets may contain only collection objects.');
+	        END IF;
+	        
+	        if pt = :NEW.container_type then
+	            raise_application_error(-20000, 'A container and parent container may not share container type.');
+	        END IF;
+	        if 
+	         	pt = 'legacy container' or 
+	         	:NEW.container_type='legacy container' or 
+	         	pt='unknown' or 
+	         	:NEW.container_type='unknown' then
+	            raise_application_error(-20000, '"unknown" and "legacy container" may not be moved.');
+	        END IF;
+	        
+	        if :NEW.container_type='position' and pt not in ('freezer','freezer box','freezer rack','microplate','shelf','slide box') then
+	            raise_application_error(-20000, 'Positions are not allowed in ' || pt);
+	        END IF;
+	        
+	      
+
 	    END IF;
 	end if;
 	:new.bypasscheck:=null;
