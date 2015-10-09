@@ -1,3 +1,14 @@
+select trigger_name from all_triggers where table_name='CONTAINER';
+
+
+select trigger_name from all_triggers where table_name='COLL_OBJ_CONT_HIST';
+
+select trigger_name from all_triggers where table_name='COLL_OBJECT';
+
+select trigger_name from all_triggers where table_name='COLL_OBJ_REMARK';
+
+coll_object_remark
+
 CREATE OR REPLACE TRIGGER trg_cont_defdate BEFORE UPDATE OR INSERT ON CONTAINER 
 FOR EACH ROW
 begin
@@ -5,8 +16,13 @@ begin
 end;
 /
 
-CREATE OR REPLACE TRIGGER MOVE_CONTAINER
-before UPDATE OR INSERT ON CONTAINER
+
+CREATE OR REPLACE TRIGGER trg_CONTAINER_delete
+after delete ON CONTAINER
+FOR EACH ROW
+DECLARE
+
+
 -- this trigger checks that container movements are valid. The following rules are enforced:
 -- 1) a container may not be moved to itself
 -- 2) positions must be locked
@@ -22,111 +38,108 @@ before UPDATE OR INSERT ON CONTAINER
 -- search 42 to know why
 -- I'm so sorry
 
-
+CREATE OR REPLACE TRIGGER MOVE_CONTAINER
+before UPDATE OR INSERT ON CONTAINER
 FOR EACH ROW
 DECLARE
-    cw number;
-    ch number;
-    cd number;
-    pt varchar2(60);
-    pw number;
-    ph number;
-    pd number;
-    cl number;
-    pragma autonomous_transaction;
+    msg varchar2(4000);
+    parent_has_positions number;
+    parent_has_notpositions number;
+ 	pragma autonomous_transaction;
 BEGIN
+	dbms_output.put_line('i am triggery');
+	dbms_output.put_line(':new.bypasscheck = ' ||  :new.bypasscheck);
+	 if :new.bypasscheck is null or :new.bypasscheck !=42 then
+	 	dbms_output.put_line('bypasscheck IS NOT 42');
+	 	dbms_output.put_line('i am still triggery');
+	 	select count(*) into parent_has_positions from container where container_type = 'position' and parent_container_id=:NEW.parent_container_id;
+		select count(*) into parent_has_notpositions from container where container_type != 'position' and parent_container_id=:NEW.parent_container_id;
 
-    if :new.bypasscheck!=42 then
-	    -- I'm so sorry.
-	    -- see procedure moveContainer
-	    IF :new.container_id = :new.parent_container_id THEN
-	        raise_application_error(-20000, 'You cannot put a container into itself!');
-	    END IF;
-	        
-	--  if :new.container_type = 'position' AND :new.LOCKED_POSITION != 1 then
-	--      raise_application_error(
-	--          -20000,
-	--          'Positions must be locked.');
-	--  end if;
-	    IF :new.parent_container_id != :old.parent_container_id THEN
-	
-	  
-	    -- they moved a container - run this trigger
-	    -- get data into local vars
-	        SELECT
-	           container_type,
-	            width,
-	            height,
-	            length
-	        into 
-	            pt,
-	            pw,
-	            ph,
-	            pd
-	        FROM container WHERE container_id = :new.parent_container_id;
-	        -- see if they've done anything stoopid
-	        IF pt = 'collection object' THEN
-	            raise_application_error(-20000, 'You cannot put anything in a collection object!'); 
-	        END IF;
-	             
-	        IF pt LIKE '%label%' THEN
-	            raise_application_error(-20000, 'You cannot put anything in a label! (container_id:' || :NEW.container_id || '; parent_container_id: ' || :NEW.parent_container_id);
-	        END IF;
-	            
-	        IF :new.container_type LIKE '%label%' THEN
-	            raise_application_error(-20000, 'A label cannot have a parent!');
-	        END IF;
-	            
-	        IF :new.height >= ph THEN
-	            raise_application_error(-20000, 'The child cannot fit into the parent (check height)!');
-	        END IF;
-	        IF :new.length >= pd THEN
-	            raise_application_error(-20000, 'The child won''t fit into the parent (check length)!');
-	        END IF;
-	            
-	        IF :new.width >= pw THEN
-	            raise_application_error(-20000, 'The child won''t fit into the parent (check width)!');
-	        END IF;
-	            
-	        IF :new.locked_position = 1 THEN
-	            raise_application_error(-20000, 'The position you are trying to move is locked.');
-	        END IF;
-	        
-	        if pt = 'herbarium folder' and :new.container_type != 'herbarium sheet' then
-	            raise_application_error(-20000, 'Herbarium folders may contain only herbarium sheets.');
-	        END IF;
-	        
-	        if pt = 'herbarium sheet' and :new.container_type != 'collection object' then
-	            raise_application_error(-20000, 'Herbarium sheets may contain only collection objects.');
-	        END IF;
-	        
-	        if pt = :NEW.container_type then
-	            raise_application_error(-20000, 'A container and parent container may not share container type.');
-	        END IF;
-	        if 
-	         	pt = 'legacy container' or 
-	         	:NEW.container_type='legacy container' or 
-	         	pt='unknown' or 
-	         	:NEW.container_type='unknown' then
-	            raise_application_error(-20000, '"unknown" and "legacy container" may not be moved.');
-	        END IF;
-	        
-	        if :NEW.container_type='position' and pt not in ('freezer','freezer box','freezer rack','microplate','shelf','slide box') then
-	            raise_application_error(-20000, 'Positions are not allowed in ' || pt);
-	        END IF;
-	        
-	      
-
-	    END IF;
-	end if;
+		if updating then
+			-- we'll have old and new
+	    	dbms_output.put_line('updating');
+	    	
+	    	select
+	    		containerCheck(
+	    			:NEW.container_id,
+	    			:NEW.parent_container_id,
+	    			:NEW.container_type,
+	    			:NEW.barcode,
+	    			:NEW.height,
+	    			:NEW.length,
+	    			:NEW.width,
+	    			:NEW.institution_acronym,
+	    			:OLD.container_type,
+	    			:OLD.parent_container_id,
+	    			:OLD.institution_acronym,
+	    			:OLD.barcode,
+	    			p.container_type,
+	    			p.height,
+	    			p.length,
+	    			p.width,
+	    			p.institution_acronym,
+	    			parent_has_positions,
+	    			parent_has_notpositions
+	    		) into msg from container p where container_id=:NEW.parent_container_id;
+	  elsif inserting then
+    	dbms_output.put_line('inserting');
+	  	-- no old, pass in new so we get no change
+	  	select
+    		containerCheck(
+    			:NEW.container_id,
+    			:NEW.parent_container_id,
+    			:NEW.container_type,
+    			:NEW.barcode,
+    			:NEW.height,
+    			:NEW.length,
+    			:NEW.width,
+    			:NEW.institution_acronym,
+	    		:OLD.barcode,
+    			:NEW.container_type,
+    			:NEW.parent_container_id,
+    			:NEW.institution_acronym,
+    			p.container_type,
+    			p.height,
+    			p.length,
+    			p.width,
+    			p.institution_acronym,
+    			parent_has_positions,
+    			parent_has_notpositions
+    		) into msg from container p where container_id=:NEW.parent_container_id;
+		else
+	  	   msg:='noinsertupdate - misfire';
+		end if;
+    	dbms_output.put_line('msg: ' || msg);
+		if msg is not null then
+		    raise_application_error(-20000, 'FAIL: ' || msg);
+		 end if;
+	end if; -- END bypasscheck-check
 	:new.bypasscheck:=null;
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-    -- ColdFusion hasn't commited yet - ignore and move right along....
-        NULL;
 END move_container;
 /
 SHO ERR;
+
+
+
+
+
+
+
+
+
+update container set parent_container_id=1021 where container_id=41083;
+update container set parent_container_id=41083 where container_id=1021;
+
+select min(container_id) from container where institution_acronym='UAM';
+select min(container_id) from container where institution_acronym='UAMb';
+
+revoke uamb_herb from dlm;
+
+update container set institution_acronym='ABC' where container_id=1021;
+
+
+select min(container_id) from container where container_type='collection object';
+select min(container_id) from container where container_type='jar';
 
 
 

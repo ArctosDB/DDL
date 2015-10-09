@@ -10,3 +10,18 @@ BEGIN
 		WHERE ACCN_ID = :NEW.TRANSACTION_ID;
 END IF;
 END;
+
+
+
+CREATE OR REPLACE TRIGGER trg_accn_datecheck
+before INSERT or update ON accn
+FOR EACH ROW
+	declare status varchar2(255);
+BEGIN
+	status:=is_iso8601(:NEW.RECEIVED_DATE);
+    IF status != 'valid' THEN
+        raise_application_error(-20001,'RECEIVED_DATE: ' || status);
+    END IF;
+END;
+/
+sho err

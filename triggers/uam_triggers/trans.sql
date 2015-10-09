@@ -15,3 +15,15 @@ BEGIN
     AND UPPER(agent_name) = UPPER(USER));
 END;
 
+CREATE OR REPLACE TRIGGER trg_TRANS_datecheck
+before INSERT or update ON TRANS
+FOR EACH ROW
+	declare status varchar2(255);
+BEGIN
+	status:=is_iso8601(:NEW.TRANS_DATE);
+    IF status != 'valid' THEN
+        raise_application_error(-20001,'TRANS_DATE: ' || status);
+    END IF;
+END;
+/
+sho err
