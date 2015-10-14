@@ -17,10 +17,6 @@ end;
 /
 
 
-CREATE OR REPLACE TRIGGER trg_CONTAINER_delete
-after delete ON CONTAINER
-FOR EACH ROW
-DECLARE
 
 
 -- this trigger checks that container movements are valid. The following rules are enforced:
@@ -38,7 +34,12 @@ DECLARE
 -- search 42 to know why
 -- I'm so sorry
 
-CREATE OR REPLACE TRIGGER MOVE_CONTAINER
+CREATE OR REPLACE TRIGGER 
+
+deprecated use procedures
+
+
+MOVE_CONTAINER
 before UPDATE OR INSERT ON CONTAINER
 FOR EACH ROW
 DECLARE

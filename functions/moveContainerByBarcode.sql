@@ -1,4 +1,8 @@
-CREATE OR REPLACE procedure moveContainerByBarcode (
+CREATE OR REPLACE 
+
+deprecated
+
+procedure moveContainerByBarcode (
     child_barcode  VARCHAR2,
     parent_barcode VARCHAR2,
     child_container_type  varchar2 default null,
