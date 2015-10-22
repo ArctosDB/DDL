@@ -32,7 +32,16 @@ CREATE OR REPLACE procedure updateContainer (
         -- No updates except through this
         -- revoke update on container from manage_container;
         -- so all of the logic/business rules can live here.
-        select * into parent from container where container_id=v_parent_container_id;
+        if v_parent_container_id > 0 then
+        	select * into parent from container where container_id=v_parent_container_id;
+        	 select count(*) into parent_position_count from container where container_type='position' and parent_container_id=v_parent_container_id;
+        	select count(*) into parent_notposition_count from container where container_type != 'position' and parent_container_id=v_parent_container_id;
+    	
+       	else
+       		parent.container_id:=0;
+       		
+		end if;
+		
         select * into old_child from container where container_id=v_container_id;
         new_child.container_id := v_container_id;
         new_child.parent_container_id := v_parent_container_id;
@@ -47,9 +56,7 @@ CREATE OR REPLACE procedure updateContainer (
         new_child.locked_position := v_locked_position;
         new_child.number_positions := v_number_positions;
         new_child.institution_acronym := v_institution_acronym;
-        select count(*) into parent_position_count from container where container_type='position' and parent_container_id=v_parent_container_id;
-        select count(*) into parent_notposition_count from container where container_type != 'position' and parent_container_id=v_parent_container_id;
-    	containerContentCheck(old_child,new_child,parent,parent_position_count,parent_notposition_count,msg);
+       containerContentCheck(old_child,new_child,parent,parent_position_count,parent_notposition_count,msg);
     	
     	--dbms_output.put_line('got back ' || msg);
     	

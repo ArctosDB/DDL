@@ -565,6 +565,14 @@ CREATE UNIQUE INDEX IU_GEOGAUTHREC_HIGHERGEOG
 CREATE UNIQUE INDEX PK_GEOG_AUTH_REC
 	ON GEOG_AUTH_REC (GEOG_AUTH_REC_ID)
 	TABLESPACE UAM_IDX_1;
+	
+-- function stripGeogRanks is used by the data services geog-looker-upper and needs these to be less-slow	
+create index ix_sr_geo_country on geog_auth_rec ( stripGeogRanks(country) ) tablespace uam_idx_1;
+create index ix_sr_geo_state_prov on geog_auth_rec ( stripGeogRanks(state_prov) ) tablespace uam_idx_1;
+create index ix_sr_geo_county on geog_auth_rec ( stripGeogRanks(county) ) tablespace uam_idx_1;
+create index ix_sr_geo_island on geog_auth_rec ( stripGeogRanks(island) ) tablespace uam_idx_1;
+create index ix_sr_geo_island_group on geog_auth_rec ( stripGeogRanks(island_group) ) tablespace uam_idx_1;
+
 
 -- GEOLOGY_ATTRIBUTES 
 CREATE UNIQUE INDEX PK_GEOLOGY_ATTRIBUTES

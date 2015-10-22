@@ -56,7 +56,7 @@ CREATE OR REPLACE procedure moveContainerByBarcode (
 			-- only need to update the parent if there's a change
 			-- get position data
 			containerContentCheck(old_child,new_child,parent,parent_position_count,parent_notposition_count,ccmsg);
-			dbms_output.put_line('back with ccmsg=' || ccmsg);
+			--dbms_output.put_line('back with ccmsg=' || ccmsg);
 
 			 if ccmsg is not null then
 			 	msg := msg || sep || ccmsg ;
@@ -84,7 +84,7 @@ CREATE OR REPLACE procedure moveContainerByBarcode (
     select count(*) into parent_notposition_count from container where container_type != 'position' and parent_container_id=parent.container_id;
     ccmsg:='';
 	containerContentCheck(old_child,new_child,parent,parent_position_count,parent_notposition_count,ccmsg);
-	dbms_output.put_line('back with ccmsg=' || ccmsg);
+	--dbms_output.put_line('back with ccmsg=' || ccmsg);
 	if ccmsg is not null then
 	 	msg := msg || sep || ccmsg ;
   		sep := '; ';
@@ -114,7 +114,6 @@ GRANT EXECUTE ON moveContainerByBarcode TO manage_container;
 
 
 
-exec moveContainerByBarcode('test6','test5000','drawer','cabinet');
 
 
 

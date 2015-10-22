@@ -25,18 +25,39 @@ CREATE OR REPLACE procedure movePartToContainer (
 		select * into old_child from container where container_id=(
 			select container_id from coll_obj_cont_hist where collection_object_id=v_collection_object_id
 		);
+		
+		--dbms_output.put_line(v_parent_container_type);
 		-- get new
 		new_child:=old_child;
 		-- give it the proper parent
 		new_child.parent_container_id:=parent.container_id;
 		-- autochange certain container type
-		if new_child.container_type='cryovial label' then
+		
+		
+		--dbms_output.put_line('v_parent_container_type: ' || v_parent_container_type);
+		--dbms_output.put_line('parent.container_type: ' || parent.container_type);
+
+				
+				
+		if parent.container_type='cryovial label' then
 			parent.container_type:='cryovial';
 		end if;
+		
+		
+		--dbms_output.put_line('parent.container_type: ' || parent.container_type);
+		
+		
 		-- even if we autochanged, overwrite if there's a provided type
 		if v_parent_container_type is not null then
 			parent.container_type:=v_parent_container_type;
 		end if;
+		
+		
+		
+		--dbms_output.put_line('parent.container_type: ' || parent.container_type);
+		
+		
+		
 		select count(*) into parent_position_count from container where container_type='position' and parent_container_id=parent.container_id;
         select count(*) into parent_notposition_count from container where container_type != 'position' and parent_container_id=parent.container_id;
 		containerContentCheck(old_child,new_child,parent,parent_position_count,parent_notposition_count,msg);

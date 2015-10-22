@@ -14,7 +14,7 @@ CREATE OR REPLACE procedure batchCreateContainer is
         if c > 0 then
             raise_application_error(-20000, 'Untrimmed barcodes detected');
         end if;
-		select count(*) into c from cf_temp_container where container_type not in (select container_type from ctcontainer_type where container_type like '%label%');
+		select count(*) into c from cf_temp_container where container_type != 'position' and container_type not in (select container_type from ctcontainer_type where container_type like '%label%');
         if c > 0 then
             raise_application_error(-20000, 'Invalid container_type; labels only');
         end if;

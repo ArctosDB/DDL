@@ -129,8 +129,42 @@ CREATE OR REPLACE procedure containerContentCheck (
 				msg := msg || sep || 'Positions are not allowed in ' || parent.container_type;
 				sep:='; ';
 			END IF;
+			
+			
+				
 		end if; -- end parent = 0 check
 
+		--msg := msg || sep || 'new_child.height: ' || new_child.height;
+		--sep:='; ';
+		/*
+		dbms_output.put_line('new_child.height: ' || new_child.height);
+		dbms_output.put_line('new_child.width: ' || new_child.width);
+		dbms_output.put_line('new_child.length: ' || new_child.length);
+		
+		dbms_output.put_line('old_child.height: ' || old_child.height);
+		dbms_output.put_line('old_child.width: ' || old_child.width);
+		dbms_output.put_line('old_child.length: ' || old_child.length);
+		
+		*/
+		-- now test all existing children of the container being edited (=new_child)
+		if 
+			(new_child.height is not null and new_child.height!=old_child.height) or
+			(new_child.width is not null and new_child.width!=old_child.width) or
+			(new_child.length is not null and new_child.length!=old_child.length)
+		then
+			select count(*) into c from container where
+				parent_container_id=new_child.container_id and (
+					height > nvl(new_child.height,9999999999) or
+					width > nvl(new_child.width,9999999999) or
+					length > nvl(new_child.length,9999999999)
+				);
+			if c>0 then
+				msg := msg || sep || 'Edits to child size invalid; ' || c || ' children do not fit.';
+				sep:='; ';
+			end if;
+		end if;
+			
+			
 		msg_out:= msg;
 	end;
 /
@@ -139,3 +173,7 @@ sho err;
     
 CREATE OR REPLACE PUBLIC SYNONYM containerContentCheck FOR containerContentCheck;
 GRANT EXECUTE ON containerContentCheck TO manage_container;
+
+ -- exec updateContainer( 15808283, 0, 'bag', 'test500', '', '', 'test500', '0.5', '','' ,'' , 0, 'UAM');
+
+ -- exec updateContainer( 15808283, 0, 'bag', 'test500', '', '', 'test500', '1.5', '','' ,'' , 0, 'UAM');

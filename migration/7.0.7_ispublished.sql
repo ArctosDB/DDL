@@ -94,13 +94,15 @@ commit;
 
 
 
+
+
+
+
+
+
+
 --------------- container-related trigger changes
 
-revoke update on container from manage_container;
-revoke insert on container from manage_container;
-revoke delete on container from manage_container;
-
-drop trigger move_container;
 
 alter table container modify locked_position null;
 
@@ -112,28 +114,12 @@ drop function moveContainerByBarcode;
 
 CREATE OR REPLACE procedure moveContainerByBarcode (.....
 
-
-drop trigger MAKE_PART_COLL_OBJ_CONT;
-drop trigger TR_SPECIMENPART_AD;
-drop trigger SPECIMEN_PART_CT_CHECK;
-drop TRIGGER MAKE_PART_COLL_OBJ_CONT
-
-CREATE OR REPLACE TRIGGER trg_cmpd_specimenpart...
-CREATE OR REPLACE TRIGGER tr_specpart_sampfr_biupa....
-CREATE OR REPLACE TRIGGER TR_SPECPART_AIUD_FLAT...
-
-
-
 CREATE OR REPLACE procedure createContainer ...
-
-CREATE OR REPLACE TRIGGER trg_cont_defdate BEFORE UPDATE OR INSERT ON CONTAINER ...
-
-
-CREATE OR REPLACE TRIGGER GET_CONTAINER_HISTORY...
 
 CREATE OR REPLACE procedure updateAllChildrenContainer (
 
 CREATE OR REPLACE procedure bulkUpdateContainer is 
+
 
 CREATE OR REPLACE procedure batchCreateContainer is 
 
@@ -144,6 +130,48 @@ CREATE OR REPLACE procedure movePartToContainer (
 
 
 
+CREATE OR REPLACE TRIGGER trg_cmpd_specimenpart...
+CREATE OR REPLACE TRIGGER tr_specpart_sampfr_biupa....
+CREATE OR REPLACE TRIGGER TR_SPECPART_AIUD_FLAT...
+
+
+CREATE OR REPLACE TRIGGER trg_cont_defdate BEFORE UPDATE OR INSERT ON CONTAINER ...
+
+
+CREATE OR REPLACE TRIGGER GET_CONTAINER_HISTORY...
+
+
+
+
+
+
+
+drop trigger MAKE_PART_COLL_OBJ_CONT;
+drop trigger TR_SPECIMENPART_AD;
+drop trigger SPECIMEN_PART_CT_CHECK;
+drop TRIGGER MAKE_PART_COLL_OBJ_CONT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+revoke update on container from manage_container;
+revoke insert on container from manage_container;
+revoke delete on container from manage_container;
+
+drop trigger move_container;
 
 
 
