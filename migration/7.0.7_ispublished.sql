@@ -127,9 +127,6 @@ CREATE OR REPLACE procedure batchCreateContainer is
 CREATE OR REPLACE procedure movePartToContainer (
 
 
-
-
-
 CREATE OR REPLACE TRIGGER trg_cmpd_specimenpart...
 CREATE OR REPLACE TRIGGER tr_specpart_sampfr_biupa....
 CREATE OR REPLACE TRIGGER TR_SPECPART_AIUD_FLAT...
@@ -142,27 +139,10 @@ CREATE OR REPLACE TRIGGER GET_CONTAINER_HISTORY...
 
 
 
-
-
-
-
 drop trigger MAKE_PART_COLL_OBJ_CONT;
 drop trigger TR_SPECIMENPART_AD;
 drop trigger SPECIMEN_PART_CT_CHECK;
 drop TRIGGER MAKE_PART_COLL_OBJ_CONT
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -172,10 +152,4 @@ revoke insert on container from manage_container;
 revoke delete on container from manage_container;
 
 drop trigger move_container;
-
-
-
-
-
-
 
