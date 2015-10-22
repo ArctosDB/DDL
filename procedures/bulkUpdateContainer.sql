@@ -83,6 +83,7 @@ CREATE OR REPLACE procedure bulkUpdateContainer is
 	        	set
 	        		CONTAINER_TYPE=new_child.container_type,
 	        		DESCRIPTION=new_child.DESCRIPTION,
+	        		LABEL=new_child.label,
 	        		CONTAINER_REMARKS=new_child.CONTAINER_REMARKS,
 	        		HEIGHT=new_child.HEIGHT,
 	        		LENGTH=new_child.LENGTH,
