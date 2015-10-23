@@ -1,3 +1,86 @@
+-- find all children of a container
+select container.container_id, container.container_type ,container.institution_acronym from 
+container,
+(
+with recursion_view(base, parent_container_id, container_id) as (
+   -- first step, get rows to start with
+   select 
+     parent_container_id base, 
+     parent_container_id, 
+     container_id
+  from 
+    container
+  where container_id=12571229
+  union all
+  -- subsequent steps
+  select
+    -- retain base value from previous level
+    previous_level.base,
+    -- get information from current level
+    current_level.parent_container_id,
+    current_level.container_id
+  from
+    recursion_view previous_level,
+    container        current_level
+  where
+    current_level.parent_container_id = previous_level.container_id
+)
+select 
+  base, parent_container_id, container_id
+from 
+  recursion_view
+order by 
+  base, parent_container_id, container_id
+  )
+children
+where container.container_id=children.container_id and
+container.institution_acronym != 'MVZ'
+  ;
+  
+ -- update all children of a container
+ 
+  update container set institution_acronym='MVZ' where 
+  container.institution_acronym != 'MVZ' and
+  container_id in (
+	  select container_id from (
+	  	with recursion_view(base, parent_container_id, container_id) as (
+		   -- first step, get rows to start with
+		   select 
+		     parent_container_id base, 
+		     parent_container_id, 
+		     container_id
+		  from 
+		    container
+		  where
+		  	--  VLSB 1143
+		  	container_id=12571229
+		  union all
+		  -- subsequent steps
+		  select
+		    -- retain base value from previous level
+		    previous_level.base,
+		    -- get information from current level
+		    current_level.parent_container_id,
+		    current_level.container_id
+		  from
+		    recursion_view previous_level,
+		    container        current_level
+		  where
+		    current_level.parent_container_id = previous_level.container_id
+		)
+		select 
+		  base, parent_container_id, container_id
+		from 
+		  recursion_view
+		order by 
+	  base, parent_container_id, container_id
+	  )
+  );
+  
+  
+  
+  
+  
 20151001 - implemented in production
 
 alter table flat add ispublished varchar2(10);

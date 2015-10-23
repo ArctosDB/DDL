@@ -5,6 +5,12 @@ create table pre_bulkloader as select * from bulkloader where 1=2;
 -- drop the constraints
 alter table pre_bulkloader modify collection_id null;
 alter table pre_bulkloader modify ENTERED_AGENT_ID null;
+alter table pre_bulkloader modify COLLECTION_OBJECT_ID null;
+alter table pre_bulkloader modify part_lot_count_1 varchar2(4000);
+
+
+
+
 
 -- hu...
 alter table specimen_event modify COLLECTING_METHOD VARCHAR2(4000);
@@ -61,7 +67,41 @@ select count(*) from YYYOOUURRTTAABBLLEE;
 select count(*) from pre_bulkloader;
 
 
-	---- trim and de-regex everything
+---- trim and de-regex everything
+-- slow as hell in big data so proceduretime
+
+CREATE OR REPLACE PROCEDURE temp_update_junk IS
+	s varchar2(4000);
+	clist varchar2(4000);
+	sep varchar2(20);
+BEGIN
+	for r in (select column_name from user_tab_cols where table_name=upper('pre_bulkloader')) loop
+		--s:='update pre_bulkloader set ' || r.column_name || '=trim(' || r.column_name || ') where ' ||  r.column_name || ' != trim(' || r.column_name || ')';
+		s:='update pre_bulkloader set ' || r.column_name || '=trim(' || r.column_name || ')';
+		--dbms_output.put_line(s);
+		execute immediate s;
+		s:='update pre_bulkloader set ' || r.column_name || '=regexp_replace(' || r.column_name || ',''[^[:print:]]'','''') where regexp_like(' || r.column_name || ',''[^[:print:]]'')';
+		--dbms_output.put_line(s);
+		execute immediate s;
+	end loop;
+end;
+/
+
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+    job_name    => 'J_temp_update_junk',
+    job_type    => 'STORED_PROCEDURE',
+    job_action    => 'temp_update_junk',
+    enabled     => TRUE,
+    end_date    => NULL
+  );
+END;
+/ 
+
+select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_TEMP_UPDATE_JUNK';
+
+
+/*
 
 declare 
 	s varchar2(4000);
@@ -80,7 +120,7 @@ begin
 end;
 /
 
-
+*/
 
 /*
   horrible evil hack to deal with getting collection_cde out of here
