@@ -19,7 +19,6 @@ CREATE OR REPLACE procedure deleteContainer (
 /
 sho err;
 
-    
 CREATE OR REPLACE PUBLIC SYNONYM deleteContainer FOR deleteContainer;
 GRANT EXECUTE ON deleteContainer TO manage_container;
 
