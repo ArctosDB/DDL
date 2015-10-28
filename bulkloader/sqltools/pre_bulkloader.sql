@@ -29,7 +29,75 @@ alter table FILTERED_FLAT modify COLLECTING_METHOD VARCHAR2(4000);
 -- fix this stuff
 select column_name from user_tab_cols where table_name=upper('YYYOOUURRTTAABBLLEE') and column_name not in (select column_name from user_tab_cols where table_name='BULKLOADER');
 
+-- except lot count is hosed/doesn't fit so
+-- back
+drop table pre_bulk_date;
+create table pre_bulk_date as select * from dlm.my_temp_cf ;
+create table pre_bulk_plc1 as select * from dlm.my_temp_cf ;
 
+select ':' || part_lot_count_1 || ':' from pre_bulkloader where is_number(part_lot_count_1)=0;
+
+
+
+begin
+	for r in (select * from pre_bulk_plc1) loop
+		if r.APPEND_REMARK is not null then
+			update 
+				pre_bulkloader 
+			set 
+				part_lot_count_1=r.SHOULDBE, 
+				COLL_OBJECT_REMARKS=COLL_OBJECT_REMARKS || '; ' || r.APPEND_REMARK
+			where
+				part_lot_count_1=r.PART_LOT_COUNT_1;
+		else
+			update 
+				pre_bulkloader 
+			set 
+				part_lot_count_1=r.SHOULDBE
+			where
+				part_lot_count_1=r.PART_LOT_COUNT_1;
+		end if;
+	end loop;
+end;
+/
+	
+	update pre_bulkloader set 
+				part_lot_count_1=184, 
+				COLL_OBJECT_REMARKS=COLL_OBJECT_REMARKS || '; approximate count'
+			where
+				part_lot_count_1='approx.184';
+					
+				update pre_bulkloader set 
+				part_lot_count_1=33, 
+				COLL_OBJECT_REMARKS=COLL_OBJECT_REMARKS || '; approximate count'
+			where
+				part_lot_count_1='approx 33';
+	update pre_bulkloader set 
+				part_lot_count_1=30, 
+				COLL_OBJECT_REMARKS=COLL_OBJECT_REMARKS || '; part 1 count "30�"'
+			where
+				part_lot_count_1='30�';
+				
+				
+				
+				update pre_bulkloader set 
+				part_lot_count_1=1, 
+				COLL_OBJECT_REMARKS=COLL_OBJECT_REMARKS || '; part 1 count not given'
+			where
+				part_lot_count_1 =' ';
+------------------------------------------------------------------------------------------------------------------------
+approx.184
+
+
+
+
+4 rows selected.
+
+
+	
+-- back
+drop table pre_bulk_date;
+create table pre_bulk_date as select * from dlm.my_temp_cf ;
 
 
 -- example of column-merger-code
@@ -248,6 +316,36 @@ begin
 end;
 /	
 
+
+
+begin
+	for r in (select * from pre_bulk_agent_lookup) loop
+		update pre_bulkloader set COLLECTOR_agent_1=trim(r.GOOD_NAME) where trim(COLLECTOR_agent_1)=trim(r.BAD_DUPLICATE);
+		update pre_bulkloader set COLLECTOR_agent_2=trim(r.GOOD_NAME) where trim(COLLECTOR_agent_2)=trim(r.BAD_DUPLICATE);
+		update pre_bulkloader set COLLECTOR_agent_3=trim(r.GOOD_NAME) where trim(COLLECTOR_agent_3)=trim(r.BAD_DUPLICATE);
+		update pre_bulkloader set COLLECTOR_agent_4=trim(r.GOOD_NAME) where trim(COLLECTOR_agent_4)=trim(r.BAD_DUPLICATE);
+		update pre_bulkloader set COLLECTOR_agent_5=trim(r.GOOD_NAME) where trim(COLLECTOR_agent_5)=trim(r.BAD_DUPLICATE);
+		update pre_bulkloader set COLLECTOR_agent_6=trim(r.GOOD_NAME) where trim(COLLECTOR_agent_6)=trim(r.BAD_DUPLICATE);
+		update pre_bulkloader set COLLECTOR_agent_7=trim(r.GOOD_NAME) where trim(COLLECTOR_agent_7)=trim(r.BAD_DUPLICATE);
+		update pre_bulkloader set COLLECTOR_agent_8=trim(r.GOOD_NAME) where trim(COLLECTOR_agent_8)=trim(r.BAD_DUPLICATE);
+		update pre_bulkloader set ATTRIBUTE_DETERMINER_1=trim(r.GOOD_NAME) where trim(ATTRIBUTE_DETERMINER_1)=trim(r.BAD_DUPLICATE);
+		update pre_bulkloader set ATTRIBUTE_DETERMINER_2=trim(r.GOOD_NAME) where trim(ATTRIBUTE_DETERMINER_2)=trim(r.BAD_DUPLICATE);
+		update pre_bulkloader set ATTRIBUTE_DETERMINER_3=trim(r.GOOD_NAME) where trim(ATTRIBUTE_DETERMINER_3)=trim(r.BAD_DUPLICATE);
+		update pre_bulkloader set ATTRIBUTE_DETERMINER_4=trim(r.GOOD_NAME) where trim(ATTRIBUTE_DETERMINER_4)=trim(r.BAD_DUPLICATE);
+		update pre_bulkloader set ATTRIBUTE_DETERMINER_5=trim(r.GOOD_NAME) where trim(ATTRIBUTE_DETERMINER_5)=trim(r.BAD_DUPLICATE);
+		update pre_bulkloader set ATTRIBUTE_DETERMINER_6=trim(r.GOOD_NAME) where trim(ATTRIBUTE_DETERMINER_6)=trim(r.BAD_DUPLICATE);
+		update pre_bulkloader set ATTRIBUTE_DETERMINER_7=trim(r.GOOD_NAME) where trim(ATTRIBUTE_DETERMINER_7)=trim(r.BAD_DUPLICATE);
+		update pre_bulkloader set ATTRIBUTE_DETERMINER_8=trim(r.GOOD_NAME) where trim(ATTRIBUTE_DETERMINER_8)=trim(r.BAD_DUPLICATE);
+		update pre_bulkloader set ATTRIBUTE_DETERMINER_9=trim(r.GOOD_NAME) where trim(ATTRIBUTE_DETERMINER_9)=trim(r.BAD_DUPLICATE);
+		update pre_bulkloader set ATTRIBUTE_DETERMINER_10=trim(r.GOOD_NAME) where trim(ATTRIBUTE_DETERMINER_10)=trim(r.BAD_DUPLICATE);
+		update pre_bulkloader set ID_MADE_BY_AGENT=trim(r.GOOD_NAME) where trim(ID_MADE_BY_AGENT)=trim(r.BAD_DUPLICATE);
+		update pre_bulkloader set EVENT_ASSIGNED_BY_AGENT=trim(r.GOOD_NAME) where trim(EVENT_ASSIGNED_BY_AGENT)=trim(r.BAD_DUPLICATE);
+	end loop;
+end;
+/	
+
+
+
 -- rinse and repeat as necessary
 
 
@@ -375,7 +473,18 @@ select * from pre_bulk_attributes;
 
 
 alter table pre_bulk_attributes add shouldbe varchar2(4000);
+
 update pre_bulk_attributes set shouldbe='xxxxx' where attribute_type='xxxxx';
+update pre_bulk_attributes set shouldbe='xxxxx' where attribute_type='xxxxx';
+update pre_bulk_attributes set shouldbe='xxxxx' where attribute_type='xxxxx';
+update pre_bulk_attributes set shouldbe='xxxxx' where attribute_type='xxxxx';
+update pre_bulk_attributes set shouldbe='xxxxx' where attribute_type='xxxxx';
+
+select * from pre_bulk_attributes where shouldbe is null;
+
+
+
+ select * from pre_bulk_attributes where (shouldbe) not in (select attribute_type from ctattribute_type where COLLECTION_CDE='Arc');
 
 begin
 	for r in (select * from pre_bulk_attributes) loop
@@ -414,8 +523,37 @@ delete from pre_bulk_oidt where other_id_type in (select other_id_type from CTCO
 
 select * from pre_bulk_oidt;
 
+
+
+original identifier.
+
+
+
+---------------------------------------------------------------------------------------
+
+
+
+original identifier (field number)
+
+
+
+
+
+
+
+
+
+
 -- add a lookup
 alter table pre_bulk_oidt add shouldbe varchar2(4000);
+update pre_bulk_oidt set shouldbe='original identifier' where OTHER_ID_TYPE='original identifier (field number)';
+update pre_bulk_oidt set shouldbe='AHRS (Alaska Heritage Resources Survey)' where OTHER_ID_TYPE='AHRS Number (State of Alaska ID)';
+update pre_bulk_oidt set shouldbe='UAM:Arc Locality ID' where OTHER_ID_TYPE='Locality ID (site name)';
+
+update pre_bulk_oidt set shouldbe='xxxxx' where OTHER_ID_TYPE='xxxxxx';
+update pre_bulk_oidt set shouldbe='xxxxx' where OTHER_ID_TYPE='xxxxxx';
+update pre_bulk_oidt set shouldbe='xxxxx' where OTHER_ID_TYPE='xxxxxx';
+update pre_bulk_oidt set shouldbe='xxxxx' where OTHER_ID_TYPE='xxxxxx';
 update pre_bulk_oidt set shouldbe='xxxxx' where OTHER_ID_TYPE='xxxxxx';
 
 
@@ -486,10 +624,64 @@ select * from pre_bulk_date;
 
 alter table pre_bulk_date add shouldbe VARCHAR2(255);
 
+--ONLY run this for what is apprently m/d/y format eg 1/19/2001
+
+update pre_bulk_date set shouldbe=null;
+
+declare
+	v_tab parse_list.varchar2_table;
+	v_nfields integer;
+	o varchar(20);
+	d varchar(20);
+	m varchar(20);
+	y varchar(20);
+	id varchar(20);
+begin
+	for r in (select adate from pre_bulk_date ) loop
+		d:=NULL;
+		m:=NULL;
+		y:=NULL;
+		o:=trim(r.adate);
+		dbms_output.put_line(o);
+		parse_list.delimstring_to_table (o, v_tab, v_nfields,'/');
+		for i in 1..v_nfields loop
+			dbms_output.put_line(i || '--> ' || v_tab(i));
+	        if i=1 then
+	        	m:=lpad(v_tab(i),2,0);
+	        elsif i=2 then
+	        	d:=lpad(v_tab(i),2,0);
+	        elsif i=3 then
+	        	y:=v_tab(i);
+	        end if;
+		end loop;
+		dbms_output.put_line('d=' || d);
+		dbms_output.put_line('m=' || m);
+		dbms_output.put_line('y=' || y);
+		id:=y || '-' || m || '-' || d;
+		
+	        dbms_output.put_line('id=' || id);
+		if is_iso8601(id) ='valid' then
+			dbms_output.put_line('isdate');
+			update pre_bulk_date set shouldbe=id where adate=r.adate;
+		end if;
+	
+	end loop;
+end;
+/
+
+
+select adate || '---->' || shouldbe from pre_bulk_date order by adate;
+select adate || '---->' || shouldbe from pre_bulk_date where shouldbe is null order by adate;
+
+delete from pre_bulk_date where shouldbe is null;
+
 update pre_bulk_date set shouldbe='xxxxxx' where adate='xxxxxx';
 
 
-begin
+
+	
+CREATE OR REPLACE PROCEDURE temp_update_junk IS
+	begin
 	for r in (select * from pre_bulk_date) loop
 		update pre_bulkloader set MADE_DATE=r.shouldbe where MADE_DATE=r.adate;
 		update pre_bulkloader set BEGAN_DATE=r.shouldbe where BEGAN_DATE=r.adate;
@@ -508,11 +700,39 @@ begin
 end;
 /
 
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+    job_name    => 'J_temp_update_junk',
+    job_type    => 'STORED_PROCEDURE',
+    job_action    => 'temp_update_junk',
+    enabled     => TRUE,
+    end_date    => NULL
+  );
+END;
+/ 
+select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_TEMP_UPDATE_JUNK';
+
+
+
+
+
+
+
 
 ----------------- geog ----------------------------
 
 
 update pre_bulkloader set HIGHER_GEOG=trim(HIGHER_GEOG);
+
+select distinct replace(HIGHER_GEOG,'quad','Quad') from pre_bulkloader where HIGHER_GEOG like '% quad%';
+select distinct replace(HIGHER_GEOG,'Ameica','America') from pre_bulkloader where HIGHER_GEOG like '% Ameica%';
+select distinct replace(HIGHER_GEOG,'  ',' ') from pre_bulkloader where HIGHER_GEOG like '%  %';
+
+
+
+update pre_bulkloader set HIGHER_GEOG=replace(HIGHER_GEOG,'quad','Quad') where HIGHER_GEOG like '% quad%';
+update pre_bulkloader set HIGHER_GEOG=replace(HIGHER_GEOG,'Ameica','America') where HIGHER_GEOG like '% Ameica%';
+update pre_bulkloader set HIGHER_GEOG=replace(HIGHER_GEOG,'  ',' ' ) where HIGHER_GEOG like '%  %';
 
 drop table pre_bulk_geog;
 
@@ -522,7 +742,59 @@ delete from pre_bulk_geog where HIGHER_GEOG in (select HIGHER_GEOG from geog_aut
 
 select * from pre_bulk_geog order by HIGHER_GEOG;
 
+update pre_bulkloader set HIGHER_GEOG='North Pacific Ocean, Marshall Islands' where trim(HIGHER_GEOG)='Asia, Marshall Islands';
+update pre_bulkloader set HIGHER_GEOG='Central America, Honduras' where trim(HIGHER_GEOG)='North America, Honduras';
+update pre_bulkloader set HIGHER_GEOG='Central America, Panama' where trim(HIGHER_GEOG)='North America, Panama';
+update pre_bulkloader set HIGHER_GEOG='South America, Peru' where trim(HIGHER_GEOG)='North America, Peru';
+update pre_bulkloader set HIGHER_GEOG='North America, Bering Sea, United States, Alaska, Adak Quad, Andreanof Islands, Aleutian Islands' where trim(HIGHER_GEOG)='North America, United States, Alaska, Adak Quad';
+update pre_bulkloader set HIGHER_GEOG='North America, Bering Sea, United States, Alaska, Attu Quad, Aleutian Islands' where trim(HIGHER_GEOG)='North America, United States, Alaska, Attu Quad';
+update pre_bulkloader set HIGHER_GEOG='North America, Bering Sea, United States, Alaska, Baird Inlet Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Baird Inlet Quad';
+update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Baird Mts. Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Baird Mountains Quad';
+update pre_bulkloader set HIGHER_GEOG='North America, Bering Sea, United States, Alaska, Black Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Black Quad';
+update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Craig Quad, Alexander Archipelago' where trim(HIGHER_GEOG)='North America, United States, Alaska, Craig Quad';
+update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, De Long Mts. Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, DeLong Mountains Quad';
+update pre_bulkloader set HIGHER_GEOG='North America, Bering Sea, United States, Alaska, Gareloi Island Quad, Aleutian Islands' where trim(HIGHER_GEOG)='North America, United States, Alaska, Gareloi Island Quad';
+update pre_bulkloader set HIGHER_GEOG='North America, Bering Sea, United States, Alaska, Kiska Quad, Aleutian Islands' where trim(HIGHER_GEOG)='North America, United States, Alaska, Kiska Quad';
+update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Misheguk Mtn. Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Misheguk Mountain Quad';
+update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Mt. Fairweather Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Mount Fairweather Quad';
+update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Mt. Hayes Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Mount Hayes Quad';
+update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Mt. Katmai Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Mount Katmai Quad';
+update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Mt. McKinley Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Mount McKinley Quad';
+update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Mt. Michelson Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Mount Michelson Quad';
+update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Petersburg Quad, Alexander Archipelago' where trim(HIGHER_GEOG)='North America, United States, Alaska, Petersburg Quad';
+update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Philip Smith Mts. Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Phillip Smith Mountains Quad';
+update pre_bulkloader set HIGHER_GEOG='North America, Bering Sea, United States, Alaska, Rat Islands Quad, Aleutian Islands' where trim(HIGHER_GEOG)='North America, United States, Alaska, Rat Islands Quad';
+update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Simeonof Island Quad, Shumagin Islands' where trim(HIGHER_GEOG)='North America, United States, Alaska, Simeonof Island Quad';
+update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Table Mtn. Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Table Mountain Quad';
+update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Talkeetna Mts. Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Talkeetna Mountains Quad';
+update pre_bulkloader set HIGHER_GEOG='North America, Bering Sea, United States, Alaska, Umnak Quad, Aleutian Islands' where trim(HIGHER_GEOG)='North America, United States, Alaska, Umnak Quad';
+update pre_bulkloader set HIGHER_GEOG='North America, Bering Sea, United States, Alaska, Unalaska Quad, Aleutian Islands' where trim(HIGHER_GEOG)='North America, United States, Alaska, Unalaska Quad';
+update pre_bulkloader set HIGHER_GEOG='Pacific Ocean, United States, Hawaii, Hawaiian Islands' where trim(HIGHER_GEOG)='North America, United States, Hawaii';
+update pre_bulkloader set HIGHER_GEOG='South Pacific Ocean, Chile, Valparaiso, Easter Island' where trim(HIGHER_GEOG)='South Pacific Ocean, Easter Island';
+
+
 update pre_bulkloader set HIGHER_GEOG='xxxxxxx' where trim(HIGHER_GEOG)='xxxxxx';
+update pre_bulkloader set HIGHER_GEOG='xxxxxxx' where trim(HIGHER_GEOG)='xxxxxx';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ---------------------------- random single-column junk ------------------------------
 
@@ -600,9 +872,32 @@ begin
 end;
 /
 
+create table temp_pre_accn as 
+select distinct ACCN from pre_bulkloader where (ACCN,guid_prefix) not in 
+	(select ACCN_NUMBER,guid_prefix from accn,trans,collection where 
+	accn.transaction_id=trans.transaction_id and trans.collection_id=collection.collection_id);
 
+	
+	select distinct ':'||ACCN||':' from pre_bulkloader where (ACCN,guid_prefix) not in 
+	(select ACCN_NUMBER,guid_prefix from accn,trans,collection where 
+	accn.transaction_id=trans.transaction_id and trans.collection_id=collection.collection_id);
 
-select distinct ACCN from pre_bulkloader where ACCN not in (select ACCN_NUMBER from accn,trans,collection);
+	update accn set accn_number=trim(accn_number) where accn_number != trim(accn_number);
+	
+	
+	select accn_number from accn where accn_number != trim(accn_number);
+	
+	update pre_bulkloader set accn='1-1954' where accn='1-1954 (01)';
+	update pre_bulkloader set accn='1-1929' where accn='29-Jan';
+	update pre_bulkloader set accn='1-1933' where accn='Feb-33';
+	update pre_bulkloader set accn='1-1932' where accn='Jan-32';
+	update pre_bulkloader set accn='UA70-212' where accn='Ua70-212';
+	
+	
+	update pre_bulkloader set accn='xxxx' where accn='xxxx';
+	update pre_bulkloader set accn='xxxx' where accn='xxxx';
+	update pre_bulkloader set accn='xxxx' where accn='xxxx';
+
 
 
 --------------------------------- parts -----------------------------------------
@@ -666,7 +961,37 @@ create table pre_bulk_disposition as select d disposition from (
 
 delete from pre_bulk_disposition where disposition in (select COLL_OBJ_DISPOSITION from CTCOLL_OBJ_DISP);
 
+delete from pre_bulk_disposition where disposition in ('in collection/being process/on loan/not deposited/missing/destroyed');
+
+
 select * from pre_bulk_disposition;
+
+-- reload
+
+drop table pre_bulk_disposition;
+create table pre_bulk_disposition as select * from dlm.my_temp_cf;
+
+insert into pre_bulk_disposition(disposition,shouldbe) values ('not deposited','being processed');
+
+begin
+	for r in (select * from pre_bulk_disposition) loop
+		update pre_bulkloader set PART_DISPOSITION_1=r.shouldbe where PART_DISPOSITION_1=r.disposition;
+		update pre_bulkloader set PART_DISPOSITION_2=r.shouldbe where PART_DISPOSITION_2=r.disposition;
+		update pre_bulkloader set PART_DISPOSITION_3=r.shouldbe where PART_DISPOSITION_3=r.disposition;
+		update pre_bulkloader set PART_DISPOSITION_4=r.shouldbe where PART_DISPOSITION_4=r.disposition;
+		update pre_bulkloader set PART_DISPOSITION_5=r.shouldbe where PART_DISPOSITION_5=r.disposition;
+		update pre_bulkloader set PART_DISPOSITION_6=r.shouldbe where PART_DISPOSITION_6=r.disposition;
+		update pre_bulkloader set PART_DISPOSITION_7=r.shouldbe where PART_DISPOSITION_7=r.disposition;
+		update pre_bulkloader set PART_DISPOSITION_8=r.shouldbe where PART_DISPOSITION_8=r.disposition;
+		update pre_bulkloader set PART_DISPOSITION_9=r.shouldbe where PART_DISPOSITION_9=r.disposition;
+		update pre_bulkloader set PART_DISPOSITION_10=r.shouldbe where PART_DISPOSITION_10=r.disposition;
+		update pre_bulkloader set PART_DISPOSITION_11=r.shouldbe where PART_DISPOSITION_11=r.disposition;
+		update pre_bulkloader set PART_DISPOSITION_12=r.shouldbe where PART_DISPOSITION_12=r.disposition;
+	end loop;
+end;
+/
+
+		
 
 ------------------------------ collector role ------------------------------
 
@@ -697,8 +1022,11 @@ delete from pre_bulk_collrole where collector_role in (select collector_role fro
 select * from pre_bulk_collrole;
 
 alter table pre_bulk_collrole add shouldbe VARCHAR2(255);
-update pre_bulk_collrole set shouldbe='collector' where collector_role = 'c';
-update pre_bulk_collrole set shouldbe='preparator' where collector_role = 'p';
+
+
+
+update pre_bulk_collrole set shouldbe='preparator' where collector_role = 'cataloger';
+update pre_bulk_collrole set shouldbe='collector' where collector_role = 'excavator';
 
 begin
 	for r in (select * from pre_bulk_collrole) loop
@@ -722,6 +1050,8 @@ end;
 -- date object, so special handling
 update pre_bulkloader set EVENT_ASSIGNED_DATE=substr(ended_date,0,10) where EVENT_ASSIGNED_DATE is null and is_iso8601(ended_date)='valid' and length(ended_date)>=10;
 
+select count(*) from pre_bulkloader where EVENT_ASSIGNED_DATE is null;
+
 -- set the rest to sysdate, lacking better options
 update pre_bulkloader set EVENT_ASSIGNED_DATE=sysdate where EVENT_ASSIGNED_DATE is null;
 
@@ -738,8 +1068,12 @@ update pre_bulkloader set ATTRIBUTE_DATE_9=substr(ended_date,0,4) where attribut
 update pre_bulkloader set ATTRIBUTE_DATE_10=substr(ended_date,0,4) where attribute_10 is not null and ATTRIBUTE_DATE_10 is null;
 update pre_bulkloader set MADE_DATE=substr(ended_date,0,4) where MADE_DATE is null;
 
+select count(*) from pre_bulkloader where EVENT_ASSIGNED_DATE is null;
 
 -- set empty and required determiners to first collector when available
+select count(*) from pre_bulkloader where EVENT_ASSIGNED_BY_AGENT is null;
+select count(*) from pre_bulkloader where ID_MADE_BY_AGENT is null;
+select count(*) from pre_bulkloader where SPECIMEN_EVENT_TYPE is null;
 
 
 update pre_bulkloader set EVENT_ASSIGNED_BY_AGENT=COLLECTOR_agent_1 where EVENT_ASSIGNED_BY_AGENT is null and COLLECTOR_agent_1 is not null and COLLECTOR_ROLE_1='collector';
@@ -806,6 +1140,32 @@ update pre_bulkloader set
 
 
 --------------------------------- actual per-row checker aimed at pre-bulk -----------------------------
+
+
+	
+	
+CREATE OR REPLACE PROCEDURE temp_update_junk IS
+	e VARCHAR2(4000);
+BEGIN
+	for r in (select collection_object_id from pre_bulkloader) loop
+		select bulk_pre_check_one(r.collection_object_id) into e from dual;
+		update pre_bulkloader set loaded=e where collection_object_id=r.collection_object_id;
+	end loop;
+end;
+/
+
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+    job_name    => 'J_temp_update_junk',
+    job_type    => 'STORED_PROCEDURE',
+    job_action    => 'temp_update_junk',
+    enabled     => TRUE,
+    end_date    => NULL
+  );
+END;
+/ 
+
+
 
 
 declare

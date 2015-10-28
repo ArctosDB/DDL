@@ -3,6 +3,25 @@
 
 
 CREATE OR REPLACE procedure updateContainer (
+
+ exec updateContainer(
+ 	12039138,
+ 	16417770,
+ 	'cryovial',
+ 	'CC 3752',
+ 	'',
+ 	'',
+ 	'MVZ105169',
+ 	'',
+ 	'',
+ 	'',
+ 	'',
+ 	0,
+ 	'MVZ');
+
+ 
+ 
+ 
     v_container_id in number,
     v_parent_container_id in number,
     v_container_type in varchar2,

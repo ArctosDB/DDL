@@ -1,9 +1,6 @@
 CREATE OR REPLACE FUNCTION isValidTaxonName (name  in varchar)
 	return varchar as
 		botabbr varchar2(4000);
-		v_tab parse_list.varchar2_table;
-	    v_nfields integer;
-	    isval number := 0;
 	    temp varchar2(255);
 	BEGIN
 		-- keep this here so we have ONE place to maintain the code, call it from triggers/application/whatever
