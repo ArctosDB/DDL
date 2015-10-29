@@ -1167,6 +1167,27 @@ END;
 
 
 
+select collection_object_id from pre_bulkloader where ro;
+
+
+select bulk_pre_check_one(collection_object_id) from pre_bulkloader where rownum<100;
+
+select BEGAN_DATE from pre_bulkloader where collection_object_id=11775036;
+
+select count(*) from pre_bulkloader where began_date is null;
+
+
+BULK_PRE_CHECK_ONE(11775036)
+------------------------------------------------------------------------------------------------------------------------
+; ENTEREDBY [  ] matches 0 login agents; EVENT_ASSIGNED_BY_AGENT [  ] matches 0 agents; SPECIMEN_EVENT_TYPE is invalid;
+BEGAN_DATE is invalid; ENDED_DATE is invalid; VERBATIM_DATE is invalid; NATURE_OF_ID is invalid; TAXON_NAME (Fastener) n
+ot found; ID_MADE_BY_AGENT [  ] matches 0 agents; ATTRIBUTE_DATE_1 is invalid; ATTRIBUTE_DETERMINER_1 [  ] matches 0 age
+nts; ATTRIBUTE_DATE_2 is invalid; ATTRIBUTE_DETERMINER_2 [  ] matches 0 agents; PART_CONDITION_1 is invalid
+
+
+
+
+
 
 declare
 	e VARCHAR2(4000);
@@ -1178,6 +1199,9 @@ begin
 end;
 /
 
+select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_TEMP_UPDATE_JUNK';
+
+select distinct loaded from pre_bulkloader;
 
 
 

@@ -13,22 +13,26 @@ CREATE OR REPLACE procedure containerContentCheck (
 	   	
 	   	--dbms_output.put_line('hello I am containerContentCheck');
 	   	--- make sure they have access to the container's institution
-	   	select count(*) into c from collection where institution_acronym=new_child.institution_acronym;
+	   	select count(*) into c from collection where institution_acronym=old_child.institution_acronym;
 		if c=0 then
-			msg := msg || sep || 'You do not have access to child container';
+			msg := msg || sep || 'You do not have access to the child container';
 			sep := '; ';
 		end if;
 		 -- disallow institution change
 	   	if new_child.institution_acronym != old_child.institution_acronym then
-			msg := msg || sep || 'Changing institution_acronym is not allowed';
-			sep := '; ';
+	   		select count(*) into c from collection where institution_acronym=new_child.institution_acronym;
+			if c=0 then
+				msg := msg || sep || 'You do not have access to the new institution';
+				sep := '; ';
+			end if;
 		end if;
 		-- no editing barcodes; deal with this in replaceParentContainer
 		if new_child.barcode != old_child.barcode then
+			-- make sure they have access to both
 			msg := msg || sep || 'Changing barcode is not allowed';
 			sep := '; ';
 		end if;
-		-- if parent.container_id is 0, they're not moving so we don't need to bother checking anyting relating to the parent
+		-- if parent.container_id is 0, they're not moving so we don't need to bother checking anything relating to the parent
 		if parent.container_id != 0 then
 			select count(*) into c from collection where institution_acronym=parent.institution_acronym;
 			if c=0 then
