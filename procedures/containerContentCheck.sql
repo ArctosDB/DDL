@@ -10,8 +10,6 @@ CREATE OR REPLACE procedure containerContentCheck (
 		sep varchar2(10);
 		c number;
    	begin
-	   	
-	   	--dbms_output.put_line('hello I am containerContentCheck');
 	   	--- make sure they have access to the container's institution
 	   	select count(*) into c from collection where institution_acronym=old_child.institution_acronym;
 		if c=0 then
