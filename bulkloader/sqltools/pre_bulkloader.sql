@@ -696,9 +696,21 @@ CREATE OR REPLACE PROCEDURE temp_update_junk IS
 		update pre_bulkloader set ATTRIBUTE_DATE_8=r.shouldbe where ATTRIBUTE_DATE_8=r.adate;
 		update pre_bulkloader set ATTRIBUTE_DATE_9=r.shouldbe where ATTRIBUTE_DATE_9=r.adate;
 		update pre_bulkloader set ATTRIBUTE_DATE_10=r.shouldbe where ATTRIBUTE_DATE_10=r.adate;
+		update pre_bulkloader set EVENT_ASSIGNED_DATE=r.shouldbe where EVENT_ASSIGNED_DATE=r.adate;
+		
 	end loop;
 end;
 /
+
+
+
+begin
+	for r in (select * from pre_bulk_date) loop
+		update pre_bulkloader set EVENT_ASSIGNED_DATE=r.shouldbe where EVENT_ASSIGNED_DATE=r.adate;
+	end loop;
+end;
+
+
 
 BEGIN
   DBMS_SCHEDULER.CREATE_JOB (
@@ -1047,6 +1059,75 @@ end;
 
 ------------------------------------ deal with common-default, often-NULL junk -----------------------------------
 
+
+-- set empty and required determiners to first collector when available
+select count(*) from pre_bulkloader where event_assigned_date is null;
+
+select count(*) from pre_bulkloader where EVENT_ASSIGNED_BY_AGENT is null;
+select count(*) from pre_bulkloader where ID_MADE_BY_AGENT is null;
+select count(*) from pre_bulkloader where SPECIMEN_EVENT_TYPE is null;
+
+-- just default versions of "no idea" in
+
+update pre_bulkloader set ATTRIBUTE_DETERMINER_1='unknown' where attribute_1 is not null and ATTRIBUTE_DETERMINER_1 is null;
+update pre_bulkloader set ATTRIBUTE_DETERMINER_2='unknown' where attribute_2 is not null and ATTRIBUTE_DETERMINER_2 is null;
+update pre_bulkloader set ATTRIBUTE_DETERMINER_3='unknown' where attribute_3 is not null and ATTRIBUTE_DETERMINER_3 is null;
+update pre_bulkloader set ATTRIBUTE_DETERMINER_4='unknown' where attribute_4 is not null and ATTRIBUTE_DETERMINER_4 is null;
+update pre_bulkloader set ATTRIBUTE_DETERMINER_5='unknown' where attribute_5 is not null and ATTRIBUTE_DETERMINER_5 is null;
+update pre_bulkloader set ATTRIBUTE_DETERMINER_6='unknown' where attribute_6 is not null and ATTRIBUTE_DETERMINER_6 is null;
+update pre_bulkloader set ATTRIBUTE_DETERMINER_7='unknown' where attribute_7 is not null and ATTRIBUTE_DETERMINER_7 is null;
+update pre_bulkloader set ATTRIBUTE_DETERMINER_8='unknown' where attribute_8 is not null and ATTRIBUTE_DETERMINER_8 is null;
+update pre_bulkloader set ATTRIBUTE_DETERMINER_9='unknown' where attribute_9 is not null and ATTRIBUTE_DETERMINER_9 is null;
+update pre_bulkloader set ATTRIBUTE_DETERMINER_10='unknown' where attribute_10 is not null and ATTRIBUTE_DETERMINER_10 is null;
+
+   
+update pre_bulkloader set BEGAN_DATE='1900-01-01' where BEGAN_DATE is null;
+update pre_bulkloader set ENDED_DATE=to_char(sysdate,'yyyy-mm-dd') where ENDED_DATE is null;
+update pre_bulkloader set VERBATIM_DATE='before October 2015' where VERBATIM_DATE is null;
+
+ 
+update pre_bulkloader set ATTRIBUTE_DATE_1=to_char(sysdate,'yyyy-mm-dd') where attribute_1 is not null and ATTRIBUTE_DATE_1 is null;
+update pre_bulkloader set ATTRIBUTE_DATE_2=to_char(sysdate,'yyyy-mm-dd') where attribute_2 is not null and ATTRIBUTE_DATE_2 is null;
+update pre_bulkloader set ATTRIBUTE_DATE_3=to_char(sysdate,'yyyy-mm-dd') where attribute_3 is not null and ATTRIBUTE_DATE_3 is null;
+update pre_bulkloader set ATTRIBUTE_DATE_4=to_char(sysdate,'yyyy-mm-dd') where attribute_4 is not null and ATTRIBUTE_DATE_4 is null;
+update pre_bulkloader set ATTRIBUTE_DATE_5=to_char(sysdate,'yyyy-mm-dd') where attribute_5 is not null and ATTRIBUTE_DATE_5 is null;
+update pre_bulkloader set ATTRIBUTE_DATE_6=to_char(sysdate,'yyyy-mm-dd') where attribute_6 is not null and ATTRIBUTE_DATE_6 is null;
+update pre_bulkloader set ATTRIBUTE_DATE_7=to_char(sysdate,'yyyy-mm-dd') where attribute_7 is not null and ATTRIBUTE_DATE_7 is null;
+update pre_bulkloader set ATTRIBUTE_DATE_8=to_char(sysdate,'yyyy-mm-dd') where attribute_8 is not null and ATTRIBUTE_DATE_8 is null;
+update pre_bulkloader set ATTRIBUTE_DATE_9=to_char(sysdate,'yyyy-mm-dd') where attribute_9 is not null and ATTRIBUTE_DATE_9 is null;
+update pre_bulkloader set ATTRIBUTE_DATE_10=to_char(sysdate,'yyyy-mm-dd') where attribute_10 is not null and ATTRIBUTE_DATE_10 is null;
+
+update pre_bulkloader set PART_CONDITION_1='unchecked' where PART_NAME_1 is not null and PART_CONDITION_1 is null;
+update pre_bulkloader set PART_CONDITION_2='unchecked' where PART_NAME_2 is not null and PART_CONDITION_2 is null;
+update pre_bulkloader set PART_CONDITION_3='unchecked' where PART_NAME_3 is not null and PART_CONDITION_3 is null;
+update pre_bulkloader set PART_CONDITION_4='unchecked' where PART_NAME_4 is not null and PART_CONDITION_4 is null;
+update pre_bulkloader set PART_CONDITION_5='unchecked' where PART_NAME_5 is not null and PART_CONDITION_5 is null;
+update pre_bulkloader set PART_CONDITION_6='unchecked' where PART_NAME_6 is not null and PART_CONDITION_6 is null;
+update pre_bulkloader set PART_CONDITION_7='unchecked' where PART_NAME_7 is not null and PART_CONDITION_7 is null;
+update pre_bulkloader set PART_CONDITION_8='unchecked' where PART_NAME_8 is not null and PART_CONDITION_8 is null;
+update pre_bulkloader set PART_CONDITION_9='unchecked' where PART_NAME_9 is not null and PART_CONDITION_9 is null;
+update pre_bulkloader set PART_CONDITION_10='unchecked' where PART_NAME_10 is not null and PART_CONDITION_10 is null;
+update pre_bulkloader set PART_CONDITION_11='unchecked' where PART_NAME_11 is not null and PART_CONDITION_11 is null;
+update pre_bulkloader set PART_CONDITION_12='unchecked' where PART_NAME_12 is not null and PART_CONDITION_12 is null;
+
+
+
+update pre_bulkloader set SPECIMEN_EVENT_TYPE='accepted place of collection' where SPECIMEN_EVENT_TYPE is null;
+
+update pre_bulkloader set NATURE_OF_ID='legacy' where NATURE_OF_ID is null;
+
+
+
+
+
+
+update pre_bulkloader set EVENT_ASSIGNED_DATE=to_char(sysdate,'yyyy-mm-dd') where event_assigned_date is null;
+update pre_bulkloader set EVENT_ASSIGNED_BY_AGENT='unknown' where EVENT_ASSIGNED_BY_AGENT is null;
+update pre_bulkloader set ID_MADE_BY_AGENT='unknown' where ID_MADE_BY_AGENT is null;
+
+-- for cultural stuff only
+update pre_bulkloader set taxon_name='unidentifiable {' || taxon_name || '}';
+--- draw from data, make crazy assumptions
 -- date object, so special handling
 update pre_bulkloader set EVENT_ASSIGNED_DATE=substr(ended_date,0,10) where EVENT_ASSIGNED_DATE is null and is_iso8601(ended_date)='valid' and length(ended_date)>=10;
 
@@ -1070,10 +1151,6 @@ update pre_bulkloader set MADE_DATE=substr(ended_date,0,4) where MADE_DATE is nu
 
 select count(*) from pre_bulkloader where EVENT_ASSIGNED_DATE is null;
 
--- set empty and required determiners to first collector when available
-select count(*) from pre_bulkloader where EVENT_ASSIGNED_BY_AGENT is null;
-select count(*) from pre_bulkloader where ID_MADE_BY_AGENT is null;
-select count(*) from pre_bulkloader where SPECIMEN_EVENT_TYPE is null;
 
 
 update pre_bulkloader set EVENT_ASSIGNED_BY_AGENT=COLLECTOR_agent_1 where EVENT_ASSIGNED_BY_AGENT is null and COLLECTOR_agent_1 is not null and COLLECTOR_ROLE_1='collector';
@@ -1170,21 +1247,72 @@ END;
 select collection_object_id from pre_bulkloader where ro;
 
 
-select bulk_pre_check_one(collection_object_id) from pre_bulkloader where rownum<100;
+select collection_object_id,bulk_pre_check_one(collection_object_id) from pre_bulkloader where rownum<100;
 
-select BEGAN_DATE from pre_bulkloader where collection_object_id=11775036;
+select EVENT_ASSIGNED_DATE from pre_bulkloader where collection_object_id=11775037;
+
+select attribute_2, attribute_value_2 from pre_bulkloader where collection_object_id=11775057;
+select distinct attribute_1 from pre_bulkloader;
+select distinct attribute_2 from pre_bulkloader;
+select distinct attribute_3 from pre_bulkloader;
+select distinct attribute_4 from pre_bulkloader;
+select distinct attribute_5 from pre_bulkloader;
+select distinct attribute_6 from pre_bulkloader;
+select distinct attribute_7 from pre_bulkloader;
+select distinct attribute_8 from pre_bulkloader;
+select distinct attribute_9 from pre_bulkloader;
+select distinct attribute_10 from pre_bulkloader;
+
+create table temp_arc_culture as select distinct attribute_value_2 culture from pre_bulkloader where attribute_value_2 not in (select CULTURE from ctCULTURE where collection_cde='Arc');
+
+alter table temp_arc_culture add shouldbe varchar2(255);
+
+select culture from temp_arc_culture order by culture
+
+update temp_arc_culture set shouldbe='Aleut' where culture='Alaskan Native-Aleut';
+update temp_arc_culture set shouldbe='Aleut' where culture='AleutArch Study Lab';
+update temp_arc_culture set shouldbe='unknown' where culture='Unaffiliated';
+update temp_arc_culture set shouldbe='unknown' where culture='Undetermine';
+update temp_arc_culture set shouldbe='unknown' where culture='Undetermined';
+update temp_arc_culture set shouldbe='unknown' where culture='Undeturmined';
+update temp_arc_culture set shouldbe='unknown' where culture='Unidentified';
+update temp_arc_culture set shouldbe='unknown' where culture='Unknown';
+update temp_arc_culture set shouldbe='unknown' where culture='uknown';
+update temp_arc_culture set shouldbe='unknown' where culture='unknownq';
+update temp_arc_culture set shouldbe='unknown' where culture='unkown';
+update temp_arc_culture set shouldbe='unknown' where culture='various';
+update temp_arc_culture set shouldbe='Athabascan' where culture='Athabaskan';
+update temp_arc_culture set shouldbe='Athabascan' where culture='Athabaskan';
+update temp_arc_culture set shouldbe='Athabascan' where culture='Athapaskan';
+update temp_arc_culture set shouldbe='non-Native' where culture='Non-Native';
+update temp_arc_culture set shouldbe='unknown' where culture='Culturally Unidentif';
+update temp_arc_culture set shouldbe='Eskimo, Cup''ik' where culture='Cup''ik';
+update temp_arc_culture set shouldbe='Athabascan, Dena''ina' where culture='Denaina';
+update temp_arc_culture set shouldbe='Eskimo, Inupiaq' where culture='Eskimoid-Inupiaq';
+update temp_arc_culture set shouldbe='Eskimo, Yup''ik' where culture='Eskimoid-Yupik';
+update temp_arc_culture set shouldbe='Pueblo, Hopi' where culture='Hopi';
+update temp_arc_culture set shouldbe='Eskimo, Inupiaq' where culture='Inupiaq';
+update temp_arc_culture set shouldbe='Eskimo, Inupiaq' where culture='Ipiutak Eskimo';
+
+
+update temp_arc_culture set shouldbe='xxxxxxx' where culture='xxxxxxxxxx';
+update temp_arc_culture set shouldbe='xxxxxxx' where culture='xxxxxxxxxx';
+update temp_arc_culture set shouldbe='xxxxxxx' where culture='xxxxxxxxxx';
+update temp_arc_culture set shouldbe='xxxxxxx' where culture='xxxxxxxxxx';
+update temp_arc_culture set shouldbe='xxxxxxx' where culture='xxxxxxxxxx';
+update temp_arc_culture set shouldbe='xxxxxxx' where culture='xxxxxxxxxx';
+update temp_arc_culture set shouldbe='xxxxxxx' where culture='xxxxxxxxxx';
+
+
+
+
+
 
 select count(*) from pre_bulkloader where began_date is null;
 
 
-BULK_PRE_CHECK_ONE(11775036)
-------------------------------------------------------------------------------------------------------------------------
-; ENTEREDBY [  ] matches 0 login agents; EVENT_ASSIGNED_BY_AGENT [  ] matches 0 agents; SPECIMEN_EVENT_TYPE is invalid;
-BEGAN_DATE is invalid; ENDED_DATE is invalid; VERBATIM_DATE is invalid; NATURE_OF_ID is invalid; TAXON_NAME (Fastener) n
-ot found; ID_MADE_BY_AGENT [  ] matches 0 agents; ATTRIBUTE_DATE_1 is invalid; ATTRIBUTE_DETERMINER_1 [  ] matches 0 age
-nts; ATTRIBUTE_DATE_2 is invalid; ATTRIBUTE_DETERMINER_2 [  ] matches 0 agents; PART_CONDITION_1 is invalid
 
-
+select EVENT_ASSIGNED_DATE from pre_bulkloader where collection_object_id=11775144;
 
 
 
@@ -1210,8 +1338,21 @@ select distinct loaded from pre_bulkloader;
 -------------------------------- insert ------------------------------------------
 update pre_bulkloader set collection_object_id=bulkloader_pkey.nextval;
 
+update pre_bulkloader set loaded='arcwait';
+
+ALTER TABLE PRE_BULKLOADER DROP COLUMN COLLECTION_CDE;
+update pre_bulkloader set entered_agent_id='2072';
+update pre_bulkloader set collection_id='75';
+
+
 insert into bulkloader (select * from pre_bulkloader);
 
+update bulkloader set loaded=null where collection_object_id in (
+select collection_object_id from bulkloader where loaded='arcwait' and rownum<10
+);
+
+select count(*) from bulkloader where guid_prefix='UAM:Arc';
 
 
-
+select column_name from user_tab_cols where table_name=upper('PRE_BULKLOADER') and column_name not in 
+(select column_name from user_tab_cols where table_name='BULKLOADER');

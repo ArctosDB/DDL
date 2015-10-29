@@ -10,13 +10,13 @@ CREATE OR REPLACE procedure containerContentCheck (
 		sep varchar2(10);
 		c number;
    	begin
-	   	--- make sure they have access to the container's institution
+	   	--- User cannot change containers to which they do not have access
 	   	select count(*) into c from collection where institution_acronym=old_child.institution_acronym;
 		if c=0 then
 			msg := msg || sep || 'You do not have access to the child container';
 			sep := '; ';
 		end if;
-		 -- disallow institution change
+		 -- institution change is allowed only when the user has access to both the old and new institution
 	   	if new_child.institution_acronym != old_child.institution_acronym then
 	   		select count(*) into c from collection where institution_acronym=new_child.institution_acronym;
 			if c=0 then
@@ -24,14 +24,15 @@ CREATE OR REPLACE procedure containerContentCheck (
 				sep := '; ';
 			end if;
 		end if;
-		-- no editing barcodes; deal with this in replaceParentContainer
+		-- no editing barcodes; replaceParentContainer exists to move all children to a new parent, 
+		-- so there is no reason to ever change a barcode, which has been the source of MANY problems
 		if new_child.barcode != old_child.barcode then
-			-- make sure they have access to both
 			msg := msg || sep || 'Changing barcode is not allowed';
 			sep := '; ';
 		end if;
 		-- if parent.container_id is 0, they're not moving so we don't need to bother checking anything relating to the parent
 		if parent.container_id != 0 then
+			-- user must have access to parent container
 			select count(*) into c from collection where institution_acronym=parent.institution_acronym;
 			if c=0 then
 				msg := msg || sep || 'You do not have access to parent container';
@@ -43,16 +44,18 @@ CREATE OR REPLACE procedure containerContentCheck (
 				msg := msg || sep || 'Parent contains not-positions and cannot contain position containers';
 				sep := '; ';
 			end if;
-			-- limit the number of positions
+			-- limit the number of positions to parent's number_positions or fewer
+			-- (exact isn't possible in any obvious way)
 			if parent_position_count > parent.number_positions then
 				msg := msg || sep || 'Too many positions';
 				sep := '; ';
 			end if;
+			-- Containers which contain positions cannot contain anything else
 			if new_child.container_type != 'position' and parent_position_count > 0 then
 				msg := msg || sep || 'Parent contains positions and cannot contain not-position containers';
 				sep := '; ';
 			end if;
-			-- don't allow position movement
+			-- Positions cannot be moved. Positions MAY be created with a parent
 			if new_child.parent_container_id != old_child.parent_container_id and old_child.container_type = 'position' then
 				msg := msg || sep || 'Positions may not be moved.';
 				sep := '; ';
@@ -68,7 +71,8 @@ CREATE OR REPLACE procedure containerContentCheck (
 				sep := '; ';
 			END IF;
 	
-			-- don't allow eg box-->box
+			-- don't allow eg box-->box; parent and child must be of different container types
+			-- (seems potentially problematic, but also prevents creating another freezer rack of freezer racks)
 			if new_child.container_type = parent.container_type then
 				msg := msg || sep || 'Parent and child may not be of the same container_type';
 				sep := '; ';
@@ -79,24 +83,17 @@ CREATE OR REPLACE procedure containerContentCheck (
 				sep := '; ';
 			END IF;
 		
-			-- labels cannot be used
+			-- labels cannot be used sa parents
 			if parent.container_type like '%label%' then
 				msg := msg || sep || 'You cannot put anything in a label.';
 				sep := '; ';
 			END IF;
+			-- labels cannot be used as children
 			if new_child.container_type like '%label%' and parent.container_id != 0 then
 			   msg := msg || sep || 'A label cannot have a parent.';
 			   sep := '; ';
 			END IF;
 			-- will it fit?
-			/*
-			dbms_output.put_line('new_child.height = ' || new_child.height);
-			dbms_output.put_line('parent.height = ' || parent.height);
-			dbms_output.put_line('new_child.width = ' || new_child.width);
-			dbms_output.put_line('parent.width = ' || parent.height);
-			dbms_output.put_line('new_child.length = ' || new_child.length);
-			dbms_output.put_line('parent.length = ' || parent.length);
-			*/
 			if (new_child.height>parent.height) OR (new_child.width>parent.width) OR (new_child.length>parent.length) then
 			  msg := msg || sep || 'The child will not fit into the parent.';
 			   sep:='; ';
@@ -117,7 +114,8 @@ CREATE OR REPLACE procedure containerContentCheck (
 				msg := msg || sep || 'Herbarium sheets may contain only collection objects';
 				sep:='; ';
 			END IF;
-			-- legacy containers are legacy
+			-- legacy containers are legacy; update container type (or file an issue to get rid of container type altogether)
+			-- before moving them
 			if 
 			 	parent.container_type = 'legacy container' or 
 			 	new_child.container_type='legacy container' or 
@@ -131,24 +129,9 @@ CREATE OR REPLACE procedure containerContentCheck (
 				msg := msg || sep || 'Positions are not allowed in ' || parent.container_type;
 				sep:='; ';
 			END IF;
-			
-			
-				
 		end if; -- end parent = 0 check
-
-		--msg := msg || sep || 'new_child.height: ' || new_child.height;
-		--sep:='; ';
-		/*
-		dbms_output.put_line('new_child.height: ' || new_child.height);
-		dbms_output.put_line('new_child.width: ' || new_child.width);
-		dbms_output.put_line('new_child.length: ' || new_child.length);
-		
-		dbms_output.put_line('old_child.height: ' || old_child.height);
-		dbms_output.put_line('old_child.width: ' || old_child.width);
-		dbms_output.put_line('old_child.length: ' || old_child.length);
-		
-		*/
 		-- now test all existing children of the container being edited (=new_child)
+		-- do not allow a container to "shrink" such that it's children no longer fit
 		if 
 			(new_child.height is not null and new_child.height!=old_child.height) or
 			(new_child.width is not null and new_child.width!=old_child.width) or
@@ -165,8 +148,6 @@ CREATE OR REPLACE procedure containerContentCheck (
 				sep:='; ';
 			end if;
 		end if;
-			
-			
 		msg_out:= msg;
 	end;
 /
@@ -175,7 +156,3 @@ sho err;
     
 CREATE OR REPLACE PUBLIC SYNONYM containerContentCheck FOR containerContentCheck;
 GRANT EXECUTE ON containerContentCheck TO manage_container;
-
- -- exec updateContainer( 15808283, 0, 'bag', 'test500', '', '', 'test500', '0.5', '','' ,'' , 0, 'UAM');
-
- -- exec updateContainer( 15808283, 0, 'bag', 'test500', '', '', 'test500', '1.5', '','' ,'' , 0, 'UAM');

@@ -42,7 +42,7 @@ CREATE OR REPLACE TRIGGER ti_bulk_cid before INSERT OR UPDATE ON bulkloader FOR 
         ismgr INTEGER;
         c INTEGER;
     BEGIN
-	    SELECT 
+	    SELECT
             COUNT(*)
         INTO   
             ismgr
