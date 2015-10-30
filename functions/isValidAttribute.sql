@@ -14,23 +14,31 @@ return number as
 		if v_collectionCode is null then
 			return 0;
 		end if;
+		--dbms_output.put_line('past collectioncde check');
 		select  /*+ RESULT_CACHE */ count(*) INTO numRecs FROM ctattribute_type WHERE ATTRIBUTE_TYPE = v_attribute AND collection_cde = v_collectionCode;
 		IF (numRecs = 0) THEN
 			return 0;
 		END IF;
+		--dbms_output.put_line('past ctattribute_type');
 		-- now see if there is a value or units code table
 		BEGIN
 			select  /*+ RESULT_CACHE */ VALUE_CODE_TABLE,UNITS_CODE_TABLE into attributeValueTable,attributeUnitsTable from ctattribute_code_tables where attribute_type=v_attribute;
 		EXCEPTION WHEN NO_DATA_FOUND THEN
+			--dbms_output.put_line('in exception');
+
 			-- there is not value or units table, but it's a valid attribute since we made it this far
 			-- error if units are given, otherwise whatever
 			if v_attributeUnits is not null then
 				return 0;
 			end if;
 		END;
+		
+		--dbms_output.put_line('past exception');
 		--dbms_output.put_line('attributeValueTable: ' || attributeValueTable);
 		--dbms_output.put_line('attributeUnitsTable: ' || attributeUnitsTable);
 		IF attributeValueTable is not null THEN
+			--dbms_output.put_line('got attributeValueTable');
+
 			-- need code-table controlled value, no units
 			--dbms_output.put_line('got attributeValueTable');	
 			if v_attributeUnits is not null then
@@ -64,6 +72,8 @@ return number as
 			end if;
     	elsif attributeUnitsTable is not null then
     		--dbms_output.put_line('got attributeUnitsTable');
+
+    		--dbms_output.put_line('got attributeUnitsTable');
 	    	-- attribute value must be number
     		if is_number(v_attributeValue)=0 then
 	    		--dbms_output.put_line('attributeValue is not a number - ' || attributeValue);
@@ -72,7 +82,7 @@ return number as
 	        --dbms_output.put_line('there is a units table--' || attributeUnitsTable);	
 		    thesql := 'select  /*+ RESULT_CACHE */ count(*) from user_tab_cols where table_name = upper(''' || attributeUnitsTable || ''') and column_name=''COLLECTION_CDE''';
    		    --dbms_output.put_line(thesql);	
-   		  dbms_output.put_line('user_tab_cols##='||numRecs);	
+   		  --dbms_output.put_line('user_tab_cols##='||numRecs);	
 		    execute immediate thesql into numRecs;
     		thesql := 'select  /*+ RESULT_CACHE */ column_name from user_tab_cols where table_name = upper(''' ||upper(attributeUnitsTable) || ''')
 	    		and column_name <> ''DESCRIPTION'' and column_name <> ''COLLECTION_CDE''';
@@ -90,10 +100,12 @@ return number as
 				return 0;
 			end if;
     	else
+    	--dbms_output.put_line('got to else....');
     		thesql := 'select  /*+ RESULT_CACHE */ count(*) from ' || attributeUnitsTable || ' where ' || 
     			attributeCodeTableColName || ' = ''' || v_attributeUnits || '''';
     		    --dbms_output.put_line(thesql);	
    			execute immediate thesql into numRecs;	
+   			--dbms_output.put_line('numRecs: '|| numRecs);
 			if numRecs = 0 then
 				return 0;
 			end if;
@@ -111,5 +123,5 @@ CREATE or replace PUBLIC SYNONYM isValidAttribute FOR isValidAttribute;
 GRANT execute ON isValidAttribute TO PUBLIC;
 
 -- select isValidAttribute('sex','female','','mammf') from dual;
-select isValidAttribute(ATTRIBUTE,ATTRIBUTE_VALUE,ATTRIBUTE_UNITS,trim(SUBSTR(guid_prefix, INSTR(guid_prefix, ':')+1))),attribute,attribute_value,attribute_units from cf_temp_attributes where username='DLM' and  attribute='reproductive data' and attribute_units is not null;
+--select isValidAttribute(ATTRIBUTE,ATTRIBUTE_VALUE,ATTRIBUTE_UNITS,trim(SUBSTR(guid_prefix, INSTR(guid_prefix, ':')+1))),attribute,attribute_value,attribute_units from cf_temp_attributes where username='DLM' and  attribute='reproductive data' and attribute_units is not null;
 
