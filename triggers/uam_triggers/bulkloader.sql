@@ -41,70 +41,74 @@ CREATE OR REPLACE TRIGGER ti_bulk_cid before INSERT OR UPDATE ON bulkloader FOR 
         cid INTEGER;
         ismgr INTEGER;
         c INTEGER;
-    BEGIN 
-	    SELECT /*+ RESULT_CACHE */
-            COUNT(*)
-        INTO   
-            ismgr
-        FROM   
-            dba_role_privs
-        WHERE  
-            UPPER(grantee) = Sys_context ('USERENV', 'SESSION_USER')
-        AND 
-            granted_role   = 'MANAGE_COLLECTION';
-     
-        IF :new.collection_id IS NULL THEN
-        	SELECT /*+ RESULT_CACHE */ NVL(collection_id, 0)
-            INTO   :NEW.collection_id
-            FROM   collection
-            WHERE  guid_prefix = :new.guid_prefix;
-            IF ( :NEW.collection_id = 0 ) THEN
-            	Raise_application_error(-20002, 
-                	'invalid guid_prefix (' || :new.guid_prefix || ') 
-				');
-            END IF;
-        END IF;
-        IF :new.collection_object_id IS NULL THEN
-            SELECT bulkloader_pkey.nextval
-            INTO :NEW.collection_object_id
-            FROM dual;
-        END IF;
-        IF :NEW.entered_agent_id IS NULL THEN
-                SELECT /*+ RESULT_CACHE */ COUNT(*) INTO c FROM agent_name WHERE  agent_name_type = 'login' AND agent_name = :NEW.enteredby;
-                IF c>0 THEN
-                    SELECT /*+ RESULT_CACHE */ agent_id INTO :NEW.entered_agent_id FROM agent_name  WHERE  agent_name_type = 'login' AND agent_name= :NEW.enteredby;
-                ELSE
-                    Raise_application_error(-20002, 'enteredby ('|| :NEW.enteredby || ') is invalid');
-                END IF;
-        END IF;
-        IF inserting THEN
-            SELECT systimestamp
-            INTO   :NEW.enteredtobulkdate
-            FROM   dual;
-            IF ismgr = 0 AND :NEW.loaded IS NULL THEN
-            	Raise_application_error(-20002, 'You may not insert records with loaded=NULL.' );
-            END IF;
-        END IF;
-        IF updating THEN
-            IF :NEW.enteredtobulkdate != :OLD.enteredtobulkdate THEN
-                Raise_application_error(-20002, 'You may not change enteredtobulkdate');
-            END IF;
-            IF :NEW.enteredby != :OLD.enteredby THEN
-                Raise_application_error(-20002, 'You may not change enteredby');
-            END IF;
-            IF ismgr = 0 THEN
-                IF :NEW.loaded IS NULL THEN
-                    Raise_application_error(-20002, 'You may not NULL loaded, and you may not update records with loaded=NULL.' );
-                END IF;
-                SELECT /*+ RESULT_CACHE */ COUNT(*)
-                INTO c
-                FROM dual
-                WHERE UPPER(:NEW.enteredby) = Sys_context ('USERENV', 'SESSION_USER');
-                IF c = 0 THEN
-                    Raise_application_error(-20001, 'You may only update your own records.');
-                END IF;
-            END IF;
-        END IF;
+    BEGIN
+	    
+	    --if uam, no need to check permissions
+	    if Sys_context ('USERENV', 'SESSION_USER') != 'UAM' then
+		    SELECT /*+ RESULT_CACHE */
+	            COUNT(*)
+	        INTO   
+	            ismgr
+	        FROM   
+	            dba_role_privs
+	        WHERE  
+	            UPPER(grantee) = Sys_context ('USERENV', 'SESSION_USER')
+	        AND 
+	            granted_role   = 'MANAGE_COLLECTION';
+	     
+	        IF :new.collection_id IS NULL THEN
+	        	SELECT /*+ RESULT_CACHE */ NVL(collection_id, 0)
+	            INTO   :NEW.collection_id
+	            FROM   collection
+	            WHERE  guid_prefix = :new.guid_prefix;
+	            IF ( :NEW.collection_id = 0 ) THEN
+	            	Raise_application_error(-20002, 
+	                	'invalid guid_prefix (' || :new.guid_prefix || ') 
+					');
+	            END IF;
+	        END IF;
+	        IF :new.collection_object_id IS NULL THEN
+	            SELECT bulkloader_pkey.nextval
+	            INTO :NEW.collection_object_id
+	            FROM dual;
+	        END IF;
+	        IF :NEW.entered_agent_id IS NULL THEN
+	                SELECT /*+ RESULT_CACHE */ COUNT(*) INTO c FROM agent_name WHERE  agent_name_type = 'login' AND agent_name = :NEW.enteredby;
+	                IF c>0 THEN
+	                    SELECT /*+ RESULT_CACHE */ agent_id INTO :NEW.entered_agent_id FROM agent_name  WHERE  agent_name_type = 'login' AND agent_name= :NEW.enteredby;
+	                ELSE
+	                    Raise_application_error(-20002, 'enteredby ('|| :NEW.enteredby || ') is invalid');
+	                END IF;
+	        END IF;
+	        IF inserting THEN
+	            SELECT systimestamp
+	            INTO   :NEW.enteredtobulkdate
+	            FROM   dual;
+	            IF ismgr = 0 AND :NEW.loaded IS NULL THEN
+	            	Raise_application_error(-20002, 'You may not insert records with loaded=NULL.' );
+	            END IF;
+	        END IF;
+	        IF updating THEN
+	            IF :NEW.enteredtobulkdate != :OLD.enteredtobulkdate THEN
+	                Raise_application_error(-20002, 'You may not change enteredtobulkdate');
+	            END IF;
+	            IF :NEW.enteredby != :OLD.enteredby THEN
+	                Raise_application_error(-20002, 'You may not change enteredby');
+	            END IF;
+	            IF ismgr = 0 THEN
+	                IF :NEW.loaded IS NULL THEN
+	                    Raise_application_error(-20002, 'You may not NULL loaded, and you may not update records with loaded=NULL.' );
+	                END IF;
+	                SELECT /*+ RESULT_CACHE */ COUNT(*)
+	                INTO c
+	                FROM dual
+	                WHERE UPPER(:NEW.enteredby) = Sys_context ('USERENV', 'SESSION_USER');
+	                IF c = 0 THEN
+	                    Raise_application_error(-20001, 'You may only update your own records.');
+	                END IF;
+	            END IF;
+	        END IF;
+	    END IF; --- end user is uam check
         -- NULL out unused coordinates based on current format
         IF :new.orig_lat_long_units IS NULL THEN
             :new.latdeg := NULL;
