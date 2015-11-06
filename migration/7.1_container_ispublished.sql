@@ -10,7 +10,7 @@ with recursion_view(base, parent_container_id, container_id) as (
      container_id
   from 
     container
-  where container_id=12571229
+  where container_id=14853895
   union all
   -- subsequent steps
   select
@@ -34,13 +34,13 @@ order by
   )
 children
 where container.container_id=children.container_id and
-container.institution_acronym != 'MVZ'
+container.institution_acronym not in ('MSB','DGR')
   ;
   
  -- update all children of a container
  
-  update container set institution_acronym='MVZ' where 
-  container.institution_acronym != 'MVZ' and
+  update container set institution_acronym='MSB' where 
+  container.institution_acronym != 'MSB' and
   container_id in (
 	  select container_id from (
 	  	with recursion_view(base, parent_container_id, container_id) as (
@@ -52,8 +52,8 @@ container.institution_acronym != 'MVZ'
 		  from 
 		    container
 		  where
-		  	--  VLSB 1143
-		  	container_id=12571229
+		  	--  MSB
+		  	container_id=14853895
 		  union all
 		  -- subsequent steps
 		  select

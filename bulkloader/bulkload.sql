@@ -1126,58 +1126,58 @@ PROCEDURE b_bulk_this is
 	--error_msg varchar2(4000);  
 	collobjid cataloged_item.collection_object_id%TYPE;
 	l_loaded bulkloader.loaded%TYPE;
+	thisError varchar2(4000);
 begin
 	FOR rec IN rec_cursor LOOP
-		error_msg := NULL;
 		collobjid := rec.collection_object_id;
-		b_build_keys_table(collobjid);
-		--if error_msg is null then
-		--	b_bulkload_locality(collobjid);
-		--end if;
-		if error_msg is null then
-			b_bulkload_coll_event(collobjid);
-			--dbms_output.put_line('back from b_bulkload_coll_event');
-		end if;
-		if error_msg is null then
-			b_bulkload(collobjid);
-			--dbms_output.put_line('back from b_bulkload');
-		end if;
-		if error_msg is null then
-			b_bulkload_otherid(collobjid);
-			--dbms_output.put_line('back from b_bulkload_otherid');
-		end if;
-		if error_msg is null then
-			b_bulkload_parts(collobjid);
-			--dbms_output.put_line('back from b_bulkload_parts');
-		end if;
-		if error_msg is null then
-			b_bulkload_attribute(collobjid);
-			--dbms_output.put_line('back from b_bulkload_attribute');
-		end if;		
-		--dbms_output.put_line('error_msg: ' || error_msg);
-		if error_msg is null then
-		    --dbms_output.put_line('deletING from bulkloader');
-			delete from bulkloader where collection_object_id = collobjid;
-			--dbms_output.put_line('deleted from bulkloader');
-			--update bulkloader set loaded = 'spiffification complete' where collection_object_id = collobjid;
-		else
-			b_rollback_bulkloader (l_collection_object_id,collobjid);
-		end if;	
-		
-		--b_bulk_makeflat(rec.collection_object_id);
-		-- commit;
-		/*
-		select loaded into l_loaded from bulkloader where collection_object_id = collobjid;
-			if l_loaded is null then
-				
+		-- run bulkloader check for this one record
+		SELECT bulk_check_one(collobjid) INTO thisError FROM dual;
+		if thisError is not null then
+			if length(thisError) > 224 then
+				thisError := substr(thisError,1,200) || ' {snip...}';
+				 --dbms_output.put_line('thisError: ' || thisError);
 			end if;
-		
-		--b_bulk_makeflat(rec.collection_object_id);
-		commit;
-		*/
-		--dbms_output.put_line('end of b_bulk_this loop');
+			update bulkloader set loaded = thisError where collection_object_id = collobjid;
+		else
+			-- passed preliminary checks, load it
+			error_msg := NULL;
+			b_build_keys_table(collobjid);
+			--if error_msg is null then
+			--	b_bulkload_locality(collobjid);
+			--end if;
+			if error_msg is null then
+				b_bulkload_coll_event(collobjid);
+				--dbms_output.put_line('back from b_bulkload_coll_event');
+			end if;
+			if error_msg is null then
+				b_bulkload(collobjid);
+				--dbms_output.put_line('back from b_bulkload');
+			end if;
+			if error_msg is null then
+				b_bulkload_otherid(collobjid);
+				--dbms_output.put_line('back from b_bulkload_otherid');
+			end if;
+			if error_msg is null then
+				b_bulkload_parts(collobjid);
+				--dbms_output.put_line('back from b_bulkload_parts');
+			end if;
+			if error_msg is null then
+				b_bulkload_attribute(collobjid);
+				--dbms_output.put_line('back from b_bulkload_attribute');
+			end if;		
+			--dbms_output.put_line('error_msg: ' || error_msg);
+			if error_msg is null then
+			    --dbms_output.put_line('deletING from bulkloader');
+				delete from bulkloader where collection_object_id = collobjid;
+				--dbms_output.put_line('deleted from bulkloader');
+				--update bulkloader set loaded = 'spiffification complete' where collection_object_id = collobjid;
+			else
+				b_rollback_bulkloader (l_collection_object_id,collobjid);
+			end if;	
+			--dbms_output.put_line('end of b_bulk_this loop');
+		end if;
+		-- end passed check
 	end loop;
-	
 	--b_bulk_enable;
 EXCEPTION
 	when others then
@@ -1189,6 +1189,7 @@ PROCEDURE check_and_load is
 begin
 	-- preemptive strike: zap all coordinate-stuff where orig_lat_long_units is NULL
 	--    in order to prevent this stuff from clogging up the triggers, etc.
+	/*
 	update bulkloader set
 		DEC_LAT=null,
 		DEC_LONG=null,
@@ -1212,7 +1213,7 @@ begin
 		LATSEC=null
 		where ORIG_LAT_LONG_UNITS is null;
 
-
+	*/
 	--dbms_output.put_line('here i am');
 	-- relies on table proc_bl_status:
 	-- create table proc_bl_status (status number(1));
@@ -1227,7 +1228,9 @@ begin
 		-- lock this process
 		update proc_bl_status set status=1;
 		commit;
-		bulkloader_check;
+		-- move bulkloader_check to b_bulk_this
+		-- run it by-record
+		--bulkloader_check;
 		--dbms_output.put_line('back from check');
 		b_bulk_this;
 		-- update status table to indicate loading attempt complete

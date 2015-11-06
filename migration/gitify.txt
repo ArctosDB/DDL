@@ -1,0 +1,65 @@
+web
+cd ../
+ls
+
+# for prod use /corral-tacc/tacc/arctos/
+# copy backup copy copy!
+
+sudo cp -R wwwarctos /corral/wwarctos_pregit
+
+#check it out yo
+# make sure it's all there!!
+
+#delete everything from the web directory
+# MAKE DAMNED SURE YOU'RE IN THE WEB DIRECTORY
+
+sudo rm -rf *
+
+#make sure to get dot-files
+
+#cd web
+
+git clone https://github.com/ArctosDB/arctos.git .
+
+
+
+now copy back in the stuff we need
+
+cp /corral/wwarctos_pregit/*.xml .
+cp /corral/wwarctos_pregit/*.gz .
+sudo cp -R /corral/wwarctos_pregit/mediaUploads .
+sudo cp -R /corral/wwarctos_pregit/temp .
+sudo cp -R /corral/wwarctos_pregit/robots.txt .
+
+
+
+
+
+cp -R /corral/wwarctos_pregit/Reports/templates/*.cfr /usr/local/httpd/htdocs/wwwarctos/Reports/templates/
+cp -R /corral/wwarctos_pregit/bnhmMaps/tabfiles /usr/local/httpd/htdocs/wwwarctos/bnhmMaps/tabfiles
+cp -R /corral/wwarctos_pregit/cache /usr/local/httpd/htdocs/wwwarctos/cache
+cp -R /corral/wwarctos_pregit/download /usr/local/httpd/htdocs/wwwarctos/download
+sudo cp -R /corral/wwarctos_pregit/sandbox /usr/local/httpd/htdocs/wwwarctos/sandbox
+
+# check some random stuff
+ls /corral/wwarctos_pregit/Reports/templates/DMNS_bat_label.cfr
+ls /usr/local/httpd/htdocs/wwwarctos/Reports/templates/DMNS_bat_label.cfr
+
+# this should only find garbage, .git, .svn
+
+diff -bur /corral/wwarctos_pregit /usr/local/httpd/htdocs/wwwarctos
+
+# goddammit test is locked out try this before moving to prod
+
+
+run build_home
+
+
+# to switch versions:
+
+git checkout master
+git checkout v7.1
+
+# to refresh
+git pull
+

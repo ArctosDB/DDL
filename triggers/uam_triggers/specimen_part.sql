@@ -20,7 +20,7 @@ COMPOUND TRIGGER
 		 
 		 if inserting or updating then
 			-- old trigger SPECIMEN_PART_CT_CHECK
-			SELECT 
+			SELECT /*+ RESULT_CACHE */
 				collection.collection_cde 
 			INTO 
 				collectionCode
@@ -31,7 +31,7 @@ COMPOUND TRIGGER
 				collection.collection_id = cataloged_item.collection_id AND 
 				cataloged_item.collection_object_id = :NEW.derived_from_cat_item;
 			    
-			SELECT 
+			SELECT /*+ RESULT_CACHE */
 				COUNT(*) 
 			INTO 
 				numrows 
@@ -57,10 +57,10 @@ COMPOUND TRIGGER
 	 	end if;
 	 	
 	 	if inserting then
-		 	dbms_output.put_line('insert');
-		 	dbms_output.put_line(':NEW.part_name: ' || :NEW.part_name);
+		 	--dbms_output.put_line('insert');
+		 	--dbms_output.put_line(':NEW.part_name: ' || :NEW.part_name);
 		 	-- old trigger MAKE_PART_COLL_OBJ_CONT
-		 	SELECT
+		 	SELECT /*+ RESULT_CACHE */
 			    collection.institution_acronym,
 				collection.GUID_PREFIX || ':' || cataloged_item.cat_num || ' ' || :NEW.part_name
 		    INTO
@@ -74,8 +74,8 @@ COMPOUND TRIGGER
 		    	cataloged_item.collection_object_id = :NEW.derived_from_cat_item;
 		    
 		    	
-		 	dbms_output.put_line('institution_acronym: ' || institution_acronym);
-		 	dbms_output.put_line('label: ' || label);
+		 	--dbms_output.put_line('institution_acronym: ' || institution_acronym);
+		 	--dbms_output.put_line('label: ' || label);
 		 	
 		    INSERT INTO container (
 			    container_id,
@@ -91,7 +91,7 @@ COMPOUND TRIGGER
 				label,
 				0,
 				institution_acronym);
-		 	dbms_output.put_line('made container');
+		 	--dbms_output.put_line('made container');
 		    INSERT INTO coll_obj_cont_hist (
 				collection_object_id,
 				container_id,
@@ -103,7 +103,7 @@ COMPOUND TRIGGER
 				sysdate,
 				1);
 			-- END old trigger MAKE_PART_COLL_OBJ_CONT
-		dbms_output.put_line('made history');
+		--dbms_output.put_line('made history');
 		 end if;
 		 
 		 

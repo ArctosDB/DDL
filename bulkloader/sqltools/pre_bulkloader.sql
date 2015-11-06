@@ -1305,7 +1305,7 @@ update temp_arc_culture set shouldbe='xxxxxxx' where culture='xxxxxxxxxx';
 
 
 
-
+create table temp_arc_cltr_r as select * from dlm.my_temp_cf;
 
 
 select count(*) from pre_bulkloader where began_date is null;
