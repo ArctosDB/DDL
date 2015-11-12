@@ -657,7 +657,8 @@ BEGIN
                 locality_name IS NULL AND -- because we tested that above and will use it if it exists
                 nvl(concatGeologyAttributeDetail(locality.locality_id),'NULL') = nvl(b_concatGeologyAttributeDetail(rec.collection_object_id),'NULL') and
                 -- this needs developed if we ever add WKT to the bulkloader
-                wkt_polygon is null
+                --wkt_polygon is null
+                dbms_lob.compare(nvl(rec.WKT_POLYGON,'Null'),nvl(WKT_POLYGON,'Null'))=0
             ;
         ELSE          
            select 
@@ -686,7 +687,8 @@ BEGIN
                 locality_name IS NULL AND -- because we tested that above and will use it if it exists
                 nvl(concatGeologyAttributeDetail(locality.locality_id),'NULL') = nvl(b_concatGeologyAttributeDetail(rec.collection_object_id),'NULL') and
                  -- this needs developed if we ever add WKT to the bulkloader
-                wkt_polygon is null
+                --wkt_polygon is null
+                dbms_lob.compare(nvl(rec.WKT_POLYGON,'Null'),nvl(WKT_POLYGON,'Null'))=0
             ;
         END IF; 
         if gLocalityId is null then
@@ -716,7 +718,8 @@ BEGIN
                  MAX_ERROR_UNITS,
                  DATUM,
                  georeference_source,
-                 georeference_protocol
+                 georeference_protocol,
+                 wkt_polygon
             ) values (
                 gLocalityId,
                 gGeog_auth_rec_id,
@@ -734,7 +737,8 @@ BEGIN
                 meu,
                 rec.DATUM,
                 rec.georeference_source,
-                rec.georeference_protocol
+                rec.georeference_protocol,
+                rec.wkt_polygon
             );
             --dbms_output.put_line('made a locality');
             for i IN 1 .. 6 LOOP -- number of geology attributes
