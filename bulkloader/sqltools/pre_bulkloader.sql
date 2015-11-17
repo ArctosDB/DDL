@@ -8,7 +8,23 @@ alter table pre_bulkloader modify ENTERED_AGENT_ID null;
 alter table pre_bulkloader modify COLLECTION_OBJECT_ID null;
 alter table pre_bulkloader modify part_lot_count_1 varchar2(4000);
 
+alter table PRE_BULKLOADER modify OTHER_ID_REFERENCES_2 varchar2(4000);
+alter table PRE_BULKLOADER modify ATTRIBUTE_1 varchar2(4000);
+alter table PRE_BULKLOADER modify PART_LOT_COUNT_2 varchar2(4000);
+alter table PRE_BULKLOADER modify OTHER_ID_NUM_4 varchar2(4000);
+alter table PRE_BULKLOADER modify OTHER_ID_NUM_TYPE_4 varchar2(4000);
+alter table PRE_BULKLOADER modify xxxxx varchar2(4000);
+alter table PRE_BULKLOADER modify xxxxx varchar2(4000);
+alter table PRE_BULKLOADER modify xxxxx varchar2(4000);
+alter table PRE_BULKLOADER modify xxxxx varchar2(4000);
+alter table PRE_BULKLOADER modify xxxxx varchar2(4000);
+alter table PRE_BULKLOADER modify xxxxx varchar2(4000);
+alter table PRE_BULKLOADER modify xxxxx varchar2(4000);
+alter table PRE_BULKLOADER modify xxxxx varchar2(4000);
+alter table PRE_BULKLOADER modify xxxxx varchar2(4000);
+alter table PRE_BULKLOADER modify xxxxx varchar2(4000);
 
+alter table pre_bulkloader add wkt_polygon clob;
 
 
 
