@@ -135,7 +135,7 @@ fields terminated by ',' optionally enclosed by '"'
  
  load data as CSV
  
-$ORACLE_HOME/bin/sqlldr uam/ayyouem\!13 control=arcpart.ctl
+$ORACLE_HOME/bin/sqlldr U/P control=arcpart.ctl
 
 -- then hop to prod and create the table there, then back to test and..
 
