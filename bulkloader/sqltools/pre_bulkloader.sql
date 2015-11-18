@@ -43,52 +43,6 @@ alter table pre_bulkloader add wkt_polygon clob;
 
 
 
-	-- single-column stuff that should be handled elsewhere
-		insert into pre_bulk_geog (HIGHER_GEOG) (select distinct HIGHER_GEOG from pre_bulkloader);
-		
-		delete from pre_bulk_geog where HIGHER_GEOG in (select HIGHER_GEOG from geog_auth_rec);
-		
-		select distinct NATURE_OF_ID from pre_bulkloader where NATURE_OF_ID not in (select NATURE_OF_ID from ctNATURE_OF_ID);
-		
-		/*
-			http://arctos.database.museum/info/ctDocumentation.cfm?table=CTNATURE_OF_ID
-			update pre_bulkloader set NATURE_OF_ID='legacy' where NATURE_OF_ID is null;
-		*/
-		
-		select distinct ORIG_LAT_LONG_UNITS from pre_bulkloader where ORIG_LAT_LONG_UNITS not in (select ORIG_LAT_LONG_UNITS from CTLAT_LONG_UNITS);
-		/*
-			http://arctos.database.museum/info/ctDocumentation.cfm?table=CTLAT_LONG_UNITS
-			update pre_bulkloader set ORIG_LAT_LONG_UNITS='decimal degrees' where ORIG_LAT_LONG_UNITS is null and dec_lat is not null;
-		*/
-		
-		select distinct GEOREFERENCE_PROTOCOL from pre_bulkloader where GEOREFERENCE_PROTOCOL not in (select GEOREFERENCE_PROTOCOL from CTGEOREFERENCE_PROTOCOL);
-		
-		/*
-			http://arctos.database.museum/info/ctDocumentation.cfm?table=CTGEOREFERENCE_PROTOCOL
-			update pre_bulkloader set GEOREFERENCE_PROTOCOL='not recorded' where GEOREFERENCE_PROTOCOL is null and ORIG_LAT_LONG_UNITS is not null;
-		*/
-		
-		select distinct VERIFICATIONSTATUS from pre_bulkloader where VERIFICATIONSTATUS not in (select VERIFICATIONSTATUS from CTVERIFICATIONSTATUS);
-		
-		
-		select distinct MAX_ERROR_UNITS from pre_bulkloader where MAX_ERROR_UNITS not in (select MAX_ERROR_UNITS from CTLAT_LONG_ERROR_UNITS);
-		
-		
-		
-		select distinct COLLECTING_SOURCE from pre_bulkloader where COLLECTING_SOURCE not in (select COLLECTING_SOURCE from CTCOLLECTING_SOURCE);
-		
-		
-		select distinct DEPTH_UNITS from pre_bulkloader where DEPTH_UNITS not in (select DEPTH_UNITS from CTDEPTH_UNITS);
-		
-		
-		select distinct DATUM from pre_bulkloader where DATUM not in (select DATUM from CTDATUM);
-		
-
-	 		accn
-	 		
-	 		
-	 		
-	 		
 	 		
 	 		
 	 		

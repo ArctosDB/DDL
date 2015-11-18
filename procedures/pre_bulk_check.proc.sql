@@ -19,6 +19,13 @@ CREATE OR REPLACE PROCEDURE pre_bulk_check  IS
 	
 	nrec number;
 	stscnt number;
+	
+	gbp number;
+	
+	a_guidprefix varchar2(255);
+	tempStr varchar2(255);
+    tempStr2 varchar2(255);
+    numRecs number;
 BEGIN
 	-- only run this if ALL records are loaded=null; set loaded in this procedure.
 	select count(*) into nrec from pre_bulkloader;
@@ -26,6 +33,14 @@ BEGIN
 	if nrec = 0 or stscnt != stscnt then
 		return;
 	end if;
+	
+	-- don't even try to deal with funky guid_prefix
+	select count(*) into gbp from pre_bulkloader where guid_prefix not in (select guid_prefix from collection);
+	if gbp > 0 then
+		update pre_bulkloader set loaded='funky guid_prefix detected; abort';
+		return;
+	end if;
+	
 	/*
 	  SEE bulkloader/sqltools for help in getting to pre_bulkloader
 	  
@@ -56,10 +71,47 @@ BEGIN
 	create table pre_bulk_collrole (collector_role varchar2(4000), shouldbe varchar2(4000));
 	
 	
+	drop table pre_bulk_accn;
+	create table pre_bulk_accn (accn varchar2(4000), shouldbe varchar2(4000));
 	
+
+
+
+
+
+
+
+	drop table pre_bulk_geog;
+	create table pre_bulk_geog (HIGHER_GEOG varchar2(4000), shouldbe varchar2(4000));
 	
+	drop table pre_bulk_NATURE_OF_ID;
+	create table pre_bulk_NATURE_OF_ID (NATURE_OF_ID varchar2(4000), shouldbe varchar2(4000));
 	
+	drop table pre_bulk_ORIG_LAT_LONG_UNITS;
+	create table pre_bulk_ORIG_LAT_LONG_UNITS (ORIG_LAT_LONG_UNITS varchar2(4000), shouldbe varchar2(4000));
 	
+	drop table pre_bulk_GEOREFERENCE_PROTOCOL;
+	create table pre_bulk_GEOREFERENCE_PROTOCOL (GEOREFERENCE_PROTOCOL varchar2(4000), shouldbe varchar2(4000));
+	
+	drop table pre_bulk_VERIFICATIONSTATUS;
+	create table pre_bulk_VERIFICATIONSTATUS (VERIFICATIONSTATUS varchar2(4000), shouldbe varchar2(4000));
+	
+	drop table pre_bulk_MAX_ERROR_UNITS;
+	create table pre_bulk_MAX_ERROR_UNITS (MAX_ERROR_UNITS varchar2(4000), shouldbe varchar2(4000));
+	
+	drop table pre_bulk_COLLECTING_SOURCE;
+	create table pre_bulk_COLLECTING_SOURCE (COLLECTING_SOURCE varchar2(4000), shouldbe varchar2(4000));
+	
+	drop table pre_bulk_DEPTH_UNITS;
+	create table pre_bulk_DEPTH_UNITS (DEPTH_UNITS varchar2(4000), shouldbe varchar2(4000));
+
+	drop table pre_bulk_DATUM;
+	create table pre_bulk_DATUM (DATUM varchar2(4000), shouldbe varchar2(4000));
+	
+
+	------->
+
+
 	
 	
 	  -- about:
@@ -108,7 +160,33 @@ BEGIN
 
 	
 	 
+	---------------------------- accn -------------------------------------
 	
+	delete from pre_bulk_accn;
+	
+	for rec in (select distinct accn,guid_prefix from pre_bulkloader) loop
+		if rec.accn LIKE '[%' AND rec.accn LIKE '%]%' THEN
+        	tempStr :=  substr(rec.accn, instr(rec.accn,'[',1,1) + 1,instr(rec.accn,']',1,1) -2);
+        	tempStr2 := REPLACE(rec.accn,'['||tempStr||']');
+        	tempStr:=REPLACE(tempStr,'[');
+        	tempStr:=REPLACE(tempStr,']');
+            a_guidprefix := tempStr;
+          ELSE
+            -- use institution_acronym	
+            a_guidprefix := rec.guid_prefix;
+            tempStr2 := rec.accn;
+    	END IF; 
+		select count(distinct(accn.transaction_id)) into numRecs from 
+            accn,trans,collection 
+        where 
+          	accn.transaction_id = trans.transaction_id and
+           	trans.collection_id=collection.collection_id AND
+           	collection.guid_prefix = a_guidprefix AND
+           	accn_number = tempStr2;
+        if (numRecs != 1) then
+        	insert into pre_bulk_accn(accn) values (rec.accn);
+        end if;
+    end loop;
 	--------------------------- agents -------------------------------------
 	
 	
@@ -435,6 +513,55 @@ BEGIN
 	);
 	
 	delete from pre_bulk_collrole where collector_role in (select collector_role from CTcollector_role);
+	
+	
+	
+	delete from pre_bulk_geog;
+	insert into pre_bulk_geog (HIGHER_GEOG) (select distinct HIGHER_GEOG from pre_bulkloader);
+	delete from pre_bulk_geog where HIGHER_GEOG in (select HIGHER_GEOG from geog_auth_rec);
+
+	delete from  pre_bulk_NATURE_OF_ID;
+	insert into pre_bulk_NATURE_OF_ID (NATURE_OF_ID) (
+		select distinct NATURE_OF_ID from pre_bulkloader where NATURE_OF_ID not in (select NATURE_OF_ID from ctNATURE_OF_ID)
+	);
+	
+	delete from  pre_bulk_ORIG_LAT_LONG_UNITS;
+	insert into pre_bulk_ORIG_LAT_LONG_UNITS (ORIG_LAT_LONG_UNITS) (
+		select distinct ORIG_LAT_LONG_UNITS from pre_bulkloader where ORIG_LAT_LONG_UNITS not in (select ORIG_LAT_LONG_UNITS from CTLAT_LONG_UNITS)
+	);
+	
+	delete from  pre_bulk_GEOREFERENCE_PROTOCOL;
+	insert into pre_bulk_GEOREFERENCE_PROTOCOL (GEOREFERENCE_PROTOCOL) (
+		select distinct GEOREFERENCE_PROTOCOL from pre_bulkloader where  GEOREFERENCE_PROTOCOL not in (select GEOREFERENCE_PROTOCOL from CTGEOREFERENCE_PROTOCOL)
+	);
+	
+	delete from  pre_bulk_VERIFICATIONSTATUS;
+	insert into pre_bulk_VERIFICATIONSTATUS (VERIFICATIONSTATUS) (
+		select distinct VERIFICATIONSTATUS from pre_bulkloader where  VERIFICATIONSTATUS not in (select VERIFICATIONSTATUS from CTVERIFICATIONSTATUS)
+	);
+	
+	delete from  pre_bulk_MAX_ERROR_UNITS;
+	insert into pre_bulk_MAX_ERROR_UNITS (MAX_ERROR_UNITS) (
+		select distinct MAX_ERROR_UNITS from pre_bulkloader where  MAX_ERROR_UNITS not in (select MAX_ERROR_UNITS from CTLAT_LONG_ERROR_UNITS)
+	);
+	
+	delete from  pre_bulk_COLLECTING_SOURCE;
+	insert into pre_bulk_COLLECTING_SOURCE (COLLECTING_SOURCE) (
+		select distinct COLLECTING_SOURCE from pre_bulkloader where  COLLECTING_SOURCE not in (select COLLECTING_SOURCE from CTCOLLECTING_SOURCE)
+	);
+	
+	delete from  pre_bulk_DEPTH_UNITS;
+	insert into pre_bulk_DEPTH_UNITS (DEPTH_UNITS) (
+		select distinct DEPTH_UNITS from pre_bulkloader where  DEPTH_UNITS not in (select DEPTH_UNITS from CTDEPTH_UNITS)
+	);
+	
+	delete from  pre_bulk_DATUM;
+	insert into pre_bulk_DATUM (DATUM) (
+		select distinct DATUM from pre_bulkloader where  DATUM not in (select DATUM from CTDATUM)
+	);
+	
+	
+
 	
 	
 
