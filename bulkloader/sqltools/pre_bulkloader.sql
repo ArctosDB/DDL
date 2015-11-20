@@ -14,7 +14,10 @@ alter table pre_bulkloader modify ENTERED_AGENT_ID null;
 alter table pre_bulkloader modify COLLECTION_OBJECT_ID null;
 alter table pre_bulkloader modify part_lot_count_1 varchar2(4000);
 alter table pre_bulkloader modify COLLECTION_OBJECT_ID varchar2(4000);
+-- newstuff
+alter table pre_bulkloader add wkt_polygon clob;
 
+-- some adjustments - these are usually NOT "real" just trying to find what's busted/shifted/Excel-ed.
 alter table PRE_BULKLOADER modify OTHER_ID_REFERENCES_2 varchar2(4000);
 alter table PRE_BULKLOADER modify ATTRIBUTE_1 varchar2(4000);
 alter table PRE_BULKLOADER modify PART_LOT_COUNT_2 varchar2(4000);
@@ -22,34 +25,7 @@ alter table PRE_BULKLOADER modify OTHER_ID_NUM_4 varchar2(4000);
 alter table PRE_BULKLOADER modify OTHER_ID_NUM_TYPE_4 varchar2(4000);
 alter table PRE_BULKLOADER modify SPECIMEN_EVENT_REMARK varchar2(4000);
 alter table PRE_BULKLOADER modify ATTRIBUTE_UNITS_2 varchar2(4000);
-alter table PRE_BULKLOADER modify xxxxx varchar2(4000);
-alter table PRE_BULKLOADER modify xxxxx varchar2(4000);
-alter table PRE_BULKLOADER modify xxxxx varchar2(4000);
-alter table PRE_BULKLOADER modify xxxxx varchar2(4000);
-alter table PRE_BULKLOADER modify xxxxx varchar2(4000);
-alter table PRE_BULKLOADER modify xxxxx varchar2(4000);
-alter table PRE_BULKLOADER modify xxxxx varchar2(4000);
-alter table PRE_BULKLOADER modify xxxxx varchar2(4000);
 
-alter table pre_bulkloader add wkt_polygon clob;
-
-
-
-
-
-
-
-
-
-
-
-	 		
-	 		
-	 		
-	 		
-	 		
-	 		
--- hu...
 alter table specimen_event modify COLLECTING_METHOD VARCHAR2(4000);
 alter table flat modify COLLECTING_METHOD VARCHAR2(4000);
 alter table bulkloader modify COLLECTING_METHOD VARCHAR2(4000);
@@ -66,75 +42,6 @@ alter table FILTERED_FLAT modify COLLECTING_METHOD VARCHAR2(4000);
 -- fix this stuff
 select column_name from user_tab_cols where table_name=upper('YYYOOUURRTTAABBLLEE') and column_name not in (select column_name from user_tab_cols where table_name='BULKLOADER');
 
--- except lot count is hosed/doesn't fit so
--- back
-drop table pre_bulk_date;
-create table pre_bulk_date as select * from dlm.my_temp_cf ;
-create table pre_bulk_plc1 as select * from dlm.my_temp_cf ;
-
-select ':' || part_lot_count_1 || ':' from pre_bulkloader where is_number(part_lot_count_1)=0;
-
-
-
-begin
-	for r in (select * from pre_bulk_plc1) loop
-		if r.APPEND_REMARK is not null then
-			update 
-				pre_bulkloader 
-			set 
-				part_lot_count_1=r.SHOULDBE, 
-				COLL_OBJECT_REMARKS=COLL_OBJECT_REMARKS || '; ' || r.APPEND_REMARK
-			where
-				part_lot_count_1=r.PART_LOT_COUNT_1;
-		else
-			update 
-				pre_bulkloader 
-			set 
-				part_lot_count_1=r.SHOULDBE
-			where
-				part_lot_count_1=r.PART_LOT_COUNT_1;
-		end if;
-	end loop;
-end;
-/
-	
-	update pre_bulkloader set 
-				part_lot_count_1=184, 
-				COLL_OBJECT_REMARKS=COLL_OBJECT_REMARKS || '; approximate count'
-			where
-				part_lot_count_1='approx.184';
-					
-				update pre_bulkloader set 
-				part_lot_count_1=33, 
-				COLL_OBJECT_REMARKS=COLL_OBJECT_REMARKS || '; approximate count'
-			where
-				part_lot_count_1='approx 33';
-	update pre_bulkloader set 
-				part_lot_count_1=30, 
-				COLL_OBJECT_REMARKS=COLL_OBJECT_REMARKS || '; part 1 count "30�"'
-			where
-				part_lot_count_1='30�';
-				
-				
-				
-				update pre_bulkloader set 
-				part_lot_count_1=1, 
-				COLL_OBJECT_REMARKS=COLL_OBJECT_REMARKS || '; part 1 count not given'
-			where
-				part_lot_count_1 =' ';
-------------------------------------------------------------------------------------------------------------------------
-approx.184
-
-
-
-
-4 rows selected.
-
-
-	
--- back
-drop table pre_bulk_date;
-create table pre_bulk_date as select * from dlm.my_temp_cf ;
 
 
 -- example of column-merger-code
@@ -228,14 +135,22 @@ end;
 */
 
 /*
-  horrible evil hack to deal with getting collection_cde out of here
-  sorray!
+  bring collection_cde in to simplify
  */
 
 alter table pre_bulkloader add collection_cde varchar2(30);
 update pre_bulkloader set collection_cde=(select collection_cde from collection where collection.guid_prefix=pre_bulkloader.guid_prefix);
 
- -- /sorray
+
+
+
+
+
+
+
+
+
+----- see prebulkloader app
  
 
 --------------------------- agents -------------------------------------
@@ -562,25 +477,6 @@ select * from pre_bulk_oidt;
 
 
 
-original identifier.
-
-
-
----------------------------------------------------------------------------------------
-
-
-
-original identifier (field number)
-
-
-
-
-
-
-
-
-
-
 -- add a lookup
 alter table pre_bulk_oidt add shouldbe varchar2(4000);
 update pre_bulk_oidt set shouldbe='original identifier' where OTHER_ID_TYPE='original identifier (field number)';
@@ -773,11 +669,6 @@ select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAM
 
 update pre_bulkloader set HIGHER_GEOG=trim(HIGHER_GEOG);
 
-select distinct replace(HIGHER_GEOG,'quad','Quad') from pre_bulkloader where HIGHER_GEOG like '% quad%';
-select distinct replace(HIGHER_GEOG,'Ameica','America') from pre_bulkloader where HIGHER_GEOG like '% Ameica%';
-select distinct replace(HIGHER_GEOG,'  ',' ') from pre_bulkloader where HIGHER_GEOG like '%  %';
-
-
 
 update pre_bulkloader set HIGHER_GEOG=replace(HIGHER_GEOG,'quad','Quad') where HIGHER_GEOG like '% quad%';
 update pre_bulkloader set HIGHER_GEOG=replace(HIGHER_GEOG,'Ameica','America') where HIGHER_GEOG like '% Ameica%';
@@ -791,57 +682,9 @@ delete from pre_bulk_geog where HIGHER_GEOG in (select HIGHER_GEOG from geog_aut
 
 select * from pre_bulk_geog order by HIGHER_GEOG;
 
-update pre_bulkloader set HIGHER_GEOG='North Pacific Ocean, Marshall Islands' where trim(HIGHER_GEOG)='Asia, Marshall Islands';
-update pre_bulkloader set HIGHER_GEOG='Central America, Honduras' where trim(HIGHER_GEOG)='North America, Honduras';
-update pre_bulkloader set HIGHER_GEOG='Central America, Panama' where trim(HIGHER_GEOG)='North America, Panama';
-update pre_bulkloader set HIGHER_GEOG='South America, Peru' where trim(HIGHER_GEOG)='North America, Peru';
-update pre_bulkloader set HIGHER_GEOG='North America, Bering Sea, United States, Alaska, Adak Quad, Andreanof Islands, Aleutian Islands' where trim(HIGHER_GEOG)='North America, United States, Alaska, Adak Quad';
-update pre_bulkloader set HIGHER_GEOG='North America, Bering Sea, United States, Alaska, Attu Quad, Aleutian Islands' where trim(HIGHER_GEOG)='North America, United States, Alaska, Attu Quad';
-update pre_bulkloader set HIGHER_GEOG='North America, Bering Sea, United States, Alaska, Baird Inlet Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Baird Inlet Quad';
-update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Baird Mts. Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Baird Mountains Quad';
-update pre_bulkloader set HIGHER_GEOG='North America, Bering Sea, United States, Alaska, Black Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Black Quad';
-update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Craig Quad, Alexander Archipelago' where trim(HIGHER_GEOG)='North America, United States, Alaska, Craig Quad';
-update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, De Long Mts. Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, DeLong Mountains Quad';
-update pre_bulkloader set HIGHER_GEOG='North America, Bering Sea, United States, Alaska, Gareloi Island Quad, Aleutian Islands' where trim(HIGHER_GEOG)='North America, United States, Alaska, Gareloi Island Quad';
-update pre_bulkloader set HIGHER_GEOG='North America, Bering Sea, United States, Alaska, Kiska Quad, Aleutian Islands' where trim(HIGHER_GEOG)='North America, United States, Alaska, Kiska Quad';
-update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Misheguk Mtn. Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Misheguk Mountain Quad';
-update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Mt. Fairweather Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Mount Fairweather Quad';
-update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Mt. Hayes Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Mount Hayes Quad';
-update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Mt. Katmai Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Mount Katmai Quad';
-update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Mt. McKinley Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Mount McKinley Quad';
-update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Mt. Michelson Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Mount Michelson Quad';
-update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Petersburg Quad, Alexander Archipelago' where trim(HIGHER_GEOG)='North America, United States, Alaska, Petersburg Quad';
-update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Philip Smith Mts. Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Phillip Smith Mountains Quad';
-update pre_bulkloader set HIGHER_GEOG='North America, Bering Sea, United States, Alaska, Rat Islands Quad, Aleutian Islands' where trim(HIGHER_GEOG)='North America, United States, Alaska, Rat Islands Quad';
-update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Simeonof Island Quad, Shumagin Islands' where trim(HIGHER_GEOG)='North America, United States, Alaska, Simeonof Island Quad';
-update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Table Mtn. Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Table Mountain Quad';
-update pre_bulkloader set HIGHER_GEOG='North America, United States, Alaska, Talkeetna Mts. Quad' where trim(HIGHER_GEOG)='North America, United States, Alaska, Talkeetna Mountains Quad';
-update pre_bulkloader set HIGHER_GEOG='North America, Bering Sea, United States, Alaska, Umnak Quad, Aleutian Islands' where trim(HIGHER_GEOG)='North America, United States, Alaska, Umnak Quad';
-update pre_bulkloader set HIGHER_GEOG='North America, Bering Sea, United States, Alaska, Unalaska Quad, Aleutian Islands' where trim(HIGHER_GEOG)='North America, United States, Alaska, Unalaska Quad';
-update pre_bulkloader set HIGHER_GEOG='Pacific Ocean, United States, Hawaii, Hawaiian Islands' where trim(HIGHER_GEOG)='North America, United States, Hawaii';
-update pre_bulkloader set HIGHER_GEOG='South Pacific Ocean, Chile, Valparaiso, Easter Island' where trim(HIGHER_GEOG)='South Pacific Ocean, Easter Island';
-
 
 update pre_bulkloader set HIGHER_GEOG='xxxxxxx' where trim(HIGHER_GEOG)='xxxxxx';
 update pre_bulkloader set HIGHER_GEOG='xxxxxxx' where trim(HIGHER_GEOG)='xxxxxx';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -935,13 +778,7 @@ select distinct ACCN from pre_bulkloader where (ACCN,guid_prefix) not in
 	
 	
 	select accn_number from accn where accn_number != trim(accn_number);
-	
-	update pre_bulkloader set accn='1-1954' where accn='1-1954 (01)';
-	update pre_bulkloader set accn='1-1929' where accn='29-Jan';
-	update pre_bulkloader set accn='1-1933' where accn='Feb-33';
-	update pre_bulkloader set accn='1-1932' where accn='Jan-32';
-	update pre_bulkloader set accn='UA70-212' where accn='Ua70-212';
-	
+
 	
 	update pre_bulkloader set accn='xxxx' where accn='xxxx';
 	update pre_bulkloader set accn='xxxx' where accn='xxxx';
@@ -1090,8 +927,6 @@ begin
 	end loop;
 end;
 /
-
-
 
 
 ------------------------------------ deal with common-default, often-NULL junk -----------------------------------
@@ -1378,8 +1213,8 @@ update pre_bulkloader set collection_object_id=bulkloader_pkey.nextval;
 update pre_bulkloader set loaded='arcwait';
 
 ALTER TABLE PRE_BULKLOADER DROP COLUMN COLLECTION_CDE;
-update pre_bulkloader set entered_agent_id='2072';
-update pre_bulkloader set collection_id='75';
+update pre_bulkloader set entered_agent_id='21292294';
+update pre_bulkloader set collection_id='113';
 
 
 insert into bulkloader (select * from pre_bulkloader);
