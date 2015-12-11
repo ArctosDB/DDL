@@ -1,6 +1,6 @@
 
 --	select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where lower(JOB_NAME)='J_sched_immediate_pre_bulk_check';
-alter table pre_bulkloader add collection_cde varchar2(255);
+--alter table pre_bulkloader add collection_cde varchar2(255);
 	
 CREATE OR REPLACE PROCEDURE pre_bulk_check  IS
 	s varchar2(4000);

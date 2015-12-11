@@ -27,7 +27,7 @@ grant execute on pre_bulk_check_all to public;
 
 BEGIN
 DBMS_SCHEDULER.CREATE_JOB (
-   job_name           =>  'J_PRE_BULK_ALL',
+   job_name           =>  'J_PRE_BULK_CHK_ALL',
    job_type           =>  'STORED_PROCEDURE',
    job_action         =>  'pre_bulk_check_all',
    start_date         =>  SYSTIMESTAMP,
@@ -38,11 +38,11 @@ DBMS_SCHEDULER.CREATE_JOB (
 END;
 /
 
-select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_PRE_BULK_CHK';
+select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_PRE_BULK_CHK_ALL';
 
 	
 	
-	exec DBMS_SCHEDULER.DROP_JOB('J_PRE_BULK_CHK');
+	exec DBMS_SCHEDULER.DROP_JOB('J_PRE_BULK_ALL');
 
 	
 	
