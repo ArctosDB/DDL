@@ -1,9 +1,4 @@
 
-/*
- * 
-
-
-*/
 --	select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where lower(JOB_NAME)='J_sched_immediate_pre_bulk_check';
 
 	
@@ -42,9 +37,50 @@ BEGIN
 	end if;
 	
 	/*
+	 * 
+	 * 
+	 * manual test:
+	 * 
+	 
+	 select * from pre_bulk_agent;
+	 select * from pre_bulk_taxa;
+	 select * from pre_bulk_attributes;
+	 select * from pre_bulk_oidt;
+	 select * from pre_bulk_date;
+	 select * from pre_bulk_parts;
+	 select * from pre_bulk_disposition;
+	 select * from pre_bulk_collrole;
+	 select * from pre_bulk_accn;
+	 select * from pre_bulk_geog;
+	 select * from pre_bulk_NATURE_OF_ID;
+	 select * from pre_bulk_ORIG_LAT_LONG_UNITS;
+	 select * from pre_bulk_GEOREFERENCE_PROTOCOL;
+	 select * from pre_bulk_VERIFICATIONSTATUS;
+	 select * from pre_bulk_MAX_ERROR_UNITS;
+	 select * from pre_bulk_COLLECTING_SOURCE;
+	 select * from pre_bulk_DEPTH_UNITS;
+	 select * from pre_bulk_DATUM;
+	
+
+
+
+
+
+
+
+
+
+
+
+	 
 	  SEE bulkloader/sqltools for help in getting to pre_bulkloader
 	  
 	  -- dependancies:
+	  
+	  
+	  
+	  alter table pre_bulkloader add collection_cde varchar2(255);
+
 	  
 	  drop table pre_bulk_agent;
 	  create table pre_bulk_agent (agent_name varchar2(4000),shouldbe varchar2(4000));
@@ -584,6 +620,7 @@ DBMS_SCHEDULER.CREATE_JOB (
 END;
 /
 
+select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_PRE_BULK_CHK';
 
 	
 	

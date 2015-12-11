@@ -42,3 +42,6 @@ begin
 END;
 /
 sho err
+
+
+select ip from blacklist where ip like replace('207.46.*.*','*','%');

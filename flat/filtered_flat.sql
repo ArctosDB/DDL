@@ -204,13 +204,17 @@ CREATE or replace view pre_filtered_flat AS
 		use_license_url,
 		IDENTIFICATION_REMARKS,
 		LOCALITY_REMARKS,
-		formatted_scientific_name
+		formatted_scientific_name,
+		ISPUBLISHED
     FROM
         flat
     WHERE
+    	guid is not null and
         (encumbrances is null OR encumbrances NOT LIKE '%mask record%');
         
    
+        
+        alter table filtered_flat add ISPUBLISHED VARCHAR2(10);
  --- now we have what we want in a view, make a snapshot of it....
  create table filtered_flat as select * from pre_filtered_flat;
  -- prod runtime @ 2015-05-21: Elapsed: 00:04:03.47
@@ -319,8 +323,8 @@ CREATE INDEX IX_F_FLAT_TYPESTATUS_UPR
 	
 	drop index IU_F_FLAT_GUID_UPR;
 	
-CREATE UNIQUE INDEX IU_F_FLAT_GUID_UPR
-	ON FILTERED_FLAT (UPPER(GUID))
+CREATE UNIQUE INDEX IU_F_FLAT_GUID
+	ON FILTERED_FLAT (GUID)
 	TABLESPACE UAM_IDX_1;
 
 CREATE INDEX IX_F_FLAT_COUNTRY
@@ -421,7 +425,7 @@ END;
 
 BEGIN
 DBMS_SCHEDULER.CREATE_JOB (
-    job_name           =>  'j_refresh_filtered_flat',
+    job_name           =>  'e',
     job_type           =>  'STORED_PROCEDURE',
 	job_action         =>  'refresh_filtered_flat',
 	repeat_interval    =>  'freq=daily; byhour=2',
@@ -431,6 +435,18 @@ DBMS_SCHEDULER.CREATE_JOB (
 END;
 /
 
+select count(*) from pre_filtered_flat where guid is null;
+select guid from pre_filtered_flat having count(*) > 1 group by guid;
+
+
+
+select 
+	STATE,
+	LAST_START_DATE,
+	NEXT_RUN_DATE,
+	REPEAT_INTERVAL,
+	LAST_RUN_DURATION,
+	MAX_RUN_DURATION  from all_scheduler_jobs where lower(JOB_NAME)='j_refresh_filtered_flat';
 
 -- dats all, folks....
 

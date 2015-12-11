@@ -1213,8 +1213,8 @@ update pre_bulkloader set collection_object_id=bulkloader_pkey.nextval;
 update pre_bulkloader set loaded='arcwait';
 
 ALTER TABLE PRE_BULKLOADER DROP COLUMN COLLECTION_CDE;
-update pre_bulkloader set entered_agent_id='21292294';
-update pre_bulkloader set collection_id='113';
+update pre_bulkloader set entered_agent_id='2072';
+update pre_bulkloader set collection_id='75';
 
 
 insert into bulkloader (select * from pre_bulkloader);

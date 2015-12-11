@@ -7,7 +7,7 @@ begin
 	-- only run this if ALL records are loaded=go_go_gadget_repatriate; set loaded in this procedure.
 	select count(*) into nrec from pre_bulkloader;
 	select count(*) into stscnt from pre_bulkloader where loaded !='go_go_gadget_repatriate';
-	if nrec = 0 or stscnt != stscnt then
+	if nrec = 0 or nrec != stscnt then
 		return;
 	end if;
 	
@@ -194,5 +194,6 @@ DBMS_SCHEDULER.CREATE_JOB (
 END;
 /
 
+exec DBMS_SCHEDULER.DROP_JOB('J_PRE_BULK_REPATRIATE');
 
 	

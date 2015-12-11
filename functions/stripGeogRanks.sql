@@ -10,7 +10,7 @@ CREATE OR REPLACE FUNCTION stripGeogRanks (term in varchar2)
 begin
 	terms_to_strip:= 'autonomous,ATOLL,';
 	terms_to_strip:=terms_to_strip || 'Borough,';
-	terms_to_strip:=terms_to_strip || 'Community,county,City,CO,changwat,';
+	terms_to_strip:=terms_to_strip || 'Capitol,Community,county,City,CO,changwat,';
 	terms_to_strip:=terms_to_strip || 'Departamento,DEPARTMENT,Depto,District,Dist,Del,De,di,';
 	
 	terms_to_strip:=terms_to_strip || 'FEDERAL,';
@@ -19,6 +19,7 @@ begin
 	terms_to_strip:=terms_to_strip || 'Kabupaten,kray,KINGDOM,kraj,Kreis,';
 	terms_to_strip:=terms_to_strip || 'La,LAND,';
 	terms_to_strip:=terms_to_strip || 'Municipality,';
+	terms_to_strip:=terms_to_strip || 'National,';
 	terms_to_strip:=terms_to_strip || 'oblast,okrug,of,Okres,';
 	terms_to_strip:=terms_to_strip || 'Parish,Prefecture,Pref,Province,Provincia,Provincia,Prov,';
 	terms_to_strip:=terms_to_strip || 'Republic,REGION,REPUBBLICA,';
@@ -28,6 +29,9 @@ begin
 	
 	terms_to_strip:=terms_to_strip || 'UNION,';
 	terms_to_strip:=terms_to_strip || 'Ward,';
+	
+	
+	 
 				
 	l_str:=	upper(term);
 	l_str:=REGEXP_REPLACE(l_str,'\(.*\)','');
