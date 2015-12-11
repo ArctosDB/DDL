@@ -1,6 +1,6 @@
 
 --	select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where lower(JOB_NAME)='J_sched_immediate_pre_bulk_check';
-
+alter table pre_bulkloader add collection_cde varchar2(255);
 	
 CREATE OR REPLACE PROCEDURE pre_bulk_check  IS
 	s varchar2(4000);
@@ -25,7 +25,7 @@ BEGIN
 	-- only run this if ALL records are loaded=null; set loaded in this procedure.
 	select count(*) into nrec from pre_bulkloader;
 	select count(*) into stscnt from pre_bulkloader where loaded is null;
-	if nrec = 0 or stscnt != stscnt then
+	if nrec = 0 or nrec != stscnt then
 		return;
 	end if;
 	
@@ -624,7 +624,8 @@ select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAM
 
 	
 	
-	
+	exec DBMS_SCHEDULER.DROP_JOB('J_PRE_BULK_CHK');
+
 	
 	
 	

@@ -3,7 +3,9 @@ CREATE OR REPLACE PROCEDURE pre_bulk_repatriate  IS
 	stscnt number;
 	gbp number;
 begin
- -- reinsert the lookup values
+	-- reinsert the lookup values
+	-- ignore any NULLs in shouldbe; they're confusing.
+	
 	-- only run this if ALL records are loaded=go_go_gadget_repatriate; set loaded in this procedure.
 	select count(*) into nrec from pre_bulkloader;
 	select count(*) into stscnt from pre_bulkloader where loaded !='go_go_gadget_repatriate';
@@ -18,7 +20,7 @@ begin
 		return;
 	end if;
 	
-	for r in (select * from pre_bulk_agent) loop
+	for r in (select * from pre_bulk_agent where shouldbe is not null) loop
 		update pre_bulkloader set COLLECTOR_agent_1=trim(r.shouldbe) where trim(COLLECTOR_agent_1)=trim(r.AGENT_NAME);
 		update pre_bulkloader set COLLECTOR_agent_2=trim(r.shouldbe) where trim(COLLECTOR_agent_2)=trim(r.AGENT_NAME);
 		update pre_bulkloader set COLLECTOR_agent_3=trim(r.shouldbe) where trim(COLLECTOR_agent_3)=trim(r.AGENT_NAME);
@@ -43,12 +45,12 @@ begin
 
 	
 		
-	for r in (select * from pre_bulk_taxa) loop
+	for r in (select * from pre_bulk_taxa where shouldbe is not null) loop
 		update pre_bulkloader set taxon_name=trim(r.shouldbe) where trim(taxon_name)=trim(r.taxon_name);
 	end loop;
 
 	
-	for r in (select * from pre_bulk_attributes) loop
+	for r in (select * from pre_bulk_attributes where shouldbe is not null) loop
 		update pre_bulkloader set ATTRIBUTE_1=r.shouldbe where ATTRIBUTE_1=r.attribute_type;
 		update pre_bulkloader set ATTRIBUTE_2=r.shouldbe where ATTRIBUTE_2=r.attribute_type;
 		update pre_bulkloader set ATTRIBUTE_3=r.shouldbe where ATTRIBUTE_3=r.attribute_type;
@@ -62,7 +64,7 @@ begin
 	end loop;
 
 	
-	for r in (select * from pre_bulk_oidt) loop
+	for r in (select * from pre_bulk_oidt where shouldbe is not null) loop
 		update pre_bulkloader set OTHER_ID_NUM_TYPE_1=r.shouldbe where OTHER_ID_NUM_TYPE_1=r.OTHER_ID_TYPE;
 		update pre_bulkloader set OTHER_ID_NUM_TYPE_2=r.shouldbe where OTHER_ID_NUM_TYPE_2=r.OTHER_ID_TYPE;
 		update pre_bulkloader set OTHER_ID_NUM_TYPE_3=r.shouldbe where OTHER_ID_NUM_TYPE_3=r.OTHER_ID_TYPE;
@@ -71,7 +73,7 @@ begin
 	end loop;
 
 		
-	for r in (select * from pre_bulk_date) loop
+	for r in (select * from pre_bulk_date where shouldbe is not null) loop
 		update pre_bulkloader set MADE_DATE=r.shouldbe where MADE_DATE=r.adate;
 		update pre_bulkloader set BEGAN_DATE=r.shouldbe where BEGAN_DATE=r.adate;
 		update pre_bulkloader set ENDED_DATE=r.shouldbe where ENDED_DATE=r.adate;
@@ -89,7 +91,7 @@ begin
 	end loop;
 
 
-	for r in (select * from pre_bulk_parts) loop
+	for r in (select * from pre_bulk_parts where shouldbe is not null) loop
 		update pre_bulkloader set part_name_1=r.shouldbe where part_name_1=r.part_name;
 		update pre_bulkloader set part_name_2=r.shouldbe where part_name_2=r.part_name;
 		update pre_bulkloader set part_name_3=r.shouldbe where part_name_3=r.part_name;
@@ -105,7 +107,7 @@ begin
 	end loop;
 	
 	
-	for r in (select * from pre_bulk_disposition) loop
+	for r in (select * from pre_bulk_disposition where shouldbe is not null) loop
 		update pre_bulkloader set PART_DISPOSITION_1=r.shouldbe where PART_DISPOSITION_1=r.disposition;
 		update pre_bulkloader set PART_DISPOSITION_2=r.shouldbe where PART_DISPOSITION_2=r.disposition;
 		update pre_bulkloader set PART_DISPOSITION_3=r.shouldbe where PART_DISPOSITION_3=r.disposition;
@@ -122,7 +124,7 @@ begin
 
 	
 	
-	for r in (select * from pre_bulk_collrole) loop
+	for r in (select * from pre_bulk_collrole where shouldbe is not null) loop
 		update pre_bulkloader set collector_role_1=r.shouldbe where collector_role_1=r.collector_role;
 		update pre_bulkloader set collector_role_2=r.shouldbe where collector_role_2=r.collector_role;
 		update pre_bulkloader set collector_role_3=r.shouldbe where collector_role_3=r.collector_role;
@@ -134,43 +136,43 @@ begin
 	end loop;
 
 
-	for r in (select * from pre_bulk_accn) loop
+	for r in (select * from pre_bulk_accn where shouldbe is not null) loop
 		update pre_bulkloader set accn=trim(r.shouldbe) where trim(accn)=trim(r.accn);
 	end loop;
 	
-	for r in (select * from pre_bulk_geog) loop
+	for r in (select * from pre_bulk_geog where shouldbe is not null) loop
 		update pre_bulkloader set HIGHER_GEOG=trim(r.shouldbe) where trim(HIGHER_GEOG)=trim(r.HIGHER_GEOG);
 	end loop;
 	
-	for r in (select * from pre_bulk_NATURE_OF_ID) loop
+	for r in (select * from pre_bulk_NATURE_OF_ID where shouldbe is not null) loop
 		update pre_bulkloader set NATURE_OF_ID=trim(r.shouldbe) where trim(NATURE_OF_ID)=trim(r.NATURE_OF_ID);
 	end loop;
 	
-	for r in (select * from pre_bulk_ORIG_LAT_LONG_UNITS) loop
+	for r in (select * from pre_bulk_ORIG_LAT_LONG_UNITS where shouldbe is not null) loop
 		update pre_bulkloader set ORIG_LAT_LONG_UNITS=trim(r.shouldbe) where trim(ORIG_LAT_LONG_UNITS)=trim(r.ORIG_LAT_LONG_UNITS);
 	end loop;
 	
-	for r in (select * from pre_bulk_GEOREFERENCE_PROTOCOL) loop
+	for r in (select * from pre_bulk_GEOREFERENCE_PROTOCOL where shouldbe is not null) loop
 		update pre_bulkloader set GEOREFERENCE_PROTOCOL=trim(r.shouldbe) where trim(GEOREFERENCE_PROTOCOL)=trim(r.GEOREFERENCE_PROTOCOL);
 	end loop;
 	
-	for r in (select * from pre_bulk_VERIFICATIONSTATUS) loop
+	for r in (select * from pre_bulk_VERIFICATIONSTATUS where shouldbe is not null) loop
 		update pre_bulkloader set VERIFICATIONSTATUS=trim(r.shouldbe) where trim(VERIFICATIONSTATUS)=trim(r.VERIFICATIONSTATUS);
 	end loop;
 	
-	for r in (select * from pre_bulk_MAX_ERROR_UNITS) loop
+	for r in (select * from pre_bulk_MAX_ERROR_UNITS where shouldbe is not null) loop
 		update pre_bulkloader set MAX_ERROR_UNITS=trim(r.shouldbe) where trim(MAX_ERROR_UNITS)=trim(r.MAX_ERROR_UNITS);
 	end loop;
 	
-	for r in (select * from pre_bulk_COLLECTING_SOURCE) loop
+	for r in (select * from pre_bulk_COLLECTING_SOURCE where shouldbe is not null) loop
 		update pre_bulkloader set COLLECTING_SOURCE=trim(r.shouldbe) where trim(COLLECTING_SOURCE)=trim(r.COLLECTING_SOURCE);
 	end loop;
 	
-	for r in (select * from pre_bulk_DEPTH_UNITS) loop
+	for r in (select * from pre_bulk_DEPTH_UNITS where shouldbe is not null) loop
 		update pre_bulkloader set DEPTH_UNITS=trim(r.shouldbe) where trim(DEPTH_UNITS)=trim(r.DEPTH_UNITS);
 	end loop;
 	
-	for r in (select * from pre_bulk_DATUM) loop
+	for r in (select * from pre_bulk_DATUM where shouldbe is not null) loop
 		update pre_bulkloader set DATUM=trim(r.shouldbe) where trim(DATUM)=trim(r.DATUM);
 	end loop;
 	
