@@ -22,12 +22,15 @@ CREATE OR REPLACE PROCEDURE pre_bulk_check  IS
     tempStr2 varchar2(255);
     numRecs number;
 BEGIN
-	-- only run this if ALL records are loaded=null; set loaded in this procedure.
+	-- only run this if ALL records are loaded=go_go_gadget_precheck; set loaded in this procedure.
+	
 	select count(*) into nrec from pre_bulkloader;
-	select count(*) into stscnt from pre_bulkloader where loaded is null;
+	select count(*) into stscnt from pre_bulkloader where loaded !='go_go_gadget_precheck';
 	if nrec = 0 or nrec != stscnt then
 		return;
 	end if;
+	
+	
 	
 	-- don't even try to deal with funky guid_prefix
 	select count(*) into gbp from pre_bulkloader where guid_prefix not in (select guid_prefix from collection);
