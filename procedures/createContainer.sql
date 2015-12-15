@@ -19,6 +19,11 @@ CREATE OR REPLACE procedure createContainer (
         if v_container_type != 'position' and v_parent_container_id != 0 then
         	 raise_application_error(-20000, 'Only positions may be created with parents.');
         end if;
+        if v_barcode is not null and IS_CLAIMED_BARCODE(v_barcode) != 'PASS' then
+        	 raise_application_error(-20000, 'Invalid barcode.');
+       	end if;
+        
+        
         insert into container (
             CONTAINER_ID,
             PARENT_CONTAINER_ID,

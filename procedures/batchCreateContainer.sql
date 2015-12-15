@@ -22,6 +22,11 @@ CREATE OR REPLACE procedure batchCreateContainer is
         if c > 0 then
             raise_application_error(-20000, 'Invalid institution_acronym');
         end if;
+        select count(*) into c from cf_temp_container where barcode is not null and IS_CLAIMED_BARCODE(barcode) != 'PASS';
+        if c > 0 then
+            raise_application_error(-20000, 'Invalid barcodes detected');
+        end if;
+    
         -- if we made it here, rock on
         insert into container (
 		  CONTAINER_ID,

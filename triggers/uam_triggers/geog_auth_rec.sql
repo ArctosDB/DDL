@@ -11,10 +11,10 @@ BEFORE INSERT OR UPDATE ON GEOG_AUTH_REC
 FOR EACH ROW
 BEGIN
 	
-	if :NEW.SOURCE_AUTHORITY not like 'http://e_.wikipedia.org/wiki/%' and :NEW.SOURCE_AUTHORITY not like 'https://e_.wikipedia.org/wiki/%' then
+	if not regexp_like(:NEW.SOURCE_AUTHORITY,'^https?://e(n|n).wikipedia.org/wiki/%') then
 		 raise_application_error(
             -20371,
-            'Source authority must be a page on English Wikipedia.');	
+            'Source authority must be a page on English or Spanish Wikipedia.');	
 	end if;
 end;
 /
@@ -35,12 +35,15 @@ BEGIN
 		gid:=-1;
 	end if;
 	
-	
-	if :NEW.SOURCE_AUTHORITY not like 'http://e_.wikipedia.org/wiki/%' and :NEW.SOURCE_AUTHORITY not like 'https://e_.wikipedia.org/wiki/%' then
+	if not regexp_like(:NEW.SOURCE_AUTHORITY,'^https?://e(n|s).wikipedia.org/wiki/') then
 		 raise_application_error(
             -20371,
-            'Source authority must be a page on English Wikipedia.');	
-        rollback;
+            'Source authority must be a page on English or Spanish Wikipedia.');	
+	end if;
+	if :NEW.SOURCE_AUTHORITY like '%#%' then
+		 raise_application_error(
+            -20371,
+            'Source authority must be a specific article, not an anchor.');	
 	end if;
 	
 	
@@ -49,7 +52,6 @@ BEGIN
 			raise_application_error(
 	           	-20368,
 	           	'St. cannot be in Island.');	
-            rollback;
      	end if;
      	
 		if substr(:NEW.island,1,1) = '*' then
@@ -60,7 +62,6 @@ BEGIN
 				raise_application_error(
 	            	-20368,
 	            	'Potential duplicate detected in Island. Double-check existing data. Prefix Island with an asterisk to force-create.');	
-	            rollback;
 	     	end if;
 	     end if;
 	end if;
@@ -70,7 +71,6 @@ BEGIN
 			raise_application_error(
 	           	-20368,
 	           	'St. cannot be in State.');	
-            rollback;
      	end if;
 	end if;
 	
@@ -79,12 +79,10 @@ BEGIN
 			raise_application_error(
 	           	-20368,
 	           	'St. cannot be in County.');	
-            rollback;
      	end if;
 	end if;
 	
 	
-	commit;
 END;
 /
 sho err;
