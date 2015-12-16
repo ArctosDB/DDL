@@ -65,14 +65,14 @@ run build_home
 # to switch versions:
 
 git checkout master
-git checkout v7.1
+git checkout v7.2.2
 
 # to refresh
 git pull
 
 # to force-refresh
 git fetch --all
-git reset --hard origin/v7.2.1
+git reset --hard origin/v7.2.2
 git pull  origin
 
 -- where are we?
@@ -82,4 +82,4 @@ git branch
 
 
 
-git checkout v7.2.1
+git checkout v7.2.2
