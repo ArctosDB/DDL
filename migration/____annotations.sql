@@ -33,6 +33,7 @@ AS
 	v_nfields integer;
 	v_keyfield varchar2(255);
 	ssmt varchar2(400);
+	gid number;
 BEGIN
 	-- Advisory Committee has stated that username is optional, no checks needed
 	
@@ -54,12 +55,15 @@ BEGIN
 	end if;
 	
 	--
+	
+	select sq_annotation_group_id.nextval into gid from dual;
+	
 	parse_list.delimstring_to_table (v_keys, v_tab, v_nfields);
 	  for i in 1..v_nfields loop
 	    	-- each child is the PARENT of the collection_object_id passed in
 	    	dbms_output.put_line(v_tab(i));
-	    	ssmt:='insert into annotations (ANNOTATION_ID,ANNOTATE_DATE,CF_USERNAME,' || v_keyfield || ',ANNOTATION ) values (';
-	    	ssmt:=ssmt || 'sq_annotation_id.nextval,sysdate,''' || v_username ||''',' || v_tab(i) || ',''' || v_annotation_text || ''')';
+	    	ssmt:='insert into annotations (ANNOTATION_ID,annotation_group_id,ANNOTATE_DATE,CF_USERNAME,' || v_keyfield || ',ANNOTATION ) values (';
+	    	ssmt:=ssmt || 'sq_annotation_id.nextval,' || gid || ',sysdate,''' || v_username ||''',' || v_tab(i) || ',''' || v_annotation_text || ''')';
 	    	dbms_output.put_line(ssmt);
 			execute immediate(ssmt);
 	  end loop;
@@ -68,6 +72,10 @@ END;
 sho err;
 
 
+create public synonym add_annotation for add_annotation;
+
+grant execute on add_annotation to coldfusion_user;
+
 
 exec add_annotation('','tooshort','bad','99999999999999');
 exec add_annotation('','tooshort tooshort tooshort tooshort tooshort tooshort','bad','99999999999999');
@@ -75,7 +83,9 @@ exec add_annotation('','tooshort tooshort tooshort tooshort tooshort tooshort','
 exec add_annotation('','tooshort tooshort tooshort tooshort tooshort tooshort','specimen','99999999999999');
 
 
+exec add_annotation('','tooshort tooshort tooshort tooshort tooshort tooshort','specimen','12');
 
+exec add_annotation('','test2: tooshort tooshort tooshort tooshort tooshort tooshort','specimen','12,13,14');
 
 UAM@ARCTOS> desc annotations
  Name								   Null?    Type
