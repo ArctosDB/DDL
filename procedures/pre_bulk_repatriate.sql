@@ -8,8 +8,9 @@ begin
 	
 	-- only run this if ALL records are loaded=go_go_gadget_repatriate; set loaded in this procedure.
 	select count(*) into nrec from pre_bulkloader;
-	select count(*) into stscnt from pre_bulkloader where loaded !='go_go_gadget_repatriate';
+	select count(*) into stscnt from pre_bulkloader where loaded ='go_go_gadget_repatriate';
 	if nrec = 0 or nrec != stscnt then
+		dbms_output.put_line('fail go_go_gadget_repatriate');
 		return;
 	end if;
 	
@@ -17,8 +18,10 @@ begin
 	select count(*) into gbp from pre_bulkloader where guid_prefix not in (select guid_prefix from collection);
 	if gbp > 0 then
 		update pre_bulkloader set loaded='funky guid_prefix detected; abort';
+		dbms_output.put_line('fail guid_prefix');
 		return;
 	end if;
+	
 	
 	for r in (select * from pre_bulk_agent where shouldbe is not null) loop
 		update pre_bulkloader set COLLECTOR_agent_1=trim(r.shouldbe) where trim(COLLECTOR_agent_1)=trim(r.AGENT_NAME);
@@ -51,6 +54,8 @@ begin
 
 	
 	for r in (select * from pre_bulk_attributes where shouldbe is not null) loop
+	
+		dbms_output.put_line(r.attribute_type || '--->' || r.shouldbe);
 		update pre_bulkloader set ATTRIBUTE_1=r.shouldbe where ATTRIBUTE_1=r.attribute_type;
 		update pre_bulkloader set ATTRIBUTE_2=r.shouldbe where ATTRIBUTE_2=r.attribute_type;
 		update pre_bulkloader set ATTRIBUTE_3=r.shouldbe where ATTRIBUTE_3=r.attribute_type;

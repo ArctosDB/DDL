@@ -1,3 +1,26 @@
+
+
+
+--on hold waiting resolution of https://github.com/ArctosDB/arctos/issues/739
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 alter table specimen_event add verified_by_agent_id number;
 
 ALTER TABLE SPECIMEN_EVENT add CONSTRAINT fk_SPECIMEN_EVENT_vfdby FOREIGN KEY (verified_by_agent_id) REFERENCES agent (agent_id);
@@ -131,20 +154,20 @@ Proposed vocabulary for specimen_event_type:
 
 collection
 Definition: Specimen was collected. For biological specimens, the specimen was killed or found dead at the event.
-Migration Path: “Accepted place of collection” plus “unaccepted place of collection” merge here.
-“unaccepted place of collection” will first change verificationstatus to “unaccepted.”
+Migration Path: ï¿½Accepted place of collectionï¿½ plus ï¿½unaccepted place of collectionï¿½ merge here.
+ï¿½unaccepted place of collectionï¿½ will first change verificationstatus to ï¿½unaccepted.ï¿½
 
 encounter
 Definition: Specimen was encountered alive and not killed. Samples or recordings may have been taken; see parts and media for more information.
-Migration Path: “Encounter” and “observation” merge here.
+Migration Path: ï¿½Encounterï¿½ and ï¿½observationï¿½ merge here.
 
 manufacture
 Definition: Specimen was manufactured. Generally refers to human manufacture of cultural items, but could be extended to e.g., nests.
-Migration Path: Vocabulary change only, from “place of manufacture.”
+Migration Path: Vocabulary change only, from ï¿½place of manufacture.ï¿½
 
 use
 Definition: Specimen was used. Generally refers to human use of cultural items.
-Migration Path: Vocabulary change only, from “place of use.”
+Migration Path: Vocabulary change only, from ï¿½place of use.ï¿½
 
 
 Proposed vocabulary for verification status:
@@ -157,15 +180,15 @@ Migration Path: No changes.
 
 unaccepted
 Definition: The place and time information as entered was reviewed and determined to be incorrect, or less correct or complete than other available data.
-Migration Path: New concept, will be assigned to all specimen events which are currently of type “unaccepted place of collection.”
+Migration Path: New concept, will be assigned to all specimen events which are currently of type ï¿½unaccepted place of collection.ï¿½
 
 accepted
 Definition: The place and time information as entered was checked and determined to be correct against the information available from Arctos; original data were not consulted, and transcription or omission errors are possible.
-Migration Path: “Checked by curator” and “checked by collector” merge here. See “new fields” below.
+Migration Path: ï¿½Checked by curatorï¿½ and ï¿½checked by collectorï¿½ merge here. See ï¿½new fieldsï¿½ below.
 
 verified and locked
 Definition: The place and time information as entered was checked against all available data, including labels, fieldnotes, collector itineraries, and associated digital data, and determined to be correct. Changes should only be made in the extremely unlikely event of more authoritative data surfacing. This value LOCKS linked Locality and Event data.
-Migration Path: “Verified by curator” and “verified by collector” merge here. See “new fields” below.
+Migration Path: ï¿½Verified by curatorï¿½ and ï¿½verified by collectorï¿½ merge here. See ï¿½new fieldsï¿½ below.
 
 
 

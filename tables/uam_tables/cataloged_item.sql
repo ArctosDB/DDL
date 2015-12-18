@@ -67,3 +67,8 @@ PARTITION BY LIST (COLLECTION_ID) (
 	PARTITION UAMB_HERB  VALUES (40),
 	PARTITION MSBOBS_MAMM  VALUES (41)
 );
+
+-- case-insensitive index on "guid"
+CREATE UNIQUE INDEX IU_catitem_catnum_coln_UPR ON cataloged_item (UPPER(cat_num),collection_id) TABLESPACE UAM_IDX_1;
+	
+	

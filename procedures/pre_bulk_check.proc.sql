@@ -27,6 +27,8 @@ BEGIN
 	select count(*) into nrec from pre_bulkloader;
 	select count(*) into stscnt from pre_bulkloader where loaded !='go_go_gadget_precheck';
 	if nrec = 0 or nrec != stscnt then
+		dbms_output.put_line('fail');
+		
 		return;
 	end if;
 	
