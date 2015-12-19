@@ -87,6 +87,10 @@ exec add_annotation('','tooshort tooshort tooshort tooshort tooshort tooshort','
 
 exec add_annotation('','test2: tooshort tooshort tooshort tooshort tooshort tooshort','specimen','12,13,14');
 
+-- rebuild on-page annotation popup; add "details" link to group annotations
+
+-- make annotation page public; limit tools by roles
+
 UAM@ARCTOS> desc annotations
  Name								   Null?    Type
  ----------------------------------------------------------------- -------- --------------------------------------------
