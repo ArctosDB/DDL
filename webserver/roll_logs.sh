@@ -1,1 +1,1 @@
-tar czf /corral-tacc/tacc/arctos/webdirectory/web_dir_20150825.tar.gz .
+tar czf /corral-tacc/tacc/arctos/webdirectory/web_dir_20160112.tar.gz .

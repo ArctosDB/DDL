@@ -1,3 +1,42 @@
+-- part-containers
+
+select 
+	container.container_id,
+	container.institution_acronym
+from 
+	container,
+	coll_obj_cont_hist,
+	specimen_part,
+	cataloged_item,
+	collection
+where
+	container.container_id=coll_obj_cont_hist.container_id and
+	coll_obj_cont_hist.collection_object_id=specimen_part.collection_object_id and
+	specimen_part.derived_from_cat_item=cataloged_item.collection_object_id and
+	cataloged_item.collection_id=collection.collection_id and
+	collection.guid_prefix='MSB:Mamm' and
+	container.institution_acronym != 'MSB'
+;
+
+
+update container set institution_acronym='MSB' where container_id in (
+	select 
+		container.container_id
+	from 
+		container,
+		coll_obj_cont_hist,
+		specimen_part,
+		cataloged_item,
+		collection
+	where
+		container.container_id=coll_obj_cont_hist.container_id and
+		coll_obj_cont_hist.collection_object_id=specimen_part.collection_object_id and
+		specimen_part.derived_from_cat_item=cataloged_item.collection_object_id and
+		cataloged_item.collection_id=collection.collection_id and
+		collection.guid_prefix='MSB:Mamm' and
+		container.institution_acronym != 'MSB'
+);
+
 -- find all children of a container
 select container.container_id, container.container_type ,container.institution_acronym from 
 container,
@@ -39,6 +78,8 @@ container.institution_acronym not in ('MVZ')
   
  -- update all children of a container
  
+  
+  
   update container set institution_acronym='MVZ' where 
   container.institution_acronym != 'MVZ' and
   container_id in (
