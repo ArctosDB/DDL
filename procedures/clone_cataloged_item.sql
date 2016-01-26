@@ -15,7 +15,7 @@ begin
 
 	--dbms_output.put_line('making clone of ' || guid);
 
-	   SELECT  
+	SELECT  
     	/*+ RESULT_CACHE */ agent_id 
     INTO 
     	userAgentID 

@@ -72,7 +72,7 @@ git pull
 
 # to force-refresh
 git fetch --all
-git reset --hard origin/v7.2.2
+git reset --hard origin/v7.4.2
 git pull  origin
 
 -- where are we?

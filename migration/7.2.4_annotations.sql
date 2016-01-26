@@ -49,24 +49,25 @@ BEGIN
 		v_keyfield:='collection_object_id';
 	elsif v_annotation_type = 'taxon' then
 		v_keyfield:='taxon_name_id';
+	elsif v_annotation_type = 'project' then
+		v_keyfield:='project_id';
+	elsif v_annotation_type = 'publication' then
+		v_keyfield:='publication_id';
 	else
-	--,'','project','publication') then
-		  raise_application_error(-20000, 'Invalid annotation type.');
+		raise_application_error(-20000, 'Invalid annotation type.');
 	end if;
-	
-	--
 	
 	select sq_annotation_group_id.nextval into gid from dual;
 	
 	parse_list.delimstring_to_table (v_keys, v_tab, v_nfields);
-	  for i in 1..v_nfields loop
-	    	-- each child is the PARENT of the collection_object_id passed in
-	    	dbms_output.put_line(v_tab(i));
-	    	ssmt:='insert into annotations (ANNOTATION_ID,annotation_group_id,ANNOTATE_DATE,CF_USERNAME,' || v_keyfield || ',ANNOTATION ) values (';
-	    	ssmt:=ssmt || 'sq_annotation_id.nextval,' || gid || ',sysdate,''' || v_username ||''',' || v_tab(i) || ',''' || v_annotation_text || ''')';
-	    	dbms_output.put_line(ssmt);
-			execute immediate(ssmt);
-	  end loop;
+	for i in 1..v_nfields loop
+    	-- each child is the PARENT of the collection_object_id passed in
+		dbms_output.put_line(v_tab(i));
+		ssmt:='insert into annotations (ANNOTATION_ID,annotation_group_id,ANNOTATE_DATE,CF_USERNAME,' || v_keyfield || ',ANNOTATION ) values (';
+		ssmt:=ssmt || 'sq_annotation_id.nextval,' || gid || ',sysdate,''' || v_username ||''',' || v_tab(i) || ',''' || v_annotation_text || ''')';
+    	dbms_output.put_line(ssmt);
+		execute immediate(ssmt);
+	end loop;
 END;
 /
 sho err;
@@ -88,6 +89,25 @@ exec add_annotation('','tooshort tooshort tooshort tooshort tooshort tooshort','
 exec add_annotation('','test2: tooshort tooshort tooshort tooshort tooshort tooshort','specimen','12,13,14');
 
 -- rebuild on-page annotation popup; add "details" link to group annotations
+
+select 
+	ANNOTATION_ID,
+	ANNOTATE_DATE,
+	CF_USERNAME,
+	COLLECTION_OBJECT_ID,
+	ANNOTATION,
+	REVIEWER_AGENT_ID,
+	REVIEWED_FG,
+	REVIEWER_COMMENT,
+	ANNOTATION_GROUP_ID
+from annotations where collection_object_id=12;
+
+
+
+select * from annotations where ANNOTATION_GROUP_ID=398;
+
+
+
 
 -- make annotation page public; limit tools by roles
 
