@@ -55,11 +55,25 @@ CREATE OR REPLACE procedure containerContentCheck (
 				msg := msg || sep || 'Parent contains positions and cannot contain not-position containers';
 				sep := '; ';
 			end if;
+			/*
 			-- Positions cannot be moved. Positions MAY be created with a parent
 			if new_child.parent_container_id != old_child.parent_container_id and old_child.container_type = 'position' then
 				msg := msg || sep || 'Positions may not be moved.';
 				sep := '; ';
 			END IF;
+			*/
+			-- EDIT
+			-- Positions can be moved ONLY if they have no parent
+			if 
+				new_child.parent_container_id != old_child.parent_container_id and 
+				old_child.container_type = 'position' and
+				old_child.parent_container_id != 0 
+				then
+				msg := msg || sep || 'Already-placed Positions may not be moved.';
+				sep := '; ';
+			END IF;
+			
+			-- end position edit
 			-- don't allow creating positions from other container types, or creating other container type from positions
 			if new_child.container_type = 'position' and (old_child.container_type != 'position' and old_child.container_type not like '% lablel') then
 				msg := msg || sep || 'Positions may only be created from labels.';
