@@ -1,3 +1,4 @@
+-- ref: https://github.com/ArctosDB/arctos/issues/809
 
  
  alter table cf_report_sql add last_access date;
@@ -17,3 +18,26 @@ BEGIN
 END;
 /
 show err
+
+
+
+ mkdir /corral-tacc/tacc/arctos/20160222
+ mkdir /corral-tacc/tacc/arctos/20160222/reporttemplates/
+cp -r Reports/templates/ /corral-tacc/tacc/arctos/20160222/reporttemplates/
+ls /corral-tacc/tacc/arctos/20160216/reporttemplates/templates
+ls Reports/templates
+
+rm copied
+rm lcl
+
+
+
+
+git fetch --all
+
+git branch
+
+git checkout v7.3.1
+
+
+
