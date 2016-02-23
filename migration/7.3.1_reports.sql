@@ -40,4 +40,10 @@ git branch
 git checkout v7.3.1
 
 
+-- permissions for
+/ScheduledTasks/reportMaintenance.cfm
+
+CREATE OR REPLACE FUNCTION md5hash (str IN clob)....
+
+
 
