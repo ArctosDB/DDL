@@ -1,4 +1,10 @@
 CREATE OR REPLACE function concatEncumbrances(p_key_val  in number )
+
+invalid copy from migration
+
+
+
+
     return varchar2
     as
         type rc is ref cursor;
