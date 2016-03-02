@@ -1,4 +1,11 @@
 CREATE OR REPLACE TRIGGER tr_encumbrance_expire
+
+
+
+invalid copy from migration file
+
+
+
 BEFORE UPDATE OR INSERT ON encumbrance
 FOR EACH ROW
 BEGIN
@@ -11,6 +18,11 @@ BEGIN
 END;
 
 CREATE OR REPLACE TRIGGER TR_ENCUMBRANCE_AIUD_FLAT
+
+invalid copy from migration file
+
+
+
 AFTER INSERT OR UPDATE OR DELETE ON encumbrance
 FOR EACH ROW
 DECLARE id NUMBER;

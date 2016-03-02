@@ -170,23 +170,17 @@ begin
 				IDENTIFICATION_ID,
 				PUBLICATION_ID,
 				COLLECTION_OBJECT_ID,
-				CIT_CURRENT_FG,
 				OCCURS_PAGE_NUMBER,
 				TYPE_STATUS,
-				CITATION_REMARKS,
-				CITATION_TEXT,
-				REP_PUBLISHED_YEAR
+				CITATION_REMARKS
 			) values (
 				sq_CITATION_ID.nextval,
 				sq_identification_id.currval,
 				z.PUBLICATION_ID,
 				newCollectionObjectID,
-				z.CIT_CURRENT_FG,
 				z.OCCURS_PAGE_NUMBER,
 				z.TYPE_STATUS,
-				z.CITATION_REMARKS,
-				z.CITATION_TEXT,
-				z.REP_PUBLISHED_YEAR
+				z.CITATION_REMARKS
 			);
 		end loop;
 	end loop;
