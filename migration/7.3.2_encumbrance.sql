@@ -1,16 +1,3 @@
-for post-7.3.1 release:
-
-- expiration_event is gone; data are in remarks
-- everything that had no expiration date was updated to expire 5 years from NOW()
-- everything that had a far-future expiration date was updated to expire 5 years from NOW()
-- expiration_date is NOT NULL and must be less than 5 years from NOW()
-- the manage encumbrance form got a facelift
-- the 1000-record batch-manage restriction is removed
-- email notifications are sent to collection contacts at 0,6,12,24,36,48 before an encumbrance expires
-- expired encumbrances are visible only in the manage encumbrance form, and have no effect on specimens
-
-
-
 
 
 Ref: https://github.com/ArctosDB/arctos/issues/808
