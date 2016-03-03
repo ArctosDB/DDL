@@ -120,29 +120,6 @@ container.institution_acronym not in ('MVZ')
   
   
   
--- find all freezer boxes that belong to MVZ and update the positions in them
-
-begin
-	for r in (
-		select distinct  a.container_id,a.barcode from container a,container b where 
-			a.container_type='freezer box' and 
-			a.INSTITUTION_ACRONYM= 'MVZ' and
-			b.container_type='position' and
-			a.container_id=b.parent_container_id and
-			b.INSTITUTION_ACRONYM != 'MVZ' and
-			a.barcode is not null
-	) loop
-			
-		update container set INSTITUTION_ACRONYM='MVZ' where 
-			INSTITUTION_ACRONYM != 'MVZ' and
-			container_type='position' and
-			parent_container_id=r.container_id
-		;
-	end loop;
-end;
-/
-
-
   
   
 20151001 - implemented in production

@@ -20,8 +20,7 @@ CREATE OR REPLACE function concatGeologyAttribute(colobjid  in number )
 	           geology_attributes.locality_id=locality.locality_id AND
 	           locality.locality_id=collecting_event.locality_id AND
 	           collecting_event.collecting_event_id=cataloged_item.collecting_event_id AND
-	           cataloged_item.collection_object_id=colobjid
-	          order by geology_attribute,geo_att_value)
+	           cataloged_item.collection_object_id=colobjid)
 	 LOOP
 	     l_str := l_str || l_sep || r.oneAtt;
            l_sep := '; ';
