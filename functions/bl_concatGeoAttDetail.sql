@@ -12,7 +12,7 @@ CREATE OR REPLACE function bl_concatGeoAttDetail(v_key  in number )
    begin
     FOR r IN (
               select geology_attribute || '=' || geo_att_value ||
-      case when agent_name is not null then
+      case when determiner is not null then
 	    '; Determined by ' || determiner
 	   end
 	   ||
