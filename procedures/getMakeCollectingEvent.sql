@@ -57,7 +57,6 @@ CREATE OR REPLACE procedure getMakeCollectingEvent (
 	v_WKT_POLYGON in locality.WKT_POLYGON%type default null,
     v_HIGHER_GEOG geog_auth_rec.HIGHER_GEOG%TYPE default null,
     -- concatenated geology attributes
-    v_cc_geo_attrs varchar2(4000) default null,
     v_geology_attribute_1 geology_attributes.GEOLOGY_ATTRIBUTE%type default null,
     v_geo_att_value_1  geology_attributes.GEO_ATT_VALUE%type default null,
     v_geo_att_determined_date_1  geology_attributes.GEO_ATT_DETERMINED_DATE%type default null,
@@ -103,6 +102,8 @@ CREATE OR REPLACE procedure getMakeCollectingEvent (
 		l_geog_auth_rec_id number;
 		l_dec_lat number;
 		l_dec_long number;
+		v_cc_geo_attrs varchar2(4000);
+
 	BEGIN
 		-- user-supplied event ID - check it and return
 		IF v_collecting_event_id IS NOT NULL THEN
@@ -366,7 +367,7 @@ CREATE OR REPLACE procedure getMakeCollectingEvent (
 							n
 						);
 					end if;
-					
+					select bl_concatGeoAttDetail(n) into nvlv_cc_geo_attrs from dual;
 				end if;
     
 				-- now we should have decimal coordinates, look for a locality
