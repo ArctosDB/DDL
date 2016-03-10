@@ -1,5 +1,31 @@
 -- part-containers
 
+
+---- get parts into the right institution
+update container set institution_acronym='KWP' where container_id in (
+select
+	container.container_id
+from
+	container,
+	coll_obj_cont_hist,
+	specimen_part,
+	cataloged_item,
+	collection
+where
+	container.container_id=coll_obj_cont_hist.container_id and
+	coll_obj_cont_hist.collection_object_id=specimen_part.collection_object_id and
+	specimen_part.derived_from_cat_item=cataloged_item.collection_object_id and
+	cataloged_item.collection_id=collection.collection_id and
+	collection.institution_acronym='KWP' and
+	container.institution_acronym!='KWP'
+);
+
+
+
+
+
+
+----- /part-institution
 select 
 	container.container_id,
 	container.institution_acronym
