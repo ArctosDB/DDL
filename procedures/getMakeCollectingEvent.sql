@@ -1,20 +1,3 @@
-/*
- * 
- * DEPENDANCIES:
- 	- a table to sort geology attributes
- 	create table bl_geology_attributes as select * from geology_attributes where 1=2;
- 	alter table bl_geology_attributes drop column GEOLOGY_ATTRIBUTE_ID;
- 	alter table bl_geology_attributes add determiner varchar2(255) ;
- 	alter table bl_geology_attributes drop column GEO_ATT_DETERMINER_ID;
-  	alter table bl_geology_attributes drop column LOCALITY_ID;
- 	alter table bl_geology_attributes add key number ;
- 	alter table bl_geology_attributes modify GEOLOGY_ATTRIBUTE null;
- 	alter table bl_geology_attributes modify GEO_ATT_VALUE null;
-
-
-
- */
-
 CREATE OR REPLACE procedure getMakeCollectingEvent (
 	v_COLLECTING_EVENT_ID in collecting_event.collecting_event_id%type  default null,
 	v_LOCALITY_ID in collecting_event.locality_id%type default null,
@@ -163,6 +146,7 @@ CREATE OR REPLACE procedure getMakeCollectingEvent (
 	    END IF;
     	-- try with locality name
     	IF v_LOCALITY_NAME IS NOT NULL THEN
+    		dbms_output.put_line('v_LOCALITY_NAME: ' ||  v_LOCALITY_NAME);
     		 select 
 	            count(*) into n
 	        from
@@ -187,6 +171,7 @@ CREATE OR REPLACE procedure getMakeCollectingEvent (
 		-- if we don't yet have a locality_id we'll need to find one using locality data, or make one
 		if l_locality_id is null then
 			-- first check geography, which is required if we make it to here
+			dbms_output.put_line('v_higher_geog: ' || v_higher_geog);
         	select geog_auth_rec_id into l_geog_auth_rec_id from geog_auth_rec where higher_geog = v_higher_geog;
 	         if l_geog_auth_rec_id is null then
 	            error_msg := 'Bad HIGHER_GEOG';
@@ -588,6 +573,22 @@ sho err;
 
 
 
+/*
+ * 
+ * DEPENDANCIES:
+ 	- a table to sort geology attributes
+ 	create table bl_geology_attributes as select * from geology_attributes where 1=2;
+ 	alter table bl_geology_attributes drop column GEOLOGY_ATTRIBUTE_ID;
+ 	alter table bl_geology_attributes add determiner varchar2(255) ;
+ 	alter table bl_geology_attributes drop column GEO_ATT_DETERMINER_ID;
+  	alter table bl_geology_attributes drop column LOCALITY_ID;
+ 	alter table bl_geology_attributes add key number ;
+ 	alter table bl_geology_attributes modify GEOLOGY_ATTRIBUTE null;
+ 	alter table bl_geology_attributes modify GEO_ATT_VALUE null;
+
+
+
+ */
 
 
 
@@ -598,6 +599,26 @@ sho err;
 
 
 
+
+CREATE OR REPLACE procedure getMakeCollectingEvent (
+	v_COLLECTING_EVENT_ID in collecting_event.collecting_event_id%type  default null,  
+	blabitty in collecting_event.collecting_event_id%type  default null,  
+	v_r_ceid out number
+ ) 	is
+		error_msg varchar2(4000);
+		n number;
+		l_locality_id number;
+		l_geog_auth_rec_id number;
+		l_dec_lat number;
+		l_dec_long number;
+		v_cc_geo_attrs varchar2(4000);
+		l_verbatim_coordinates varchar2(4000);
+
+	BEGIN
+
+v_r_ceid:=42;
+end;
+/
 
 
 
@@ -681,6 +702,9 @@ CREATE OR REPLACE procedure getMakeCollectingEvent (
     v_r_ceid out number
  ) 
 
+ 
+ 
+ 
  var myvar number;
 
 begin
@@ -688,105 +712,86 @@ begin
 	for r in (select * from bulkloader where collection_object_id>1000 and rownum=1) loop
 	
 	getMakeCollectingEvent(
-		v_COLLECTING_EVENT_ID => r.v_COLLECTING_EVENT_ID,
-		v_LOCALITY_ID => r.v_LOCALITY_ID,
-		v_VERBATIM_DATE => r.v_VERBATIM_DATE,
-		v_VERBATIM_LOCALITY => r.v_VERBATIM_LOCALITY,
-		v_COLL_EVENT_REMARKS => r.v_COLL_EVENT_REMARKS,
-		v_BEGAN_DATE => r.v_BEGAN_DATE,
-		v_ENDED_DATE => r.v_ENDED_DATE,
-		v_COLLECTING_EVENT_NAME => r.v_COLLECTING_EVENT_NAME,
-		v_LAT_DEG => r.v_LAT_DEG,
-		v_DEC_LAT_MIN => r.v_DEC_LAT_MIN,
-		v_LAT_MIN => r.v_LAT_MIN,
-		v_LAT_SEC => r.v_LAT_SEC,
-		v_LAT_DIR => r.v_LAT_DIR,
-		v_LONG_DEG => r.v_LONG_DEG,
-		v_DEC_LONG_MIN => r.v_DEC_LONG_MIN,
-		v_LONG_MIN => r.v_LONG_MIN,
-		v_LONG_SEC => r.v_LONG_SEC,
-		v_LONG_DIR => r.v_LONG_DIR,
-		v_DEC_LAT => r.v_DEC_LAT,
-		v_DEC_LONG => r.v_DEC_LONG,
-		v_DATUM => r.v_DATUM,
-		v_UTM_ZONE => r.v_UTM_ZONE,
-		v_UTM_EW => r.v_UTM_EW,
-		v_UTM_NS => r.v_UTM_NS,
-		v_ORIG_LAT_LONG_UNITS => rv_ORIG_LAT_LONG_UNITS.xxxx,
-		v_SPEC_LOCALITY => r.v_SPEC_LOCALITY,
-		v_MINIMUM_ELEVATION => r.v_MINIMUM_ELEVATION,
-		v_MAXIMUM_ELEVATION => r.v_MAXIMUM_ELEVATION,
-		v_ORIG_ELEV_UNITS => r.v_ORIG_ELEV_UNITS,
-		v_MIN_DEPTH => r.v_MIN_DEPTH,
-		v_MAX_DEPTH => r.v_MAX_DEPTH,
-		v_DEPTH_UNITS => r.v_DEPTH_UNITS,
-		xxxxx => r.xxxx,
-		xxxxx => r.xxxx,
-		xxxxx => r.xxxx,
-		xxxxx => r.xxxx,
-		xxxxx => r.xxxx,
-		xxxxx => r.xxxx,
-		xxxxx => r.xxxx,
-		xxxxx => r.xxxx,
-		xxxxx => r.xxxx,
-		xxxxx => r.xxxx,
-		
-		 in locality.ORIG_ELEV_UNITS%type default null,
-		 in locality.MIN_DEPTH%type default null,
-		 in locality.MAX_DEPTH%type default null,
-		 in locality.DEPTH_UNITS%type default null,
-	 	v_MAX_ERROR_DISTANCE in locality.MAX_ERROR_DISTANCE%type default null,
-		v_MAX_ERROR_UNITS in locality.MAX_ERROR_UNITS%type default null,
-		v_LOCALITY_REMARKS in locality.LOCALITY_REMARKS%type default null,
-		v_GEOREFERENCE_SOURCE in locality.GEOREFERENCE_SOURCE%type default null,
-		v_GEOREFERENCE_PROTOCOL in locality.GEOREFERENCE_PROTOCOL%type default null,
-		v_LOCALITY_NAME in locality.LOCALITY_NAME%type default null,
-		v_WKT_POLYGON in locality.WKT_POLYGON%type default null,
-	    v_HIGHER_GEOG geog_auth_rec.HIGHER_GEOG%TYPE default null,
-	    v_geology_attribute_1 geology_attributes.GEOLOGY_ATTRIBUTE%type default null,
-	    v_geo_att_value_1  geology_attributes.GEO_ATT_VALUE%type default null,
-	    v_geo_att_determined_date_1  geology_attributes.GEO_ATT_DETERMINED_DATE%type default null,
-	    v_geo_att_determiner_1  agent_name.agent_name%type default null,
-	    v_geo_att_determined_method_1  geology_attributes.GEO_ATT_DETERMINED_METHOD%type default null,
-	    v_geo_att_remark_1  geology_attributes.GEO_ATT_REMARK%type default null,
-	    v_geology_attribute_2 geology_attributes.GEOLOGY_ATTRIBUTE%type default null,
-	    v_geo_att_value_2  geology_attributes.GEO_ATT_VALUE%type default null,
-	    v_geo_att_determined_date_2  geology_attributes.GEO_ATT_DETERMINED_DATE%type default null,
-	    v_geo_att_determiner_2  agent_name.agent_name%type default null,
-	    v_geo_att_determined_method_2  geology_attributes.GEO_ATT_DETERMINED_METHOD%type default null,
-	    v_geo_att_remark_2  geology_attributes.GEO_ATT_REMARK%type default null,
-	    v_geology_attribute_3 geology_attributes.GEOLOGY_ATTRIBUTE%type default null,
-	    v_geo_att_value_3  geology_attributes.GEO_ATT_VALUE%type default null,
-	    v_geo_att_determined_date_3  geology_attributes.GEO_ATT_DETERMINED_DATE%type default null,
-	    v_geo_att_determiner_3  agent_name.agent_name%type default null,
-	    v_geo_att_determined_method_3  geology_attributes.GEO_ATT_DETERMINED_METHOD%type default null,
-	    v_geo_att_remark_3 geology_attributes.GEO_ATT_REMARK%type default null,
-	    v_geology_attribute_4 geology_attributes.GEOLOGY_ATTRIBUTE%type default null,
-	    v_geo_att_value_4  geology_attributes.GEO_ATT_VALUE%type default null,
-	    v_geo_att_determined_date_4  geology_attributes.GEO_ATT_DETERMINED_DATE%type default null,
-	    v_geo_att_determiner_4  agent_name.agent_name%type default null,
-	    v_geo_att_determined_method_4  geology_attributes.GEO_ATT_DETERMINED_METHOD%type default null,
-	    v_geo_att_remark_4  geology_attributes.GEO_ATT_REMARK%type default null,
-	    v_geology_attribute_5 geology_attributes.GEOLOGY_ATTRIBUTE%type default null,
-	    v_geo_att_value_5  geology_attributes.GEO_ATT_VALUE%type default null,
-	    v_geo_att_determined_date_5  geology_attributes.GEO_ATT_DETERMINED_DATE%type default null,
-	    v_geo_att_determiner_5  agent_name.agent_name%type default null,
-	    v_geo_att_determined_method_5  geology_attributes.GEO_ATT_DETERMINED_METHOD%type default null,
-	    v_geo_att_remark_5 geology_attributes.GEO_ATT_REMARK%type default null,
-	    v_geology_attribute_6 geology_attributes.GEOLOGY_ATTRIBUTE%type default null,
-	    v_geo_att_value_6  geology_attributes.GEO_ATT_VALUE%type default null,
-	    v_geo_att_determined_date_6  geology_attributes.GEO_ATT_DETERMINED_DATE%type default null,
-	    v_geo_att_determiner_6  agent_name.agent_name%type default null,
-	    v_geo_att_determined_method_6  geology_attributes.GEO_ATT_DETERMINED_METHOD%type default null,
-	    v_geo_att_remark_6  geology_attributes.GEO_ATT_REMARK%type default null,            
-	    v_r_ceid out number
-    
-    
-	getMakeCollectingEvent(
-		v_COLLECTING_EVENT_ID => null,
-		v_COLLECTING_EVENT_NAME=> 'Captive Animal',
+		v_COLLECTING_EVENT_ID => r.COLLECTING_EVENT_ID,
+		v_LOCALITY_ID => r.LOCALITY_ID,
+		v_VERBATIM_DATE => r.VERBATIM_DATE,
+		v_VERBATIM_LOCALITY => r.VERBATIM_LOCALITY,
+		v_COLL_EVENT_REMARKS => r.COLL_EVENT_REMARKS,
+		v_BEGAN_DATE => r.BEGAN_DATE,
+		v_ENDED_DATE => r.ENDED_DATE,
+		v_COLLECTING_EVENT_NAME => r.COLLECTING_EVENT_NAME,
+		v_LAT_DEG => r.LAT_DEG,
+		v_DEC_LAT_MIN => r.DEC_LAT_MIN,
+		v_LAT_MIN => r.LAT_MIN,
+		v_LAT_SEC => r.LAT_SEC,
+		v_LAT_DIR => r.LAT_DIR,
+		v_LONG_DEG => r.LONG_DEG,
+		v_DEC_LONG_MIN => r.DEC_LONG_MIN,
+		v_LONG_MIN => r.LONG_MIN,
+		v_LONG_SEC => r.LONG_SEC,
+		v_LONG_DIR => r.LONG_DIR,
+		v_DEC_LAT => r.DEC_LAT,
+		v_DEC_LONG => r.DEC_LONG,
+		v_DATUM => r.DATUM,
+		v_UTM_ZONE => r.UTM_ZONE,
+		v_UTM_EW => r.UTM_EW,
+		v_UTM_NS => r.UTM_NS,
+		v_ORIG_LAT_LONG_UNITS => r.ORIG_LAT_LONG_UNITS.xxxx,
+		v_SPEC_LOCALITY => r.SPEC_LOCALITY,
+		v_MINIMUM_ELEVATION => r.MINIMUM_ELEVATION,
+		v_MAXIMUM_ELEVATION => r.MAXIMUM_ELEVATION,
+		v_ORIG_ELEV_UNITS => r.ORIG_ELEV_UNITS,
+		v_MIN_DEPTH => r.MIN_DEPTH,
+		v_MAX_DEPTH => r.MAX_DEPTH,
+		v_DEPTH_UNITS => r.DEPTH_UNITS,
+		v_MAX_ERROR_DISTANCE => r.MAX_ERROR_DISTANCE,
+		v_MAX_ERROR_UNITS => r.MAX_ERROR_UNITS,
+		v_LOCALITY_REMARKS => r.LOCALITY_REMARKS,
+		v_GEOREFERENCE_SOURCE => r.GEOREFERENCE_SOURCE,
+		v_GEOREFERENCE_PROTOCOL => r.GEOREFERENCE_PROTOCOL,
+		v_LOCALITY_NAME => r.LOCALITY_NAME,
+		v_WKT_POLYGON => r.WKT_POLYGON,
+		v_HIGHER_GEOG => r.HIGHER_GEOG,
+		v_geology_attribute_1 => r.geology_attribute_1,
+		v_geo_att_value_1 => r.geo_att_value_1,
+		v_geo_att_determined_date_1 => r.geo_att_determined_date_1,
+		v_geo_att_determiner_1 => r.geo_att_determiner_1,
+		v_geo_att_determined_method_1 => r.geo_att_determined_method_1,
+		v_geo_att_remark_1 => r.geo_att_remark_1,
+		v_geology_attribute_2 => r.geology_attribute_2,
+		v_geo_att_value_2 => r.geo_att_value_2,
+		v_geo_att_determined_date_2 => r.geo_att_determined_date_2,
+		v_geo_att_determiner_2 => r.geo_att_determiner_2,
+		v_geo_att_determined_method_2 => r.geo_att_determined_method_2,
+		v_geo_att_remark_2 => r.geo_att_remark_2,
+		v_geology_attribute_3 => r.geology_attribute_3,
+		v_geo_att_value_3 => r.geo_att_value_3,
+		v_geo_att_determined_date_3 => r.geo_att_determined_date_3,
+		v_geo_att_determiner_3 => r.geo_att_determiner_3,
+		v_geo_att_determined_method_3 => r.geo_att_determined_method_3,
+		v_geo_att_remark_3 => r.geo_att_remark_3,
+		v_geology_attribute_4 => r.geology_attribute_4,
+		v_geo_att_value_4 => r.geo_att_value_4,
+		v_geo_att_determined_date_4 => r.geo_att_determined_date_4,
+		v_geo_att_determiner_4 => r.geo_att_determiner_4,
+		v_geo_att_determined_method_4 => r.geo_att_determined_method_4,
+		v_geo_att_remark_4 => r.geo_att_remark_4,
+		v_geology_attribute_5 => r.geology_attribute_5,
+		v_geo_att_value_5 => r.geo_att_value_5,
+		v_geo_att_determined_date_5 => r.geo_att_determined_date_5,
+		v_geo_att_determiner_5 => r.geo_att_determiner_5,
+		v_geo_att_determined_method_5 => r.geo_att_determined_method_5,
+		v_geo_att_remark_5 => r.geo_att_remark_5,
+		v_geology_attribute_6 => r.geology_attribute_6,
+		v_geo_att_value_6 => r.geo_att_value_6,
+		v_geo_att_determined_date_6 => r.geo_att_determined_date_6,
+		v_geo_att_determiner_6 => r.geo_att_determiner_6,
+		v_geo_att_determined_method_6 => r.geo_att_determined_method_6,
+		v_geo_att_remark_6 => r.geo_att_remark_6,
 		v_r_ceid=>:myvar
-	);
+		);
+    
+    
 	dbms_output.put_line('got: ' || :myvar);
 end;
 /
@@ -794,11 +799,19 @@ end;
 
 
 
+
+
+	getMakeCollectingEvent(
+		v_COLLECTING_EVENT_ID => null,
+		v_COLLECTING_EVENT_NAME=> 'Captive Animal',
+		v_r_ceid=>:myvar
+	);
+
 select :myvar from dual;
 
 
 
-exec getMakeCollectingEvent(v_COLLECTING_EVENT_ID => 9999999999999,v_r_ceid=>:myvar);
+exec getMakeCollectingEvent(v_COLLECTING_EVENT_ID => NULL,HIGHER_GEOG => 'no higher geography recorded',v_r_ceid=>:myvar);
 
 select locality_id from test;
  
@@ -1106,3 +1119,104 @@ EXCEPTION
 	when others then
 		bulkload_error (error_msg,SQLERRM,'b_bulkload_coll_event',collobjid);
 END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---------------------- non-bulkloader sql ---------------
+
+getMakeCollectingEvent(
+		v_COLLECTING_EVENT_ID => r.COLLECTING_EVENT_ID,
+		v_LOCALITY_ID => r.LOCALITY_ID,
+		v_VERBATIM_DATE => r.VERBATIM_DATE,
+		v_VERBATIM_LOCALITY => r.VERBATIM_LOCALITY,
+		v_COLL_EVENT_REMARKS => r.COLL_EVENT_REMARKS,
+		v_BEGAN_DATE => r.BEGAN_DATE,
+		v_ENDED_DATE => r.ENDED_DATE,
+		v_COLLECTING_EVENT_NAME => r.COLLECTING_EVENT_NAME,
+		v_LAT_DEG => r.LAT_DEG,
+		v_DEC_LAT_MIN => r.DEC_LAT_MIN,
+		v_LAT_MIN => r.LAT_MIN,
+		v_LAT_SEC => r.LAT_SEC,
+		v_LAT_DIR => r.LAT_DIR,
+		v_LONG_DEG => r.LONG_DEG,
+		v_DEC_LONG_MIN => r.DEC_LONG_MIN,
+		v_LONG_MIN => r.LONG_MIN,
+		v_LONG_SEC => r.LONG_SEC,
+		v_LONG_DIR => r.LONG_DIR,
+		v_DEC_LAT => r.DEC_LAT,
+		v_DEC_LONG => r.DEC_LONG,
+		v_DATUM => r.DATUM,
+		v_UTM_ZONE => r.UTM_ZONE,
+		v_UTM_EW => r.UTM_EW,
+		v_UTM_NS => r.UTM_NS,
+		v_ORIG_LAT_LONG_UNITS => r.ORIG_LAT_LONG_UNITS.xxxx,
+		v_SPEC_LOCALITY => r.SPEC_LOCALITY,
+		v_MINIMUM_ELEVATION => r.MINIMUM_ELEVATION,
+		v_MAXIMUM_ELEVATION => r.MAXIMUM_ELEVATION,
+		v_ORIG_ELEV_UNITS => r.ORIG_ELEV_UNITS,
+		v_MIN_DEPTH => r.MIN_DEPTH,
+		v_MAX_DEPTH => r.MAX_DEPTH,
+		v_DEPTH_UNITS => r.DEPTH_UNITS,
+		v_MAX_ERROR_DISTANCE => r.MAX_ERROR_DISTANCE,
+		v_MAX_ERROR_UNITS => r.MAX_ERROR_UNITS,
+		v_LOCALITY_REMARKS => r.LOCALITY_REMARKS,
+		v_GEOREFERENCE_SOURCE => r.GEOREFERENCE_SOURCE,
+		v_GEOREFERENCE_PROTOCOL => r.GEOREFERENCE_PROTOCOL,
+		v_LOCALITY_NAME => r.LOCALITY_NAME,
+		v_WKT_POLYGON => r.WKT_POLYGON,
+		v_HIGHER_GEOG => r.HIGHER_GEOG,
+		v_geology_attribute_1 => r.geology_attribute_1,
+		v_geo_att_value_1 => r.geo_att_value_1,
+		v_geo_att_determined_date_1 => r.geo_att_determined_date_1,
+		v_geo_att_determiner_1 => r.geo_att_determiner_1,
+		v_geo_att_determined_method_1 => r.geo_att_determined_method_1,
+		v_geo_att_remark_1 => r.geo_att_remark_1,
+		v_geology_attribute_2 => r.geology_attribute_2,
+		v_geo_att_value_2 => r.geo_att_value_2,
+		v_geo_att_determined_date_2 => r.geo_att_determined_date_2,
+		v_geo_att_determiner_2 => r.geo_att_determiner_2,
+		v_geo_att_determined_method_2 => r.geo_att_determined_method_2,
+		v_geo_att_remark_2 => r.geo_att_remark_2,
+		v_geology_attribute_3 => r.geology_attribute_3,
+		v_geo_att_value_3 => r.geo_att_value_3,
+		v_geo_att_determined_date_3 => r.geo_att_determined_date_3,
+		v_geo_att_determiner_3 => r.geo_att_determiner_3,
+		v_geo_att_determined_method_3 => r.geo_att_determined_method_3,
+		v_geo_att_remark_3 => r.geo_att_remark_3,
+		v_geology_attribute_4 => r.geology_attribute_4,
+		v_geo_att_value_4 => r.geo_att_value_4,
+		v_geo_att_determined_date_4 => r.geo_att_determined_date_4,
+		v_geo_att_determiner_4 => r.geo_att_determiner_4,
+		v_geo_att_determined_method_4 => r.geo_att_determined_method_4,
+		v_geo_att_remark_4 => r.geo_att_remark_4,
+		v_geology_attribute_5 => r.geology_attribute_5,
+		v_geo_att_value_5 => r.geo_att_value_5,
+		v_geo_att_determined_date_5 => r.geo_att_determined_date_5,
+		v_geo_att_determiner_5 => r.geo_att_determiner_5,
+		v_geo_att_determined_method_5 => r.geo_att_determined_method_5,
+		v_geo_att_remark_5 => r.geo_att_remark_5,
+		v_geology_attribute_6 => r.geology_attribute_6,
+		v_geo_att_value_6 => r.geo_att_value_6,
+		v_geo_att_determined_date_6 => r.geo_att_determined_date_6,
+		v_geo_att_determiner_6 => r.geo_att_determiner_6,
+		v_geo_att_determined_method_6 => r.geo_att_determined_method_6,
+		v_geo_att_remark_6 => r.geo_att_remark_6,
+		v_r_ceid=>:myvar
+		);
+    
