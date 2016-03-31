@@ -36,6 +36,9 @@ begin
 			plc:=1;
 		end if;
 	end loop;
+	if plc=0 then
+		return null;
+	end if;
 	return plc;	
 end;
 /
