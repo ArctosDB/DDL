@@ -1,3 +1,7 @@
+DEPRECATED
+rewrite to use getPrioritySpecimenEvent()
+keeping this around in case that turns out to have problems tho....
+
 --- old and busted
 
 /*
@@ -49,6 +53,17 @@ guid like 'UAMb:Herb%' having count(*) > 1 group by flat.collection_object_id,sp
 
 
 
+CREATE OR REPLACE VIEW 
+    map_specimen_event 
+AS SELECT 
+     max(specimen_event_id) specimen_event_id,
+     COLLECTION_OBJECT_ID FROM 
+     specimen_event 
+WHERE
+    specimen_event_type != 'unaccepted place of collection'
+GROUP BY
+    COLLECTION_OBJECT_ID
+;
 
 
 
@@ -219,6 +234,14 @@ create or replace view map_specimen_event as
  
  update flat set stale_flag=1 where collection_object_id=12;
  
+ 
+ update flat set stale_flag=1 where collection_object_id in (
+ 	select collection_object_id from ( 
+ 		select collection_object_id from flat order by dbms_random.value
+ 	) where rownum < 500
+ );
+ 
+ 
  exec is_flat_stale;
  
  -- old model: 00:00:00.76
@@ -231,8 +254,15 @@ create or replace view map_specimen_event as
   -- GASP! Turn off schedule, try again
   -- new2: 00:07:15.88
   
+  -- with getPrioritySpecimenEvent and rebuild flat procedure:  00:01:22.51
+  -- Elapsed: 00:01:06.72
+  -- Elapsed: 00:00:57.19
+  -- 
+  -- select test:
   
-  
+   00:00:45.77
+
+   
 
  
  -- test

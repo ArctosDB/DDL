@@ -361,16 +361,17 @@ BEGIN
 					locality.maximum_elevation || ' ' ||
 					locality.orig_elev_units)
 		from
+			map_specimen_event,
 			SPECIMEN_EVENT,
 			collecting_event,
 			locality,
 			geog_auth_rec
 		where
-			SPECIMEN_EVENT.SPECIMEN_EVENT_ID =getPrioritySpecimenEvent(SPECIMEN_EVENT.COLLECTION_OBJECT_ID) and
+			map_specimen_event.SPECIMEN_EVENT_ID=SPECIMEN_EVENT.SPECIMEN_EVENT_ID and
 			SPECIMEN_EVENT.collecting_event_id=collecting_event.collecting_event_id and
 			collecting_event.locality_id=locality.locality_id and
 			locality.geog_auth_rec_id=geog_auth_rec.geog_auth_rec_id and
-			SPECIMEN_EVENT.COLLECTION_OBJECT_ID=flat.COLLECTION_OBJECT_ID
+			map_specimen_event.COLLECTION_OBJECT_ID=flat.COLLECTION_OBJECT_ID
 	) where COLLECTION_OBJECT_ID=collobjid;
 	--- identification/taxonomy
 
