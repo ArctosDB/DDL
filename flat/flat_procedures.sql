@@ -366,7 +366,7 @@ BEGIN
 			locality,
 			geog_auth_rec
 		where
-			SPECIMEN_EVENT.SPECIMEN_EVENT_ID =getPrioritySpecimenEvent(SPECIMEN_EVENT.COLLECTION_OBJECT_ID) and
+			SPECIMEN_EVENT.SPECIMEN_EVENT_ID=getPrioritySpecimenEvent(SPECIMEN_EVENT.COLLECTION_OBJECT_ID) and
 			SPECIMEN_EVENT.collecting_event_id=collecting_event.collecting_event_id and
 			collecting_event.locality_id=locality.locality_id and
 			locality.geog_auth_rec_id=geog_auth_rec.geog_auth_rec_id and
