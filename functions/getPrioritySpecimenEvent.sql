@@ -12,7 +12,7 @@ AS
    tp number;
 BEGIN
 	for r in (
-		select 
+		select
 			specimen_event.specimen_event_id,
 			specimen_event.specimen_event_type,
 			decode(locality.dec_lat,null,0,1) hascoords
@@ -25,6 +25,7 @@ BEGIN
 			collecting_event.locality_id=locality.locality_id and
 			specimen_event.specimen_event_type != 'unaccepted place of collection' and 
 			specimen_event.collection_object_id=coid
+		order by began_date ASC
 	) loop
 		if r.specimen_event_type = 'place of manufacture' then
 			tp:=1;
