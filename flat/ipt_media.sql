@@ -120,7 +120,7 @@ CREATE OR REPLACE PROCEDURE temp_update_junk IS BEGIN
 			media.media_id=relatedMedia.media_id (+) and
 			media.media_license_id=ctmedia_license.media_license_id (+) and
 			filtered_flat.collection_object_id=specimen_event.collection_object_id and
-			filtered_flat.collection_object_id=getPrioritySpecimenEvent(specimen_event.collection_object_id)
+			specimen_event.specimen_event_id=getPrioritySpecimenEvent(filtered_flat.collection_object_id)
 	);
 end;
 /
