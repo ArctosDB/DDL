@@ -17,6 +17,8 @@
  	SO, replace the above with this, which abstracts filepaths and will still work when stale
 */
 
+
+/* too slow
 drop table ipt_better_media;
 
 
@@ -57,6 +59,89 @@ where
 	catItemMR.related_primary_key=filtered_flat.collection_object_id and
 	filtered_flat.collection_object_id=getPrioritySpecimenEvent(filtered_flat.collection_object_id)
 ;
+
+*/
+
+truncate table ipt_better_media;
+
+CREATE OR REPLACE PROCEDURE temp_update_junk IS BEGIN 
+	insert into ipt_better_media (
+		collection_id,
+		occurrenceID,
+		guid,
+		identifier,
+		old_identifier,
+		references,
+		source,
+		format,
+		type,
+		title,
+		description,
+		spatial,
+		latitude,
+		longitude,
+		created,
+		creator,
+		license,
+		last_updated,
+		occurrenceID2
+	) ( select
+			filtered_flat.collection_id,
+			'urn:occurrence:Arctos:' || filtered_flat.guid || ':' || specimen_event.specimen_event_id,
+			filtered_flat.guid,
+			'http://arctos.database.museum/media/' || media.media_id || '?open',
+			'http://arctos.database.museum/exit.cfm?target=' || replace(media_uri,' ','%20'),
+			'http://arctos.database.museum/media/' || media.media_id,
+			decode(relatedMedia.related_primary_key,null,null,'http://arctos.database.museum/media/' || relatedMedia.related_primary_key),
+			media.mime_type,
+			media.media_type,
+			concatMediaDescription(media.media_id),
+			concatMediaDescription(media.media_id),
+			spec_locality,
+			dec_lat,
+			dec_long,
+			decode(is_iso8601(dcreat.label_value),'valid',dcreat.label_value,NULL),
+			concatMediaCreatedByAgent(media.media_id),
+			URI,
+			sysdate,
+			'http://arctos.database.museum/guid/'  || filtered_flat.guid || '?seid=' || specimen_event.specimen_event_id
+		from
+			media,
+			(select media_id,related_primary_key from media_relations where media_relationship='shows cataloged_item') catItemMR,
+			filtered_flat,
+			(select media_id,label_value from media_labels where media_label='made date') dcreat,
+			(select media_id,related_primary_key from media_relations where media_relationship='derived from media') relatedMedia,
+			ctmedia_license,
+			specimen_event
+		where
+			media.media_id=catItemMR.media_id and
+			catItemMR.related_primary_key=filtered_flat.collection_object_id and
+			media.media_id=dcreat.media_id (+) and
+			media.media_id=relatedMedia.media_id (+) and
+			media.media_license_id=ctmedia_license.media_license_id (+) and
+			filtered_flat.collection_object_id=specimen_event.collection_object_id and
+			filtered_flat.collection_object_id=getPrioritySpecimenEvent(specimen_event.collection_object_id)
+	);
+end;
+/
+sho err;
+
+
+
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+    job_name    => 'J_temp_update_junk',
+    job_type    => 'STORED_PROCEDURE',
+    job_action    => 'temp_update_junk',
+    enabled     => TRUE,
+    end_date    => NULL
+  );
+END;
+/ 
+
+select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_TEMP_UPDATE_JUNK';
+
+select count(*) from ipt_better_media;
 
 create or replace public synonym ipt_better_media for ipt_better_media;
 grant select on ipt_better_media to public;
