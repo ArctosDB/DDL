@@ -273,7 +273,7 @@ BEGIN
                 case tabl
                     when 'locality' then
                         select 
-                            r.media_relationship || '==<a href="/showLocality.cfm?action=srch\&locality_id=' || locality.locality_id || '">' || state_prov || ': ' || spec_locality || '</a>',
+                            r.media_relationship || '==<a href="/showLocality.cfm?action=srch&locality_id=' || locality.locality_id || '">' || state_prov || ': ' || spec_locality || '</a>',
                             spec_locality || ';' || higher_geog,
                             dec_lat || ',' || dec_long,
                             spec_locality || ';' || higher_geog,
@@ -293,7 +293,7 @@ BEGIN
                             locality.locality_id=r.related_primary_key;
                     when 'collecting_event' then
                         select
-                            r.media_relationship || '==<a href="/showLocality.cfm?action=srch\&collecting_event_id=' || collecting_event.collecting_event_id || '">' || state_prov || ': ' || spec_locality || ' (' || verbatim_date || ')</a>',
+                            r.media_relationship || '==<a href="/showLocality.cfm?action=srch&showDetail=event&collecting_event_id=' || collecting_event.collecting_event_id || '">' || state_prov || ': ' || spec_locality || ' (' || verbatim_date || ')</a>',
                             verbatim_locality || '; ' || verbatim_date || '; ' ||
                             locality.spec_locality || '; ' || higher_geog,
                             locality.dec_lat || ',' || locality.dec_long,
@@ -615,6 +615,8 @@ END;
 sho err;
 
 
+
+ update media_flat set LASTDATE=null  where RELATIONSHIPS like '%collecting_event%';
 
 
 
