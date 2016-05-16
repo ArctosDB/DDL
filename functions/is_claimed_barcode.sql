@@ -5,6 +5,9 @@ CREATE OR REPLACE FUNCTION "UAM"."IS_CLAIMED_BARCODE" (barcode in varchar)
 		ssmt varchar2(255);
 		c number;
 	begin
+		IF barcode IS NULL THEN
+			return 'PASS';
+		end if;
 		for r in (select barcodeseriessql from cf_barcodeseries) loop
 			begin
 				rsql:=replace(r.barcodeseriessql,'barcode','''' || barcode || '''');

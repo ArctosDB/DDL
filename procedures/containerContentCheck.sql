@@ -9,7 +9,27 @@ CREATE OR REPLACE procedure containerContentCheck (
 		msg varchar2(4000);
 		sep varchar2(10);
 		c number;
+		tmp varchar2(4000);
    	begin
+	   	
+	   	select is_claimed_barcode(old_child.barcode) into tmp from dual;
+	   	if tmp != 'PASS' then
+	   		msg := msg || sep || 'old_child.barcode (' || old_child.barcode || ') is unclaimed; contact a DBA';
+			sep := '; ';
+		end if;
+		
+		select is_claimed_barcode(new_child.barcode) into tmp from dual;
+	   	if tmp != 'PASS' then
+	   		msg := msg || sep || 'new_child.barcode (' || new_child.barcode || ') is unclaimed; contact a DBA';
+			sep := '; ';
+		end if;
+		
+		select is_claimed_barcode(parent.barcode) into tmp from dual;
+	   	if tmp != 'PASS' then
+	   		msg := msg || sep || 'parent.barcode (' || parent.barcode || ') is unclaimed; contact a DBA';
+			sep := '; ';
+		end if;
+	   	
 	   	--- User cannot change containers to which they do not have access
 	   	select count(*) into c from collection where institution_acronym=old_child.institution_acronym;
 		if c=0 then
