@@ -323,9 +323,7 @@ CREATE INDEX IX_F_FLAT_TYPESTATUS_UPR
 	
 	drop index IU_F_FLAT_GUID_UPR;
 	
-CREATE UNIQUE INDEX IU_F_FLAT_GUID
-	ON FILTERED_FLAT (upper(GUID))
-	TABLESPACE UAM_IDX_1;
+CREATE UNIQUE INDEX IU_F_FLAT_GUID ON FILTERED_FLAT (upper(GUID)) TABLESPACE UAM_IDX_1;
 
 CREATE INDEX IX_F_FLAT_COUNTRY
 	ON FILTERED_FLAT (COUNTRY)
@@ -438,6 +436,7 @@ END;
 select count(*) from pre_filtered_flat where guid is null;
 select guid from pre_filtered_flat having count(*) > 1 group by guid;
 
+select upper(guid) from filtered_flat having count(*) > 1 group by upper(guid);
 
 
 select 
