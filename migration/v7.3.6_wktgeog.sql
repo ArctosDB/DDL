@@ -391,12 +391,32 @@ commit;
 
 
 
-    )
-
-
+select
+  state_prov || ': ' || county
+from
+  geog_auth_rec
+where
+  state_prov is not null and
+  county is not null and
+  WKT_POLYGON is null and
+  country='United States' and
+  sea is null and
+  island_group is null and
+  island is null and
+  quad is null and
+  feature is null;
+  
+  
    
 
 
    
 
 select distinct name from temp_geostate where geog_auth_rec_id is null;
+
+
+MEDIA::
+
+- alaska
+- minnesota
+- wi
