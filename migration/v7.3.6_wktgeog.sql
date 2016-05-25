@@ -24,9 +24,13 @@ create table temp_geocounty (
 
 -- use /fix/a.cfm to populate
 
+select count(*) from temp_geocounty;
+
+
 drop table temp_geocounty_bak;
 create table temp_geocounty_bak as select * from temp_geocounty;
 
+--create table temp_geocounty as select * from temp_geocounty_bak;
 
 select distinct GeographicName from temp_geocounty order by GeographicName;
 
@@ -153,7 +157,7 @@ create table temp_geostate (
 	
 		use fix/a.cfm
 
-		
+	select count(*) from temp_geostate;
 		
 	create table temp_geostate_bak as select * from temp_geostate;
 	
@@ -215,6 +219,7 @@ insert into temp_geo_wkt (geog_auth_rec_id,GEOMETRY) (select geog_auth_rec_id,GE
 
 -- and because
 create table temp_geo_wkt_bak as select * from temp_geo_wkt;
+create table temp_geo_wkt_bak2 as select * from temp_geo_wkt;
 
 
 -- now defuckify the KML
@@ -314,10 +319,19 @@ begin
 end;
 /
 
+
+update geog_auth_rec set wkt_polygon='MEDIA::10497397' where geog_auth_rec_id=1137;
+update geog_auth_rec set wkt_polygon='MEDIA::10497395' where geog_auth_rec_id=121;
+update geog_auth_rec set wkt_polygon='MEDIA::10497396' where geog_auth_rec_id=1328;
+
 alter trigger TRG_HIGHER_GEOG_MAGICDUPS enable;
 alter trigger  TR_GEOGAUTHREC_AU_FLAT enable;
 
 commit;
+
+
+
+
 
 
 
