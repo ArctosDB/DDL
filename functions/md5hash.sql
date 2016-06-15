@@ -5,7 +5,6 @@ CREATE OR REPLACE FUNCTION md5hash (str IN clob)
       if str is null then
         return null;
       end if;
-
         v_checksum := LOWER( RAWTOHEX( UTL_RAW.CAST_TO_RAW( sys.dbms_obfuscation_toolkit.md5(input_string => str) ) ) );
         RETURN v_checksum;
         EXCEPTION
