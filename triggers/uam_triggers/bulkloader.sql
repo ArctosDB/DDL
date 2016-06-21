@@ -3,7 +3,10 @@ CREATE OR REPLACE TRIGGER TR_bulkloader_BIU
 BEFORE INSERT OR UPDATE ON bulkloader
 FOR EACH ROW
 BEGIN
- IF :new.orig_lat_long_units = 'deg. min. sec.' THEN
+	 if dbms_lob.getlength(:NEW.wkt_polygon) = 0 then
+    	:NEW.wkt_polygon:=NULL;
+    end if;
+ 	IF :new.orig_lat_long_units = 'deg. min. sec.' THEN
             :new.c$lat := :new.LATDEG + (:new.LATMIN / 60) + (nvl(:new.LATSEC,0) / 3600);
             IF :new.LATDIR = 'S' THEN
                 :new.c$lat := :new.c$lat * -1;

@@ -134,6 +134,14 @@ CREATE OR REPLACE TRIGGER trg_locality_biu
     FOR EACH ROW declare 
         status varchar2(255);
     BEGIN
+	    -- Oracle is making some super-weird distinction between
+	    -- NULL and 0-length (or something) for CLOBs, so....
+	    if dbms_lob.getlength(:NEW.wkt_polygon) = 0 then
+	    	:NEW.wkt_polygon:=NULL;
+	    end if;
+	    
+	    
+	    
         IF :NEW.DEC_LAT IS NOT NULL OR :NEW.DEC_LONG IS NOT NULL THEN
             IF :new.datum IS NULL THEN
                 raise_application_error(-20001,'Datum is required when coordinates are given.');

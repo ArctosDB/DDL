@@ -68,7 +68,11 @@ alter table specimen_archive add constraint FK_spec_archive_specimen foreign key
 
 
 
-create or replace trigger trg_archive_name_biu BEFORE update or insert or delete ON archive_name
+create or 
+
+-- see triggers 
+
+replace trigger trg_archive_name_biu BEFORE update or insert or delete ON archive_name
 	for each row declare
 		c number;
 		r number;
@@ -110,13 +114,18 @@ create or replace trigger trg_archive_name_biu BEFORE update or insert or delete
 
 
 
-create or replace trigger trg_spec_archive_biu  BEFORE update or insert or delete ON specimen_archive for each row
+create or replace trigger trg_spec_archive_biu 
+
+see triggers folder
+
+BEFORE update or insert or delete ON specimen_archive for each row
 declare
 	lockd number;
+	unme archive_name.CREATOR%TYPE;
 begin
-	select is_locked into lockd from archive_name where archive_id=:OLD.archive_id;
+	select is_locked,CREATOR into lockd,unme from archive_name where archive_id=:OLD.archive_id;
 	if lockd = 1 then
-		RAISE_APPLICATION_ERROR(-20001,'This Archive is locked and may not be altered.');
+		RAISE_APPLICATION_ERROR(-20001,'This Archive is locked and may not be altered. Contact ' || unme || ' for help.');
 	end if;
 	EXCEPTION
 		WHEN NO_DATA_FOUND THEN
