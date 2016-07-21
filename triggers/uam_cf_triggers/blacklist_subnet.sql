@@ -1,3 +1,5 @@
+------ see 7.3.9 for latest
+
 CREATE OR REPLACE TRIGGER trg_blacklist_subnet_ckblist
 BEFORE INSERT or update ON blacklist_subnet
 FOR EACH ROW declare 
