@@ -1,3 +1,32 @@
+ 67.166.156.208 
+ 
+ 
+ insert into blacklist(IP,LISTDATE,STATUS,LASTDATE) values ('67.166.156.1',sysdate,'active',sysdate);
+ insert into blacklist(IP,LISTDATE,STATUS,LASTDATE) values ('67.166.156.2',sysdate,'active',sysdate);
+ insert into blacklist(IP,LISTDATE,STATUS,LASTDATE) values ('67.166.156.3',sysdate,'active',sysdate);
+ insert into blacklist(IP,LISTDATE,STATUS,LASTDATE) values ('67.166.156.4',sysdate,'active',sysdate);
+ insert into blacklist(IP,LISTDATE,STATUS,LASTDATE) values ('67.166.156.5',sysdate,'active',sysdate);
+ insert into blacklist(IP,LISTDATE,STATUS,LASTDATE) values ('67.166.156.6',sysdate,'active',sysdate);
+ insert into blacklist(IP,LISTDATE,STATUS,LASTDATE) values ('67.166.156.7',sysdate,'active',sysdate);
+ insert into blacklist(IP,LISTDATE,STATUS,LASTDATE) values ('67.166.156.8',sysdate,'active',sysdate);
+ insert into blacklist(IP,LISTDATE,STATUS,LASTDATE) values ('67.166.156.9',sysdate,'active',sysdate);
+ insert into blacklist(IP,LISTDATE,STATUS,LASTDATE) values ('67.166.156.10',sysdate,'active',sysdate);
+ insert into blacklist(IP,LISTDATE,STATUS,LASTDATE) values ('67.166.156.11',sysdate,'active',sysdate);
+
+ update blacklist_subnet set status='hardblock'  where SUBNET='67.166';
+ 
+ 
+  Name								   Null?    Type
+ ----------------------------------------------------------------- -------- --------------------------------------------
+ IP								   NOT NULL VARCHAR2(40)
+ LISTDATE								    DATE
+ STATUS 								    VARCHAR2(255)
+ LASTDATE								    DATE
+
+
+ 
+ 
+ 
 /*
 	
 	Purpose:
@@ -7,14 +36,14 @@
 	
 	- add status to blacklist
 		- on insert, set status=active
-		- on "delete" set status to 'deleted'
+		- on "delete" set status to 'released'
 		- future possibility: disallow self-unlist when the IP has been blocked more than x times
 	- add last_date to blacklist
 		- on insert/update-->sysdate
 		
 	add status to blacklist_subnet
 		- on insert, -->active
-		- on "delete --> deleted
+		- on "delete --> released
 	- add last_date to blacklist
 		- on insert/update-->sysdate
 		
@@ -34,6 +63,10 @@
 	alter table blacklist add lastdate date;
 	
 	
+  
+  
+	
+	
 	select ip from blacklist where isvalidip(ip) != 'true';
 	
 	delete from blacklist where  isvalidip(ip) != 'true';
@@ -41,6 +74,8 @@
 	
 	update blacklist set lastdate=LISTDATE;
 	update blacklist set status='active';
+	ALTER TABLE blacklist ADD CONSTRAINT check_bl_status CHECK (status IN ('active', 'released'));
+
 	
 	-- make sure the final version of this gets copied back to
 	--	DDL/triggers/uam_cf_triggers/blacklist.sql
@@ -82,7 +117,7 @@ END;
 /
 sho err
 
-
+drop index IU_BLACKLIST_IP;
 
 
 		
@@ -100,6 +135,9 @@ sho err
 	
 	update blacklist_subnet set lastdate=INSERT_DATE;
 	update blacklist_subnet set status='active';
+	ALTER TABLE blacklist_subnet drop CONSTRAINT check_bl_sn_status;
+	ALTER TABLE blacklist_subnet ADD CONSTRAINT check_bl_sn_status CHECK (status IN ('active','released','autoinsert','hardblock'));
+
 
 	
 	
