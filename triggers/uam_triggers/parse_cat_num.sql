@@ -16,13 +16,11 @@ CREATE OR REPLACE TRIGGER parse_cat_num
         		:NEW.cat_num_integer := :NEW.cat_num;
         		:NEW.cat_num_suffix := NULL;
 			end if;
-	    		
 		elsif catalog_number_format='prefix-integer-suffix' then
 			FOR i IN 1..100 LOOP
 				td := substr(dlms,i,1);
 				EXIT WHEN td IS NULL;
 				IF instr(:NEW.cat_num,td,1,2) > 0 AND instr(:NEW.cat_num,td,1,3)=0 THEN
-					-- we have a 3-part string
 					dc:=dc+1;
 					:NEW.cat_num_prefix := get_str_el (:NEW.cat_num,td,1) || td;
 					:NEW.cat_num_integer := get_str_el (:NEW.cat_num,td,2);
@@ -31,17 +29,19 @@ CREATE OR REPLACE TRIGGER parse_cat_num
 					-- got a 2-part string
 					dc:=dc+1;
 					IF is_number(get_str_el (:NEW.cat_num,td,1)) = 1 THEN
-					-- got suffix
-					:NEW.cat_num_prefix := NULL;
-					:NEW.cat_num_integer:=get_str_el (:NEW.cat_num,td,1);
-					:NEW.cat_num_suffix:=td || get_str_el (:NEW.cat_num,td,2);
-				ELSIF is_number(get_str_el(:NEW.cat_num,td,2)) = 1 THEN
-					-- got prefix
-					:NEW.cat_num_prefix:=get_str_el(:NEW.cat_num,td,1) || td;
-					:NEW.cat_num_integer:=get_str_el(:NEW.cat_num,td,2);
-					:NEW.cat_num_suffix := NULL;
-					--ELSE something goofy happened, fail later
-				END IF;
+						-- got suffix
+						:NEW.cat_num_prefix := NULL;
+						:NEW.cat_num_integer:=get_str_el (:NEW.cat_num,td,1);
+						:NEW.cat_num_suffix:=td || get_str_el (:NEW.cat_num,td,2);
+					ELSIF is_number(get_str_el(:NEW.cat_num,td,2)) = 1 THEN
+						-- got prefix
+						:NEW.cat_num_prefix:=get_str_el(:NEW.cat_num,td,1) || td;
+						:NEW.cat_num_integer:=get_str_el(:NEW.cat_num,td,2);
+						:NEW.cat_num_suffix := NULL;
+						--ELSE something goofy happened, fail later
+					END IF;
+				ELSIF is_number(:NEW.cat_num)=1 then
+					:NEW.cat_num_integer:=:NEW.cat_num;
 				END IF;
 			END LOOP;
 			if dc>1 then
@@ -64,8 +64,6 @@ CREATE OR REPLACE TRIGGER parse_cat_num
         	:NEW.cat_num_integer := NULL;
         	:NEW.cat_num_suffix := NULL;
 		END IF;
-		
-
 end;
 /
 sho err

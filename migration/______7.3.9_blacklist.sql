@@ -14,7 +14,8 @@
  insert into blacklist(IP,LISTDATE,STATUS,LASTDATE) values ('67.166.156.11',sysdate,'active',sysdate);
 
  update blacklist_subnet set status='hardblock'  where SUBNET='67.166';
- 
+  update blacklist_subnet set status='autoinsert'  where SUBNET='67.166';
+
  
   Name								   Null?    Type
  ----------------------------------------------------------------- -------- --------------------------------------------
@@ -177,3 +178,7 @@ CREATE OR REPLACE TRIGGER trg_blacklist_subnet_ckblist
 END;
 /
 sho err
+
+
+
+drop index IU_BLACKLISTSUBNET_SUBNET;
