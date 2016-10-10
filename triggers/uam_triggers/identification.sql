@@ -5,9 +5,15 @@ DECLARE
     numrows NUMBER;
     status varchar2(255);
 BEGIN
-	SELECT COUNT(*) INTO numrows 
-	FROM ctnature_of_id 
-	WHERE nature_of_id = :NEW.nature_of_id;
+	:NEW.scientific_name := trim(:NEW.scientific_name);
+	SELECT 
+		COUNT(*) 
+	INTO 
+		numrows 
+	FROM 
+		ctnature_of_id 
+	WHERE 
+		nature_of_id = :NEW.nature_of_id;
 	
 	IF (numrows = 0) THEN
 		raise_application_error(

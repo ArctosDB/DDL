@@ -1,6 +1,6 @@
 CREATE OR REPLACE FUNCTION niceURL (s  in VARCHAR)
 return varchar2
-as
+deterministic as
  r VARCHAR2(255);
 begin
 	r:=trim(regexp_replace(s,'<[^<>]+>'));

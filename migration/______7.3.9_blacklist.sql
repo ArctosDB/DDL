@@ -1,6 +1,20 @@
- 67.166.156.208 
- 
- 
+CHANGELOG::
+
+- intrusion reports are more widely distributed (based on severity), have better documentation
+- subnets are auto-blacklisted after 10 IPs are blacklisted
+-- reduces application variable load
+-- better scary-subnet alerts
+-- possible increased chance of catching problems before they happen
+- better history - can now track past blocks from the Arctos forms
+- better reporting - blacklist IP form rebuilt to show historical data
+- better integration - tighter link between blocked IPs and subnets
+- more self-service; users can unblock auto-blocked subnets
+- more control 
+-- remains possible to hard-block subnet
+-- possible to add finer-grained IP blocking (eg, could implement hard IP blocks)
+- more modular - forms and functions have been consolidated
+
+
  insert into blacklist(IP,LISTDATE,STATUS,LASTDATE) values ('67.166.156.1',sysdate,'active',sysdate);
  insert into blacklist(IP,LISTDATE,STATUS,LASTDATE) values ('67.166.156.2',sysdate,'active',sysdate);
  insert into blacklist(IP,LISTDATE,STATUS,LASTDATE) values ('67.166.156.3',sysdate,'active',sysdate);
@@ -182,3 +196,90 @@ sho err
 
 
 drop index IU_BLACKLISTSUBNET_SUBNET;
+
+
+
+
+
+---- for https://github.com/ArctosDB/arctos/issues/904
+
+-- rebuild functions/niceURL (needs to be deterministic)
+
+CREATE OR REPLACE FUNCTION niceURL (s  in VARCHAR)
+return varchar2
+deterministic as
+ r VARCHAR2(255);
+begin
+	r:=trim(regexp_replace(s,'<[^<>]+>'));
+	r:=regexp_replace(r,'[^A-Za-z ]*');
+	r:=regexp_replace(r,' +','-');
+	r:=lower(r);
+	if length(r)>149 then
+		r:=substr(r,0,149);
+	end if;
+	IF (substr(r, -1)='-') THEN
+	    r:=substr(r,1,length(r)-1);
+	END IF;
+    RETURN r;	
+end;
+/
+
+sho err;
+
+
+create or replace public synonym niceURL for niceURL;
+grant execute on niceURL to public;
+
+-- clean up data
+-- leave results with the issue
+
+-- just in case....
+
+create table project20161010 as select * from project;
+
+--rollback....
+begin
+	for r in (select project20161010.project_name,project20161010.project_id from project20161010,project where project20161010.project_id=project.project_id and
+project20161010.project_name != project.project_name) loop
+update project set project_name=r.project_name where project_id=r.project_id;
+end loop;
+end;
+/
+
+
+set escape \;
+
+
+declare
+	npn varchar2(4000);
+	npu varchar2(4000);
+	g varchar2(4000);
+begin
+	for r in (select niceURL(project_name) nu from project having count(*) > 1 group by niceURL(project_name)) loop
+		dbms_output.put_line('Bad project URL: /project/' || r.nu);
+		for p in (select project_name,project_id from project where NICEURL(PROJECT_NAME)=r.nu) loop
+			dbms_output.put_line('    Affected project name: ' || p.project_name);
+			-- update to something unique
+			 SELECT DBMS_RANDOM.string('u',10) into g FROM dual;
+			 npn:=p.project_name || ' [' || g || ']';
+			 npu:=niceURL(npn);
+			 dbms_output.put_line('        New project name: ' || npn);
+			 dbms_output.put_line('        New project URL: /project/' || npu);
+			 dbms_output.put_line('        Edit Path: /Project.cfm?Action=editProject\&project_id=' || p.project_id);
+			 
+			 update project set project_name=npn where project_id=p.project_id;
+			 
+		end loop;
+		
+	end loop;
+end;
+/
+
+
+-- make sure to paste whatever that barfs out to https://github.com/ArctosDB/arctos/issues/904 and tag affected people
+
+-- now a unique functional index
+-- this is copied to /DDL/indexes
+create unique index iu_proj_niceurl_pname on project (niceURL(PROJECT_NAME)) tablespace uam_idx_1;
+
+

@@ -854,6 +854,10 @@ CREATE UNIQUE INDEX IU_PROJECT_PROJECTNAME
 	ON PROJECT (PROJECT_NAME)
 	TABLESPACE UAM_IDX_1;
 
+-- protect URLs which are formed from project name
+create unique index iu_proj_niceurl_pname on project (niceURL(PROJECT_NAME)) tablespace uam_idx_1;
+
+
 -- PROJECT_AGENT 
 CREATE INDEX IX_PROJECTAGENT_ANID
 	ON PROJECT_AGENT (AGENT_NAME_ID)
