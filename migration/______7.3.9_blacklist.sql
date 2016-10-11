@@ -14,7 +14,9 @@ CHANGELOG::
 -- possible to add finer-grained IP blocking (eg, could implement hard IP blocks)
 - more modular - forms and functions have been consolidated
 
+ this branch also addresses various security concerns, mostly minor intrusion attempts from the logs
 
+-- test
  insert into blacklist(IP,LISTDATE,STATUS,LASTDATE) values ('67.166.156.1',sysdate,'active',sysdate);
  insert into blacklist(IP,LISTDATE,STATUS,LASTDATE) values ('67.166.156.2',sysdate,'active',sysdate);
  insert into blacklist(IP,LISTDATE,STATUS,LASTDATE) values ('67.166.156.3',sysdate,'active',sysdate);
@@ -27,6 +29,7 @@ CHANGELOG::
  insert into blacklist(IP,LISTDATE,STATUS,LASTDATE) values ('67.166.156.10',sysdate,'active',sysdate);
  insert into blacklist(IP,LISTDATE,STATUS,LASTDATE) values ('67.166.156.11',sysdate,'active',sysdate);
 
+ 
  update blacklist_subnet set status='hardblock'  where SUBNET='67.166';
   update blacklist_subnet set status='autoinsert'  where SUBNET='67.166';
 
