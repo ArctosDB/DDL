@@ -52,6 +52,10 @@ FOR EACH ROW
 			  	fire:=1;
 			  end if;
 		end if;
+		if :NEW.agent_id=:NEW.related_agent_id then
+			RAISE_APPLICATION_ERROR(-20001,'Self-relationships disallowed.');
+		end if;
+		
 		if fire=1 then
 			:NEW.created_on_date := sysdate;
 			select 

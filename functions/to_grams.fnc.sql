@@ -11,9 +11,9 @@ CREATE OR REPLACE function to_grams(meas IN number, unit in varchar2 )
 		elsif upper(unit) = 'KG' OR upper(unit) = 'KILOGRAM' OR upper(unit) = 'KILOGRAMS' then
 			g := meas * 1000;
 		elsif upper(unit) = 'LB' OR upper(unit) = 'POUND' OR upper(unit) = 'POUNDS' then
-			g := meas * 0.0022046;
+			g := meas * 453.592;
 		elsif upper(unit) = 'OZ' OR upper(unit) = 'OUNCE' OR upper(unit) = 'OUNCES' then
-			g := meas * 0.035274;
+			g := meas * 28.3495;
 		else
 			g := null;
 		end if;
