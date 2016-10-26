@@ -68,7 +68,7 @@ begin
 	end loop;
 	s:='insert into pre_bulkloader (' || clist || ') ( select ' || clist || ' from YYYOOUURRTTAABBLLEE)';
 	dbms_output.put_line(s);
-	execute immediate s;
+	--execute immediate s;
 end;
 /
 
