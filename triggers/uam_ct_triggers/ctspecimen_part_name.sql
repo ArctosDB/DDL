@@ -1,6 +1,8 @@
 CREATE OR REPLACE TRIGGER TR_CTSPECIMEN_PART_NAME_UD
-BEFORE UPDATE OR DELETE ON ctspecimen_part_name
+BEFORE insert or UPDATE OR DELETE ON ctspecimen_part_name
 FOR EACH ROW
+DECLARE
+    c number;
 BEGIN
 	FOR r IN (
 		SELECT COUNT(*) c
@@ -24,4 +26,6 @@ BEGIN
 		    END IF;
 		END IF;
 	END LOOP;
+
+	
 END;
