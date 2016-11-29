@@ -61,6 +61,9 @@ END;
 CREATE OR REPLACE TRIGGER 
 	TR_LOCALITY_BUD
 	-- lock localities used by "verified by" specimens
+	-- EDIT 2016-11: allow access by anyone, change logs are now being maintained
+	-- block only verified
+	
 	-- and those shared by collections to which the current user
 	-- does not have access
 	BEFORE 
@@ -106,6 +109,16 @@ BEGIN
 	        'This locality is used in verified specimen/events and may not be changed or deleted.');
 	    END IF;
 	
+	 end if;
+END;
+/
+
+/*
+ * 
+ * 
+ * 
+ * pre-2016-11 code removed from the above:
+ * 
 	    SELECT SYS_CONTEXT('USERENV','SESSION_USER') INTO username FROM dual;
 	
 	    SELECT SYS.GET_COLLID_COUNT(:OLD.locality_id) INTO allrec FROM dual;
@@ -121,11 +134,7 @@ BEGIN
 	        raise_application_error(-20001,
 	            'This locality is shared and may not be changed or deleted.');
 	    END IF;
-	 end if;
-END;
-/
-
-
+ */
 
 CREATE OR REPLACE TRIGGER trg_locality_biu
   -- enforces conditional data requirements
