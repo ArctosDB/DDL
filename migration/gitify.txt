@@ -12,6 +12,14 @@ git checkout v7.3.9.1
 
 
 
+In the DDL/migration/{version}.sql file, keeep notes referencing Issues
+
+Close issues with...
+
+Closes ArctosDB/arctos#997
+
+...in the commit msg of the migration file
+
 
 
 

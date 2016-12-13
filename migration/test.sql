@@ -13,8 +13,8 @@ Maybe.
 
 copypasta issues stuff into commit msg.
 
-Closes ArctosDB/arctos/#997 with bla bla blabitty
+Closes ArctosDB/arctos#997 with bla bla blabitty
 
-Fixed ArctosDB/arctos/#998 with woopty something bla
+Fixed ArctosDB/arctos#998 with woopty something bla
 
 cagsdasdfasndfg
