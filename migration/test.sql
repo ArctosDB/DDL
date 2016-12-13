@@ -10,6 +10,9 @@ Can/should we close all issues with release notes?
 
 Maybe.
 
-closes ArctosDB/arctos/#997 with bla bla blabitty
+
+copypasta issues stuff into commit msg.
+
+Closes ArctosDB/arctos/#997 with bla bla blabitty
 
 Fixed ArctosDB/arctos/#998 with woopty something bla
