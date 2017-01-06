@@ -1,3 +1,6 @@
+alter table annotations add media_id number;
+
+
 CREATE OR REPLACE FUNCTION getAnnotationObject (aid in NUMBER )
 	return varchar2
 	AS
@@ -40,10 +43,10 @@ grant execute on getAnnotationObject to public;
 
 
 
-select getAnnotationObject(2327) from dual;
 
 
+insert into CTMEDIA_RELATIONSHIP (MEDIA_RELATIONSHIP,DESCRIPTION) values 
+	('documents borrow','Documentation in support of transaction type "borrow."');
+	
 
-select getAnnotationObject(490) from dual;
-select getAnnotationObject(489) from dual;
-select getAnnotationObject(387) from dual;
+
