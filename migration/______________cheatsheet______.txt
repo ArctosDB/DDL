@@ -139,21 +139,785 @@ git pull  origin
 
 
 
--- fix attribute mess
-
-select distinct attribute_type from attributes where attribute_type not in (select ATTRIBUTE_TYPE from CTATTRIBUTE_TYPE);
-
-select distinct ATTRIBUTE_TYPE,collection_id from cataloged_item,attributes
-where cataloged_item.collection_object_id=attributes.collection_object_id and
-attribute_type not in (select ATTRIBUTE_TYPE from CTATTRIBUTE_TYPE);
-
-select guid_prefix from collection where collection_id=39;
-select guid_prefix from collection where collection_id=82;
 
 
-insert into ctattribute_type (ATTRIBUTE_TYPE,COLLECTION_CDE) values ('bill length','Bird');
-insert into ctattribute_type (ATTRIBUTE_TYPE,COLLECTION_CDE) values ('appraised value','Art');
 
 
--- build trigger ctattribute_type to prevent deleting/changing used attributes
--- build trigger TRG_ATTRIBUTES_fkct_UD tp prevent using stuff that's not in the code table
+
+/Users/dlm/git/Arctos/Bulkloader/getBulkloaderStageRecs.cfm:
+   23  	<cfset variables.encoding="UTF-8">
+   24  	<cfscript>
+   25: 		variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+   26: 		variables.joFileWriter.writeLine(colList);
+   27  	</cfscript>
+   28  	<cfloop query="data">
+   ..
+   39  		<cfset oneLine = trim(oneLine)>
+   40  		<cfscript>
+   41: 			variables.joFileWriter.writeLine(oneLine);
+   42  		</cfscript>
+   43  	</cfloop>
+   44  	<cfscript>
+   45: 		variables.joFileWriter.close();
+   46  	</cfscript>
+   47  </cfoutput>
+
+/Users/dlm/git/Arctos/component/FileWriter.cfc:
+   11  To use:
+   12  <cfscript>
+   13: 	variables.joFileWriter = createObject('component', 'FileWriter').init(variables.fileName, variables.encoding, 32768);
+   14  
+   15: 	variables.joFileWriter.writeLine(variables.someDataVar);
+   16  
+   17: 	variables.joFileWriter.close();
+   18  </cfscript>
+   19  
+   ..
+   22  Use this program however you want.
+   23  --->
+   24: <cfcomponent displayname="FileWriter">
+   25  
+   26  	<cfscript>
+   ..
+   30  	</cfscript>
+   31  
+   32: 	<cffunction name="init" access="public" returntype="FileWriter" output="No" hint="initializes the FileWriter CF/java object">
+   33  		<cfargument name="fileName" type="string" required="Yes" hint="the path and name of the file to write" />
+   34  		<cfargument name="fileEncoding" type="string" required="yes" hint="the file encoding" />
+
+/Users/dlm/git/Arctos/CustomTags/createhtaccess.cfm:
+    5  <cfset variables.encoding="US-ASCII">
+    6  <cfscript>
+    7: 	variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+    8: 	variables.joFileWriter.writeLine('RewriteEngine On');
+    9: 	variables.joFileWriter.writeLine('RewriteBase /');
+   10  	//let PNG through so CAPTCHA works
+   11: 	variables.joFileWriter.writeLine('RewriteRule ^(.*)png$ - [L]');
+   12  </cfscript>	
+   13  <cfset i=1>
+   ..
+   18  			a=a & ' [OR]';
+   19  		}
+   20: 		variables.joFileWriter.writeLine(a);
+   21  		i=i+1;
+   22  	</cfscript>
+   ..
+   24  <cfscript>
+   25  	a='RewriteRule .*$ errors/gtfo.cfm';		
+   26: 	variables.joFileWriter.writeLine(a);
+   27: 	variables.joFileWriter.close();
+   28  </cfscript>
+   29  
+
+/Users/dlm/git/Arctos/DataServices/agentNameSplitter.cfm:
+  409  	<cfset variables.fileName="#Application.webDirectory#/download/splitAgentNames.csv">
+  410  	<cfscript>
+  411: 		variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+  412: 		variables.joFileWriter.writeLine(theCols);
+  413  	</cfscript>
+  414  
+  ...
+  420  		</cfloop>
+  421  		<cfscript>
+  422: 			variables.joFileWriter.writeLine(d);
+  423  		</cfscript>
+  424  	</cfloop>
+  425  	<cfscript>
+  426: 		variables.joFileWriter.close();
+  427  	</cfscript>
+  428  	---->
+
+/Users/dlm/git/Arctos/DataServices/geog_lookup.cfm:
+ 1217  	<cfset header=trim(ac)>
+ 1218  	<cfscript>
+ 1219: 		variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+ 1220: 		variables.joFileWriter.writeLine(header);
+ 1221  	</cfscript>
+ 1222  	<cfloop query="getData">
+ ....
+ 1233  		<cfset oneLine = trim(oneLine)>
+ 1234  		<cfscript>
+ 1235: 			variables.joFileWriter.writeLine(oneLine);
+ 1236  		</cfscript>
+ 1237  	</cfloop>
+ 1238  	<cfscript>
+ 1239: 		variables.joFileWriter.close();
+ 1240  	</cfscript>
+ 1241  	---->
+
+/Users/dlm/git/Arctos/DataServices/SciNameCheck.cfm:
+  249  	<cfset header=trim(ac)>
+  250  	<cfscript>
+  251: 		variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+  252: 		variables.joFileWriter.writeLine(header); 
+  253  	</cfscript>
+  254  	<cfloop query="getData">
+  ...
+  265  		<cfset oneLine = trim(oneLine)>
+  266  		<cfscript>
+  267: 			variables.joFileWriter.writeLine(oneLine);
+  268  		</cfscript>
+  269  	</cfloop>
+  270  	<cfscript>	
+  271: 		variables.joFileWriter.close();
+  272  	</cfscript>
+  273  	<cfoutput>
+
+/Users/dlm/git/Arctos/editAccn.cfm:
+  844  			<cfset variables.encoding="UTF-8">
+  845  			<cfscript>
+  846: 				variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+  847  				d='accn_number,accn_status,received_from,received_date,nature_of_material,remarks,estimated_count,entered_by';
+  848: 			 	variables.joFileWriter.writeLine(d);
+  849  			</cfscript>
+  850  		</cfif>
+  ...
+  904  			<cfset d=d &',"#escapeDoubleQuotes(entAgent)#"'>
+  905  			<cfscript>
+  906: 				variables.joFileWriter.writeLine(d);
+  907  			</cfscript>
+  908  		</cfif>
+  ...
+  914  	<cfif csv is true>
+  915  		<cfscript>
+  916: 			variables.joFileWriter.close();
+  917  		</cfscript>
+  918  		<cfoutput>
+
+/Users/dlm/git/Arctos/fix/AZPlantZap.cfm:
+    8  
+    9  	<cfscript>
+   10: 		variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fn, variables.encoding, 32768);
+   11  		a='test test bla testy'; 
+   12: 		variables.joFileWriter.writeLine(a);
+   13: 		variables.joFileWriter.close();
+   14  	</cfscript>
+   15  
+
+/Users/dlm/git/Arctos/fix/CSVAnyTable.cfm:
+   10  	<cfset header=trim(ac)>
+   11  	<cfscript>
+   12: 		variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+   13: 		variables.joFileWriter.writeLine(header); 
+   14  	</cfscript>
+   15  	<cfloop query="getData">
+   ..
+   26  		<cfset oneLine = trim(oneLine)>
+   27  		<cfscript>
+   28: 			variables.joFileWriter.writeLine(oneLine);
+   29  		</cfscript>
+   30  	</cfloop>
+   31  	<cfscript>	
+   32: 		variables.joFileWriter.close();
+   33  	</cfscript>
+   34  	<cflocation url="/download.cfm?file=#fname#" addtoken="false">
+
+/Users/dlm/git/Arctos/fix/fixSikesImageBarcodeMedia.cfm:
+   23  		<cfset ac="MEDIA_URI,MIME_TYPE,MEDIA_TYPE,PREVIEW_URI,media_license,media_label_1,media_label_value_1,media_label_2,media_label_value_2,media_relationship_1,media_related_term_1">
+   24  		<cfscript>
+   25: 			variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+   26: 			variables.joFileWriter.writeLine(ac); 
+   27  		</cfscript>
+   28  			
+   ..
+   61  		<cfset thisRow='"http://goodnight.corral.tacc.utexas.edu/UAF/uam_ento/#folder#","image/jpeg","image","http://goodnight.corral.tacc.utexas.edu/UAF/uam_ento/tn/tn_#folder#","CC BY-NC-ND","description","#d.guid# - #d.scientific_name#","made date","#datetaken#","shows cataloged_item","#d.guid#"'>
+   62  		<cfscript>
+   63: 			variables.joFileWriter.writeLine(thisRow);
+   64  		</cfscript>
+   65  		
+   ..
+   71  	</cfloop>
+   72  	<cfscript>	
+   73: 		variables.joFileWriter.close();
+   74  	</cfscript>
+   75  	</table>
+
+/Users/dlm/git/Arctos/includes/taxonomy/mapTax.cfm:
+   49  		<cfset variables.fileName=internalPath & fn>
+   50  		<cfscript>
+   51: 			variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+   52  			kml='<?xml version="1.0" encoding="UTF-8"?>' & chr(10) & 
+   53  				'<kml xmlns="http://earth.google.com/kml/2.2">' & chr(10) &
+   ..
+   55  				chr(9) & chr(9) & '<name>#scientific_name#</name>' & chr(10) &
+   56  				chr(9) & chr(9) & '<open>1</open>';
+   57: 			variables.joFileWriter.writeLine(kml);      
+   58  		</cfscript>
+   59  		<cfloop query="d">
+   ..
+   71  					chr(9) & chr(9) &  chr(9) & '</Point>' & chr(10) &
+   72  					chr(9) & chr(9) & '</Placemark>';
+   73: 				variables.joFileWriter.writeLine(kml);
+   74  			</cfscript>
+   75  		</cfloop>
+   ..
+   77  			kml=chr(9) & '</Document>' & chr(10) &
+   78  				'</kml>';
+   79: 			variables.joFileWriter.writeLine(kml);		
+   80: 			variables.joFileWriter.close();
+   81  		</cfscript>
+   82  	</cfif>
+
+/Users/dlm/git/Arctos/includes/taxonomy/mapTax_circles.cfm:
+   70  		<cfset variables.fileName=internalPath & fn>
+   71  		<cfscript>
+   72: 			variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+   73  			//x='"c","locality_id","scientific_name","dec_lat","dec_long","datum","coordinateuncertaintyinmeters"';
+   74: 			//variables.joFileWriter.writeLine(x);      
+   75  		</cfscript>
+   76  		<cfloop query="d">
+   77  			<cfscript>
+   78  				x='"#c#","#locality_id#","#scientific_name#","#dec_lat#","#dec_long#","#datum#","#coordinateuncertaintyinmeters#"';				
+   79: 				variables.joFileWriter.writeLine(x);
+   80  			</cfscript>
+   81  		</cfloop>
+   82  		<cfscript>
+   83: 			variables.joFileWriter.close();
+   84  		</cfscript>
+   85  	</cfif>	
+
+/Users/dlm/git/Arctos/info/dispVRemark.cfm:
+  104  	<cfset variables.fileName="#Application.webDirectory#/download/#fname#">
+  105  	<cfscript>
+  106: 		variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+  107: 		variables.joFileWriter.writeLine(ListQualify(clist,'"')); 
+  108  	</cfscript>
+  109  	
+  ...
+  113  		<cfset oneLine = '"#cat_num#","#part_name#","#spdisp#","#cirem#","#sprem#"'>
+  114  		<cfscript>
+  115: 			variables.joFileWriter.writeLine(oneLine);
+  116  		</cfscript>
+  117  		<tr>
+  ...
+  125  	
+  126  	<cfscript>	
+  127: 		variables.joFileWriter.close();
+  128  	</cfscript>	
+  129  	</table>
+
+/Users/dlm/git/Arctos/info/loanStats.cfm:
+  187  	<cfset variables.fileName="#Application.webDirectory#/download/#fname#">
+  188  	<cfscript>
+  189: 		variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+  190: 		variables.joFileWriter.writeLine(ListQualify(clist,'"'));
+  191  	</cfscript>
+  192  
+  ...
+  219  		<cfset oneLine = '"#guid_prefix#","#loan_number#","#loan_type#","#loaned_to#","#LOAN_STATUS#","#TRANS_DATE#","#dateformat(RETURN_DUE_DATE,"yyyy-mm-dd")#","#CntCatNum#","#cntCited#","#trans_remarks#"'>
+  220  		<cfscript>
+  221: 			variables.joFileWriter.writeLine(oneLine);
+  222  		</cfscript>
+  223  		<tr>
+  ...
+  239  	</cfloop>
+  240  	<cfscript>
+  241: 		variables.joFileWriter.close();
+  242  	</cfscript>
+  243  </table>
+
+/Users/dlm/git/Arctos/info/part_data_download.cfm:
+  138  	<cfset header=#trim(ac)#>
+  139  	<cfscript>
+  140: 		variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+  141: 		variables.joFileWriter.writeLine(header);
+  142  	</cfscript>
+  143  	<cfloop query="d">
+  ...
+  172  		<cfset oneLine = trim(oneLine)>
+  173  		<cfscript>
+  174: 			variables.joFileWriter.writeLine(oneLine);
+  175  		</cfscript>
+  176  	</cfloop>
+  177  	<cfscript>
+  178: 		variables.joFileWriter.close();
+  179  	</cfscript>
+  180  	<cflocation url="/download.cfm?file=#fname#" addtoken="false">
+
+/Users/dlm/git/Arctos/info/queryStats.cfm:
+  126  	<cfset header="QID,COLLECTION,QUERY_TYPE,CREATE_DATE,SUM_COUNT,REC_COUNT,USER">
+  127  	<cfscript>
+  128: 		variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+  129: 		variables.joFileWriter.writeLine(header); 
+  130  	</cfscript>
+  131  	<cfloop query="d">
+  132  		<cfset oneLine = '"#query_id#","#guid_prefix#","#QUERY_TYPE#","#CREATE_DATE#","#SUM_COUNT#","#REC_COUNT#","#username#"'>
+  133  		<cfscript>
+  134: 			variables.joFileWriter.writeLine(oneLine);
+  135  		</cfscript>
+  136  	</cfloop>
+  137  	<cfscript>	
+  138: 		variables.joFileWriter.close();
+  139  	</cfscript>
+  140  	<cflocation url="/download.cfm?file=#fname#" addtoken="false">
+
+/Users/dlm/git/Arctos/info/sysstats.cfm:
+  161  		</tr>
+  162  	<cfscript>
+  163: 		variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+  164: 		variables.joFileWriter.writeLine("year,NumberCollections,NumberSpecimens");
+  165  	</cfscript>
+  166  	<cfloop from="1995" to="#dateformat(now(),"YYYY")#" index="y">
+  ...
+  181  		</tr>
+  182  		<cfscript>
+  183: 			variables.joFileWriter.writeLine('"#y#","#qy.numberCollections#","#qy.numberSpecimens#"');
+  184  		</cfscript>
+  185  	</cfloop>
+  186  	</table>
+  187  	<cfscript>
+  188: 		variables.joFileWriter.close();
+  189  	</cfscript>
+  190  	<hr>
+
+/Users/dlm/git/Arctos/info/undocumentedCitations.cfm:
+  522  	<cfset variables.fileName="#Application.webDirectory#/download/#fname#">
+  523  	<cfscript>
+  524: 		variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+  525: 		variables.joFileWriter.writeLine(ListQualify(clist,'"'));
+  526  	</cfscript>
+  527  
+  ...
+  554  		<cfset oneLine = '"#guid_prefix#","#loan_number#","#loan_type#","#loaned_to#","#LOAN_STATUS#","#dateformat(TRANS_DATE,"yyyy-mm-dd")#","#dateformat(RETURN_DUE_DATE,"yyyy-mm-dd")#","#CntCatNum#","#cntCited#","#trans_remarks#"'>
+  555  		<cfscript>
+  556: 			variables.joFileWriter.writeLine(oneLine);
+  557  		</cfscript>
+  558  		<tr>
+  ...
+  574  	</cfloop>
+  575  	<cfscript>
+  576: 		variables.joFileWriter.close();
+  577  	</cfscript>
+  578  </table>
+
+/Users/dlm/git/Arctos/Locality.cfm:
+ 2110  		<cfset variables.fileName="#Application.webDirectory#/download/#fname#">
+ 2111  		<cfscript>
+ 2112: 			variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+ 2113: 			variables.joFileWriter.writeLine(ListQualify(clist,'"'));
+ 2114  		</cfscript>
+ 2115  		<cfloop query="getData">
+ ....
+ 2126  			<cfset oneLine = trim(oneLine)>
+ 2127  			<cfscript>
+ 2128: 				variables.joFileWriter.writeLine(oneLine);
+ 2129  			</cfscript>
+ 2130  		</cfloop>
+ 2131  		<cfscript>
+ 2132: 			variables.joFileWriter.close();
+ 2133  		</cfscript>
+ 2134  		<cflocation url="/download.cfm?file=#fname#" addtoken="false">
+
+/Users/dlm/git/Arctos/MediaSearchDownload.cfm:
+  199  			<cfset variables.fileName="#Application.webDirectory#/download/#fname#">
+  200  			<cfscript>
+  201: 				variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+  202: 				variables.joFileWriter.writeLine(header);
+  203  			</cfscript>
+  204  			<cfloop query="findIDs">
+  ...
+  250  				<cfset oneLine = trim(oneLine)>
+  251  				<cfscript>
+  252: 					variables.joFileWriter.writeLine(oneLine);
+  253  				</cfscript>
+  254  			</cfloop>
+  255  			<cfscript>
+  256: 				variables.joFileWriter.close();
+  257  			</cfscript>
+  258  			<cflocation url="/download.cfm?file=#fname#" addtoken="false">
+
+/Users/dlm/git/Arctos/Reports/dataentry.cfm:
+  270  		<cfset variables.encoding="US-ASCII">
+  271  		<cfscript>
+  272: 			variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+  273: 			variables.joFileWriter.writeLine('"ENTEREDBY","GUID_PREFIX","ENTEREDTOBULKDATE","NUMRECS"');
+  274  		</cfscript>
+  275  		<cfloop query="d">
+  276  			<cfscript>
+  277: 				variables.joFileWriter.writeLine('"#ENTEREDBY#","#GUID_PREFIX#","#ENTEREDTOBULKDATE#","#NUMRECS#"');
+  278  			</cfscript>
+  279  		</cfloop>
+  280  		<cfscript>
+  281: 			variables.joFileWriter.close();
+  282  		</cfscript>
+  283  		<cflocation url="/download.cfm?file=dataentrystats.csv" addtoken="false">
+
+/Users/dlm/git/Arctos/Reports/kenai.cfm:
+   40  \begin{multicols}{10}
+   41  ';
+   42: 	variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+   43: 	variables.joFileWriter.writeLine(header);
+   44  </cfscript>
+   45  <cfloop query="d">
+   ..
+   63  	
+   64  	<cfscript>
+   65: 		variables.joFileWriter.writeLine(l);
+   66  	</cfscript>
+   67  </cfloop>
+   ..
+   69  	l='\end{multicols}
+   70  \end{document}';
+   71: 	variables.joFileWriter.writeLine(l);
+   72: 	variables.joFileWriter.close();
+   73  </cfscript>d
+   74  <cflocation url="/download.cfm?file=#fname#" addtoken="false">
+
+/Users/dlm/git/Arctos/Reports/uamento.cfm:
+   62  <cfset variables.encoding="UTF-8">
+   63  <cfscript>
+   64: 	variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+   65: 	variables.joFileWriter.writeLine(header);
+   66  </cfscript>
+   67  <cfloop query="getData">
+   ..
+   84  	</cfloop>
+   85  	<cfscript>
+   86: 		variables.joFileWriter.writeLine(oneLine);
+   87  	</cfscript>
+   88  </cfloop>
+   89  <cfscript>
+   90: 	variables.joFileWriter.close();
+   91  </cfscript>
+   92  <cflocation url="/download.cfm?file=#fname#" addtoken="false">
+
+/Users/dlm/git/Arctos/ScheduledTasks/build_sitemap.cfm:
+  126  	<cfset variables.encoding="UTF-8">
+  127  	<cfscript>
+  128: 		variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+  129  	</cfscript>
+  130  	<cfscript>
+  131  		a='<?xml version="1.0" encoding="UTF-8"?>' & chr(10) &
+  132  		'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">';
+  133: 		variables.joFileWriter.writeLine(a);
+  134  	</cfscript>
+  135  	<cfloop list="#formList#" index="fn">
+  ...
+  139  			chr(9) & chr(9) & "<changefreq>monthly</changefreq>" & chr(10) &
+  140  			chr(9) & "</url>";
+  141: 			variables.joFileWriter.writeLine(a);
+  142  		</cfscript>
+  143  	</cfloop>
+  144  	<cfscript>
+  145  		a="</urlset>";
+  146: 		variables.joFileWriter.writeLine(a);
+  147: 		variables.joFileWriter.close();
+  148  		zip = CreateObject("component", "/component.Zip");
+  149  		status = zip.gzipAddFile("#Application.webDirectory#", "#Application.webDirectory#/#colls.filename#");
+  ...
+  187  	<cfset variables.encoding="UTF-8">
+  188  	<cfscript>
+  189: 		variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+  190  	</cfscript>
+  191  	<cfscript>
+  192  		a='<?xml version="1.0" encoding="UTF-8"?>' & chr(10) &
+  193  		'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">';
+  194: 		variables.joFileWriter.writeLine(a);
+  195  	</cfscript>
+  196  	<cfloop query="d">
+  ...
+  200  			chr(9) & chr(9) & "<changefreq>weekly</changefreq>" & chr(10) &
+  201  			chr(9) & "</url>";
+  202: 			variables.joFileWriter.writeLine(a);
+  203  		</cfscript>
+  204  	</cfloop>
+  205  	<cfscript>
+  206  		a="</urlset>";
+  207: 		variables.joFileWriter.writeLine(a);
+  208: 		variables.joFileWriter.close();
+  209  		zip = CreateObject("component", "/component.Zip");
+  210  		status = zip.gzipAddFile("#Application.webDirectory#", "#Application.webDirectory#/#colls.filename#");
+  ...
+  248  	<cfset variables.encoding="UTF-8">
+  249  	<cfscript>
+  250: 		variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+  251  	</cfscript>
+  252  	<cfscript>
+  253  		a='<?xml version="1.0" encoding="UTF-8"?>' & chr(10) &
+  254  		'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">';
+  255: 		variables.joFileWriter.writeLine(a);
+  256  	</cfscript>
+  257  	<cfloop query="d">
+  ...
+  261  			chr(9) & chr(9) & "<changefreq>weekly</changefreq>" & chr(10) &
+  262  			chr(9) & "</url>";
+  263: 			variables.joFileWriter.writeLine(a);
+  264  		</cfscript>
+  265  	</cfloop>
+  266  	<cfscript>
+  267  		a="</urlset>";
+  268: 		variables.joFileWriter.writeLine(a);
+  269: 		variables.joFileWriter.close();
+  270  		zip = CreateObject("component", "/component.Zip");
+  271  		status = zip.gzipAddFile("#Application.webDirectory#", "#Application.webDirectory#/#colls.filename#");
+  ...
+  309  	<cfset variables.encoding="UTF-8">
+  310  	<cfscript>
+  311: 		variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+  312  	</cfscript>
+  313  	<cfscript>
+  314  		a='<?xml version="1.0" encoding="UTF-8"?>' & chr(10) &
+  315  		'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">';
+  316: 		variables.joFileWriter.writeLine(a);
+  317  	</cfscript>
+  318  	<cfloop query="d">
+  ...
+  322  			chr(9) & chr(9) & "<changefreq>weekly</changefreq>" & chr(10) &
+  323  			chr(9) & "</url>";
+  324: 			variables.joFileWriter.writeLine(a);
+  325  		</cfscript>
+  326  	</cfloop>
+  327  	<cfscript>
+  328  		a="</urlset>";
+  329: 		variables.joFileWriter.writeLine(a);
+  330: 		variables.joFileWriter.close();
+  331  		zip = CreateObject("component", "/component.Zip");
+  332  		status = zip.gzipAddFile("#Application.webDirectory#", "#Application.webDirectory#/#colls.filename#");
+  ...
+  371  	<cfset variables.encoding="UTF-8">
+  372  	<cfscript>
+  373: 		variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+  374  	</cfscript>
+  375  	<cfscript>
+  376  		a='<?xml version="1.0" encoding="UTF-8"?>' & chr(10) &
+  377  		'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">';
+  378: 		variables.joFileWriter.writeLine(a);
+  379  	</cfscript>
+  380  	<cfloop query="d">
+  ...
+  384  			chr(9) & chr(9) & "<changefreq>monthly</changefreq>" & chr(10) &
+  385  			chr(9) & "</url>";
+  386: 			variables.joFileWriter.writeLine(a);
+  387  		</cfscript>
+  388  	</cfloop>
+  389  	<cfscript>
+  390  		a="</urlset>";
+  391: 		variables.joFileWriter.writeLine(a);
+  392: 		variables.joFileWriter.close();
+  393  		zip = CreateObject("component", "/component.Zip");
+  394  		status = zip.gzipAddFile("#Application.webDirectory#", "#Application.webDirectory#/#colls.filename#");
+  ...
+  434  	<cfset variables.encoding="UTF-8">
+  435  	<cfscript>
+  436: 		variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+  437  	</cfscript>
+  438  	<cfscript>
+  439  		a='<?xml version="1.0" encoding="UTF-8"?>' & chr(10) &
+  440  		'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">';
+  441: 		variables.joFileWriter.writeLine(a);
+  442  	</cfscript>
+  443  	<cfloop query="d">
+  ...
+  448  			chr(9) & chr(9) & "<changefreq>weekly</changefreq>" & chr(10) &
+  449  			chr(9) & "</url>";
+  450: 			variables.joFileWriter.writeLine(a);
+  451  		</cfscript>
+  452  	</cfloop>
+  453  	<cfscript>
+  454  		a="</urlset>";
+  455: 		variables.joFileWriter.writeLine(a);
+  456: 		variables.joFileWriter.close();
+  457  		zip = CreateObject("component", "/component.Zip");
+  458  		status = zip.gzipAddFile("#Application.webDirectory#", "#Application.webDirectory#/#colls.filename#");
+
+/Users/dlm/git/Arctos/ScheduledTasks/createHtaccess.cfm:
+    6  	<cfset variables.encoding="US-ASCII">
+    7  	<cfscript>
+    8: 		variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+    9: 		variables.joFileWriter.writeLine('RewriteEngine On');
+   10: 		variables.joFileWriter.writeLine('RewriteBase /');
+   11  		//let PNG through so CAPTCHA works
+   12: 		variables.joFileWriter.writeLine('RewriteRule ^(.*)png$ - [L]');
+   13  		// let /errors/ through
+   14: 		variables.joFileWriter.writeLine('RewriteCond %{REQUEST_URI} "/errors/');
+   15: 		variables.joFileWriter.writeLine('RewriteRule (.*) $1 [L]');
+   16  	</cfscript>	
+   17  	<cfset i=1>
+   ..
+   22  				a=a & ' [OR]';
+   23  			}
+   24: 			variables.joFileWriter.writeLine(a);
+   25  			i=i+1;
+   26  		</cfscript>
+   ..
+   28  	<cfscript>
+   29  		a='RewriteRule .*$ errors/gtfo.cfm';		
+   30: 		variables.joFileWriter.writeLine(a);
+   31: 		variables.joFileWriter.close();
+   32  	</cfscript>
+   33  </cfoutput>
+
+/Users/dlm/git/Arctos/ScheduledTasks/createRobots.cfm:
+    4  <cfset variables.encoding="US-ASCII">
+    5  <cfscript>
+    6: 	variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+    7  </cfscript>
+    8  
+    .
+  156  
+  157  		<cfscript>
+  158: 			variables.joFileWriter.writeLine(robotscontent);
+  159: 			variables.joFileWriter.writeLine(chr(10) & 'Sitemap: ' & application.serverRootUrl & '/sitemapindex.xml.gz');
+  160  		</cfscript>
+  161  
+  ...
+  177  	<cfset robotscontent=robotscontent & chr(10) & "Disallow: /">
+  178  	<cfscript>
+  179: 		variables.joFileWriter.writeLine(robotscontent);
+  180  	</cfscript>
+  181  </cfif>
+  182  <cfscript>
+  183: 	variables.joFileWriter.close();
+  184  </cfscript>
+  185  </cfoutput>
+
+/Users/dlm/git/Arctos/ScheduledTasks/CSV_everything.cfm:
+   26  	<cfset header=trim(ac)>
+   27  	<cfscript>
+   28: 		variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+   29: 		variables.joFileWriter.writeLine(header); 
+   30  	</cfscript>
+   31  	<cfloop query="getData">
+   ..
+   45  		<cfset oneLine = trim(oneLine)>
+   46  		<cfscript>
+   47: 			variables.joFileWriter.writeLine(oneLine);
+   48  		</cfscript>
+   49  	</cfloop>
+   50  	<cfscript>	
+   51: 		variables.joFileWriter.close();
+   52  	</cfscript>
+   53  	
+
+/Users/dlm/git/Arctos/ScheduledTasks/sound_TACC2list.cfm:
+   14  	<cfset variables.encoding="UTF-8">
+   15  	<cfscript>
+   16: 		variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+   17  	</cfscript>
+   18  	<cfloop index="i" from="1" to="#arrayLen(dir)#">
+   ..
+   20  		<cfif left(folder,2) is "PU" and #right(folder,4)# is ".aif">
+   21  			<cfscript>
+   22: 				variables.joFileWriter.writeLine(folder);
+   23  			</cfscript>	
+   24  		</cfif>
+
+/Users/dlm/git/Arctos/SpecimenResultsDownload.cfm:
+  301  	<cfset variables.fileName="#Application.webDirectory#/download/#fname#">
+  302  	<cfscript>
+  303: 		variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+  304: 		variables.joFileWriter.writeLine(ListQualify(clist,'"'));
+  305  	</cfscript>
+  306  	<cfloop query="getData">
+  ...
+  317  		<cfset oneLine = trim(oneLine)>
+  318  		<cfscript>
+  319: 			variables.joFileWriter.writeLine(oneLine);
+  320  		</cfscript>
+  321  	</cfloop>
+  322  	<cfscript>
+  323: 		variables.joFileWriter.close();
+  324  	</cfscript>
+  325  	---->
+  ...
+  576  			<cfset header=trim(ac)>
+  577  			<cfscript>
+  578: 				variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+  579: 				variables.joFileWriter.writeLine(header);
+  580  			</cfscript>
+  581  			<cfloop query="getData">
+  ...
+  595  				<cfset oneLine = trim(oneLine)>
+  596  				<cfscript>
+  597: 					variables.joFileWriter.writeLine(oneLine);
+  598  				</cfscript>
+  599  			</cfloop>
+  600  			<cfscript>
+  601: 				variables.joFileWriter.close();
+  602  			</cfscript>
+  603  			<cflocation url="/download.cfm?file=#fname#" addtoken="false">
+
+/Users/dlm/git/Arctos/tools/barcode2guid.cfm:
+   32  		<cfset variables.fileName="#Application.webDirectory#/download/#fname#">
+   33  		<cfscript>
+   34: 			variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+   35: 			variables.joFileWriter.writeLine('barcode,guid'); 
+   36  		</cfscript>
+   37  		<cfset bc=REReplace(bc, ",+$", "")>
+   ..
+   81  				</tr>
+   82  				<cfscript>
+   83: 					variables.joFileWriter.writeLine('"#trim(b)#","#trim(valuelist(t.guid))#"');
+   84  				</cfscript>
+   85  			</cfloop>
+   86  		</table>
+   87  		<cfscript>	
+   88: 			variables.joFileWriter.close();
+   89  		</cfscript>
+   90  	</cfif>
+
+/Users/dlm/git/Arctos/tools/BulkloadMedia.cfm:
+  599  			<cfset variables.fileName="#Application.webDirectory#/download/#fname#">
+  600  			<cfscript>
+  601: 				variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+  602: 				variables.joFileWriter.writeLine(ListQualify(header,'"'));
+  603  			</cfscript>
+  604  
+  ...
+  689  						</tr>
+  690  						<cfscript>
+  691: 							variables.joFileWriter.writeLine(thisData);
+  692  						</cfscript>
+  693  					</cfif>
+  ...
+  695  			</table>
+  696  			<cfscript>
+  697: 				variables.joFileWriter.close();
+  698  			</cfscript>
+  699  		<cfelse>
+
+/Users/dlm/git/Arctos/tools/BulkloadPlace.cfm:
+  546  <cfset variables.encoding="UTF-8">
+  547  <cfscript>
+  548: 	variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+  549  	kml='<?xml version="1.0" encoding="UTF-8"?>' & chr(10) & 
+  550  	 	'<kml xmlns="http://earth.google.com/kml/2.2">' & chr(10) & 
+  ...
+  559  	 	chr(9) & chr(9) & chr(9) & '</IconStyle>' & chr(10) & 
+  560  	 	chr(9) & chr(9) & '</Style>';
+  561: 	variables.joFileWriter.writeLine(kml);
+  562  </cfscript>
+  563  <cfloop query="df">
+  ...
+  575  			chr(9) & '<styleUrl>##green-star</styleUrl>' & chr(10) & 
+  576  			'</Placemark>';
+  577: 		variables.joFileWriter.writeLine(kml);
+  578  	</cfscript>
+  579  </cfloop>		
+  580  	<cfscript>
+  581  		kml='</Document></kml>';
+  582: 		variables.joFileWriter.writeLine(kml);	
+  583: 		variables.joFileWriter.close();
+  584  	</cfscript>
+  585  		<p>
+
+/Users/dlm/git/Arctos/tools/loanBulkload.cfm:
+   92  	<cfset variables.fileName="#Application.webDirectory#/download/#fname#">
+   93  	<cfscript>
+   94: 		variables.joFileWriter = createObject('Component', '/component.FileWriter').init(variables.fileName, variables.encoding, 32768);
+   95: 		variables.joFileWriter.writeLine(ListQualify(header,'"')); 
+   96  	</cfscript>
+   97  	<cfquery name="getLoanNumber" datasource="user_login" username="#session.dbuser#" password="#decrypt(session.epw,session.sessionKey)#">
+   ..
+  128  		<cfset oneLine = trim(oneLine)>
+  129  		<cfscript>
+  130: 			variables.joFileWriter.writeLine(oneLine);
+  131  		</cfscript>
+  132  	</cfloop>
+  133  	<cfscript>	
+  134: 		variables.joFileWriter.close();
+  135  	</cfscript>
+  136  	
+
+284 matches across 41 files
+
