@@ -18,3 +18,24 @@ CREATE TABLE ATTRIBUTES (
 			FOREIGN KEY (COLLECTION_OBJECT_ID)
 			REFERENCES CATALOGED_ITEM (COLLECTION_OBJECT_ID)
 ) TABLESPACE UAM_DAT_1 ENABLE ROW MOVEMENT;
+
+CREATE OR REPLACE TRIGGER TRG_ATTRIBUTES_fkct_UD
+BEFORE UPDATE OR INSERT ON ATTRIBUTES
+FOR EACH ROW declare
+	c number;
+BEGIN
+	select /*+ RESULT_CACHE */ count(*) into c from ctattribute_type where attribute_type=:NEW.attribute_type;
+    IF c = 0 THEN
+    	raise_application_error(
+        	-20001,
+            :NEW.attribute_type || ' is not in the code table');
+    END IF;
+END;
+/
+
+
+
+ALTER TABLE ATTRIBUTES
+ADD CONSTRAINT FK_ATTRIBUTE_CT_ATTR_TYPE
+   FOREIGN KEY (ATTRIBUTE_TYPE)
+   REFERENCES CTATTRIBUTE_TYPE (ATTRIBUTE_TYPE);
