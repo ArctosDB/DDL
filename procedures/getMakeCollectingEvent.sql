@@ -127,7 +127,7 @@ update temp_getMakeCE_flds set blfld='LONGDIR' where fld='LONG_DIR';
 
 
 
-
+-- built this in prod 20170315
 CREATE OR REPLACE procedure getMakeCollectingEvent (
 	/*
 		IMPORTANT: This procedure requires properly-typed variable. 
@@ -1411,26 +1411,6 @@ sho err;
 
 
 
-
-CREATE OR REPLACE procedure getMakeCollectingEvent (
-	v_COLLECTING_EVENT_ID in collecting_event.collecting_event_id%type  default null,  
-	blabitty in collecting_event.collecting_event_id%type  default null,  
-	v_r_ceid out number
- ) 	is
-		error_msg varchar2(4000);
-		n number;
-		l_locality_id number;
-		l_geog_auth_rec_id number;
-		l_dec_lat number;
-		l_dec_long number;
-		v_cc_geo_attrs varchar2(4000);
-		l_verbatim_coordinates varchar2(4000);
-
-	BEGIN
-
-v_r_ceid:=42;
-end;
-/
 
 
 
