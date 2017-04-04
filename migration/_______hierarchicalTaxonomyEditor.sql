@@ -75,7 +75,7 @@
 	ALTER TABLE hierarchical_taxonomy ADD CONSTRAINT fk_term_type  FOREIGN KEY (rank) REFERENCES cttaxon_term(taxon_term);
 
 	-- unique within dataset
-
+	drop index iu_term_ds;
 	create unique index iu_term_ds on hierarchical_taxonomy (term,dataset_id);
 
 
@@ -224,12 +224,15 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 						into v_c 
 						from hierarchical_taxonomy 
 						where term=r.term and rank=r.term_type and dataset_id=t.dataset_id;
+					--dbms_output.put_line('v_c=' || v_c);
 					if v_c=1 then
 						-- grab the ID for use on the next record, move on
 						select /*+ result_cache */ tid 
 						into v_pid 
 						from hierarchical_taxonomy 
 						where term=r.term and rank=r.term_type and dataset_id=t.dataset_id;
+						
+						--dbms_output.put_line( 'v_pid=' || v_pid);
 					else
 						-- create the term
 						-- first grab the current ID
@@ -248,25 +251,91 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 							t.dataset_id
 						);
 
+						--dbms_output.put_line( 'created term' );
 						-- now assign the term we just made's ID to parent so we can use it in the next loop
 						v_pid:=v_tid;
 					end if;
 				end loop;
 				-- log
 				insert into htax_temp_hierarcicized (taxon_name_id,dataset_id,status) values (t.taxon_name_id,t.dataset_id,'inserted_term');
+				-- dbms_output.put_line('inserted_term: ');
 				exception when others then
 				  err_num := SQLCODE;
 			      err_msg := SUBSTR(SQLERRM, 1, 100);
-
+			     -- dbms_output.put_line('fail: ' || err_msg);
 
 				insert into htax_temp_hierarcicized (taxon_name_id,dataset_id,status) values (t.taxon_name_id,t.dataset_id,'fail: ' || err_msg);
 				end;
+			
 		end loop;
 	end;
 	/
 sho err;
 
+exec proc_hierac_tax;
 
+
+delete from htax_temp_hierarcicized where status like 'fail%';
+
+
+select * from htax_seed where scientific_name like 'Felis domesticus';
+
+select * from htax_temp_hierarcicized where TAXON_NAME_ID=10030257;
+ select * from hierarchical_taxonomy where term like 'Passeriformes%';
+
+ 
+ 
+
+Elapsed: 00:00:00.01
+UAM@ARCTEST> select * from htax_seed where scientific_name like 'Felis domesticus';
+
+SCIENTIFIC_NAME
+------------------------------------------------------------------------------------------------------------------------
+TAXON_NAME_ID DATASET_ID
+------------- ----------
+Felis domesticus
+     10030257	83661895
+
+
+1 row selected.
+
+Elapsed: 00:00:00.01
+UAM@ARCTEST> desc htax_temp_hierarcicized
+ Name								   Null?    Type
+ ----------------------------------------------------------------- -------- --------------------------------------------
+ TAXON_NAME_ID							   NOT NULL NUMBER
+ DATASET_ID							   NOT NULL NUMBER
+ STATUS 								    VARCHAR2(255)
+
+ 
+ 
+ 
+ 
+
+SCIENTIFIC_NAME
+------------------------------------------------------------------------------------------------------------------------
+TAXON_NAME_ID DATASET_ID
+------------- ----------
+Anas platyrhynchos domestic
+     10001345	83465232
+
+
+1 row selected.
+
+Elapsed: 00:00:00.01
+UAM@ARCTEST> desc htax_temp_hierarcicized
+ Name								   Null?    Type
+ ----------------------------------------------------------------- -------- --------------------------------------------
+ TAXON_NAME_ID							   NOT NULL NUMBER
+
+ select * from hierarchical_taxonomy where term='platyrhynchos domestic';
+
+ select * from htax_temp_hierarcicized where TAXON_NAME_ID=10001345;
+
+ delete from htax_temp_hierarcicized where TAXON_NAME_ID=10001345;
+ 
+ 
+ 
 BEGIN
 DBMS_SCHEDULER.DROP_JOB('J_PROC_HIERAC_TAX');
 END;
