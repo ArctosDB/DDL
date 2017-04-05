@@ -12,7 +12,17 @@
 	- keys (tid, parent_tid) are assigned at import and have no realationship to taxon_name_id/anything
 
 
+-- for action findInconsistentData
 
+	create table htax_inconsistent_terms (
+		dataset_id number,
+		term varchar2(255),
+		rank varchar2(255)
+	);
+	create or replace public synonym htax_inconsistent_terms for htax_inconsistent_terms;
+	grant all on htax_inconsistent_terms to manage_taxonomy;
+	
+	
 -- create a half-key and metadata; make this a multi-user multi-classification environment
 
 	create table htax_dataset (
