@@ -197,6 +197,8 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 		v_c number;
 		err_num varchar2(4000);
 		err_msg varchar2(4000);
+		v_term varchar2(4000);
+		v_term_type varchar2(4000);
 	begin
 		v_pid:=NULL;
 		for t in (
@@ -214,7 +216,7 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 				(htax_seed.taxon_name_id,htax_seed.dataset_id) not in (select taxon_name_id,dataset_id from htax_temp_hierarcicized) and
 				rownum<10000
 		) loop
-			dbms_output.put_line('got in ' || t.scientific_name);
+		--	dbms_output.put_line('got in ' || t.scientific_name);
 			begin
 				for r in (
 					select
@@ -230,12 +232,15 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 					order by
 						position_in_classification ASC
 				) loop
-					dbms_output.put_line(r.term_type || '=' || r.term);
+					-- assign to variables so we can use them in error reporting
+					v_term:=r.term;
+					v_term_type:=r.term_type;
+				--	dbms_output.put_line(v_term_type || '=' || v_term);
 					-- see if we already have one
 					select /*+ result_cache */ count(*) 
 						into v_c 
 						from hierarchical_taxonomy 
-						where term=r.term 
+						where term=v_term 
 							--and rank=r.term_type 
 							and dataset_id=t.dataset_id;
 					--dbms_output.put_line('v_c=' || v_c);
@@ -244,9 +249,11 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 						select /*+ result_cache */ tid 
 						into v_pid 
 						from hierarchical_taxonomy 
-						where term=r.term and rank=r.term_type and dataset_id=t.dataset_id;
+						where term=v_term
+						--and rank=r.term_type 
+						and dataset_id=t.dataset_id;
 						
-						dbms_output.put_line( 'already got one thx; for next record v_pid=' || v_pid);
+					--	dbms_output.put_line( 'already got one thx; for next record v_pid=' || v_pid);
 					else
 						-- create the term
 						-- first grab the current ID
@@ -260,23 +267,23 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 						) values (
 							v_tid,
 							v_pid,
-							r.term,
-							r.term_type,
+							v_term,
+							v_term_type,
 							t.dataset_id
 						);
 
-						dbms_output.put_line( 'created term' );
+					--	dbms_output.put_line( 'created term' );
 						-- now assign the term we just made's ID to parent so we can use it in the next loop
 						v_pid:=v_tid;
 					end if;
 				end loop;
 				-- log
 				insert into htax_temp_hierarcicized (taxon_name_id,dataset_id,status) values (t.taxon_name_id,t.dataset_id,'inserted_term');
-				 dbms_output.put_line('inserted_term: ');
+			--	 dbms_output.put_line('inserted_term: ');
 				exception when others then
 				  err_num := SQLCODE;
 			      err_msg := SQLERRM;
-			      dbms_output.put_line('fail with ' || t.scientific_name || ': ' || err_msg || ' at ' || r.term_type || '=' || r.term);
+			    --  dbms_output.put_line('fail with ' || t.scientific_name || ': ' || err_msg || ' at ' || v_term || '=' || v_term);
 
 				insert into 
 					htax_temp_hierarcicized (
@@ -286,7 +293,7 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 					) values (
 						t.taxon_name_id,
 						t.dataset_id,
-						'fail with ' || t.scientific_name || ': ' || err_msg || ' at ' || r.term_type || '=' || r.term);
+						'fail with ' || t.scientific_name || ': ' || err_msg || ' at ' || v_term || '=' || v_term);
 				end;
 			
 		end loop;
