@@ -11,6 +11,18 @@
 
 	- keys (tid, parent_tid) are assigned at import and have no realationship to taxon_name_id/anything
 
+	
+	--- for function getTaxTreeSrch
+	drop table htax_srchhlpr;
+	create table htax_srchhlpr (
+		-- one-time use key
+		key number not null,
+		parent_tid number,
+		term varchar2(255),
+		tid number,
+		rank varchar2(255)
+	);
+	
 
 -- for action findInconsistentData
 	drop table htax_inconsistent_terms;
@@ -216,7 +228,7 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 				(htax_seed.taxon_name_id,htax_seed.dataset_id) not in (select taxon_name_id,dataset_id from htax_temp_hierarcicized) and
 				rownum<10000
 		) loop
-		--	dbms_output.put_line('got in ' || t.scientific_name);
+			--dbms_output.put_line('got in ' || t.scientific_name);
 			begin
 				for r in (
 					select
@@ -235,7 +247,7 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 					-- assign to variables so we can use them in error reporting
 					v_term:=r.term;
 					v_term_type:=r.term_type;
-				--	dbms_output.put_line(v_term_type || '=' || v_term);
+					--dbms_output.put_line(v_term_type || '=' || v_term);
 					-- see if we already have one
 					select /*+ result_cache */ count(*) 
 						into v_c 
@@ -253,7 +265,7 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 						--and rank=r.term_type 
 						and dataset_id=t.dataset_id;
 						
-					--	dbms_output.put_line( 'already got one thx; for next record v_pid=' || v_pid);
+						--dbms_output.put_line( 'already got one thx; for next record v_pid=' || v_pid);
 					else
 						-- create the term
 						-- first grab the current ID
@@ -272,18 +284,18 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 							t.dataset_id
 						);
 
-					--	dbms_output.put_line( 'created term' );
+						--dbms_output.put_line( 'created term' );
 						-- now assign the term we just made's ID to parent so we can use it in the next loop
 						v_pid:=v_tid;
 					end if;
 				end loop;
 				-- log
 				insert into htax_temp_hierarcicized (taxon_name_id,dataset_id,status) values (t.taxon_name_id,t.dataset_id,'inserted_term');
-			--	 dbms_output.put_line('inserted_term: ');
+				-- dbms_output.put_line('inserted_term: ');
 				exception when others then
 				  err_num := SQLCODE;
 			      err_msg := SQLERRM;
-			    --  dbms_output.put_line('fail with ' || t.scientific_name || ': ' || err_msg || ' at ' || v_term || '=' || v_term);
+			     -- dbms_output.put_line('fail with ' || t.scientific_name || ': ' || err_msg || ' at ' || v_term || '=' || v_term);
 
 				insert into 
 					htax_temp_hierarcicized (
@@ -304,7 +316,42 @@ sho err;
 exec proc_hierac_tax;
 
 
+
+select distinct status from htax_temp_hierarcicized;
+
+
+
 delete from htax_temp_hierarcicized where status like 'fail%';
+delete from htax_temp_hierarcicized where status = 'inserted_term';
+
+
+Elapsed: 00:00:00.31
+UAM@ARCTEST> select * from hierarchical_taxonomy where term like '%Disogmus%';
+
+       TID PARENT_TID
+---------- ----------
+TERM
+------------------------------------------------------------------------------------------------------------------------
+RANK
+------------------------------------------------------------------------------------------------------------------------
+DATASET_ID
+----------
+  84286769   84044348
+Disogmus
+genus
+  83890292
+
+
+1 row selected.
+
+Elapsed: 00:00:00.47
+UAM@ARCTEST> select * from hierarchical_taxonomy where PARENT_TID=84286769;
+
+no rows selected
+
+
+
+
 
 
 select * from htax_seed where scientific_name like 'Felis domesticus';
