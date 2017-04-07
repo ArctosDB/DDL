@@ -1,3 +1,34 @@
+["83661897","83661896","Chordata (phylum)"],["83661896","0","Animalia (kingdom)"]
+
+
+CREATE OR REPLACE function test_hier_srch (dsid in number, schterm in varchar) return varchar2
+AS
+	-- note: https://github.com/ArctosDB/arctos/issues/1000#issuecomment-290556611
+	--declare
+		v_pid number;
+		v_tid number;
+		v_c number;
+		err_num varchar2(4000);
+		err_msg varchar2(4000);
+		v_term varchar2(4000);
+		v_term_type varchar2(4000);
+	begin
+		-- pass in a search term and dataset_id
+		-- starting with the search term and working up until parent is null, find
+		-- tid, parent_tid, term, rank
+		
+		-- assume this will never be >100 terms deep; nothing is close as of writing
+		
+		for seed in (select * from hierarchical_taxonomy where term like '%' || schterm || '%') loop
+			dbms_output.put_line(seed.term);
+		end loop;
+		return 'boogity';
+		
+				
+	end;
+/
+
+select test_hier_srch(3,'Rattus') from dual;
 
 -- intent:
 
@@ -17,13 +48,12 @@
 	create table htax_srchhlpr (
 		-- one-time use key
 		key number not null,
-		parent_tid number,
-		term varchar2(255),
-		tid number,
-		rank varchar2(255)
+		-- what we need a list of
+		parent_tid number
 	);
 	
-
+	create or replace public synonym htax_srchhlpr for htax_srchhlpr;
+	grant all on htax_srchhlpr to manage_taxonomy;
 -- for action findInconsistentData
 	drop table htax_inconsistent_terms;
 	
