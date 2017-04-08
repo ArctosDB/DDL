@@ -1,34 +1,108 @@
 ["83661897","83661896","Chordata (phylum)"],["83661896","0","Animalia (kingdom)"]
 
+drop procedure test_hier_srch;
+drop function test_hier_srch;
 
-CREATE OR REPLACE function test_hier_srch (dsid in number, schterm in varchar) return varchar2
+
+CREATE OR REPLACE procedure proc_htax_srch (dsid number, schterm varchar2,v_key number) 
 AS
-	-- note: https://github.com/ArctosDB/arctos/issues/1000#issuecomment-290556611
-	--declare
-		v_pid number;
-		v_tid number;
-		v_c number;
-		err_num varchar2(4000);
-		err_msg varchar2(4000);
-		v_term varchar2(4000);
-		v_term_type varchar2(4000);
-	begin
-		-- pass in a search term and dataset_id
-		-- starting with the search term and working up until parent is null, find
-		-- tid, parent_tid, term, rank
-		
+	v_pid number;
+	v_tid number;
+	v_c number;
+	err_num varchar2(4000);
+	err_msg varchar2(4000);
+	v_term varchar2(4000);
+	v_term_type varchar2(4000);
+begin
+	-- pass in a search term, dataset_id and hopefully-unique temp key (to access the data after this runs)
+	-- starting with the search term and working up until parent is null, find
+	-- tid, parent_tid, term, rank
+	-- store in table for later query
+	for seed in (select * from hierarchical_taxonomy where dataset_id=dsid and term like '%' || schterm || '%') loop
+		insert  /*+ ignore_row_on_dupkey_index(htax_srchhlpr,ux_htax_srchhlpr_full) */   into htax_srchhlpr (
+			key,
+			parent_tid,
+			tid,
+			term,
+			rank
+		) values (
+			v_key,
+			seed.parent_tid,
+			seed.tid,
+			seed.term,
+			seed.rank
+		);
+			
+		-- grab the parent for the next loop
+		v_pid:=seed.parent_tid;
 		-- assume this will never be >100 terms deep; nothing is close as of writing
-		
-		for seed in (select * from hierarchical_taxonomy where term like '%' || schterm || '%') loop
-			dbms_output.put_line(seed.term);
+		for c in 1..100 loop
+			if v_pid is not null then
+				select term,rank,tid, parent_tid into v_term,v_term_type,v_tid,v_pid from 
+					hierarchical_taxonomy where dataset_id=dsid and
+					tid=v_pid;				
+				insert  /*+ ignore_row_on_dupkey_index(htax_srchhlpr,ux_htax_srchhlpr_full) */ into htax_srchhlpr (
+					key,
+					parent_tid,
+					tid,
+					term,
+					rank
+				) values (
+					v_key,
+					v_pid,
+					v_tid,
+					v_term,
+					v_term_type
+				);
+			end if;
 		end loop;
-		return 'boogity';
-		
-				
-	end;
+	end loop;
+end;
 /
 
-select test_hier_srch(3,'Rattus') from dual;
+sho err;
+
+
+create or replace public synonym proc_htax_srch for proc_htax_srch;
+grant execute on proc_htax_srch to manage_taxonomy;
+
+
+
+exec test_hier_srch(83661895,'Rattus',1);
+exec test_hier_srch(83890292,'Mus',12345);
+exec proc_htax_srch(83890292,'mus',12345);
+
+
+
+select test_hier_srch(83661895,'Rattus') from dual;
+
+
+/*
+
+			insert  /*+ ignore_row_on_dupkey_index(htax_srchhlpr,ux_htax_srchhlpr_full) */ into htax_srchhlpr (
+				key,
+				parent_tid,
+				tid,
+				term,
+				rank
+			) values (
+				v_key,
+				seed.parent_tid,
+				seed.tid,
+				seed.term,
+				seed.rank
+			);
+			
+	*/			
+
+	/*
+				
+			*/
+
+
+
+
+
 
 -- intent:
 
@@ -49,11 +123,19 @@ select test_hier_srch(3,'Rattus') from dual;
 		-- one-time use key
 		key number not null,
 		-- what we need a list of
-		parent_tid number
+		parent_tid number,
+		tid number,
+		term varchar2(255),
+		rank varchar2(255)
 	);
 	
 	create or replace public synonym htax_srchhlpr for htax_srchhlpr;
 	grant all on htax_srchhlpr to manage_taxonomy;
+	
+	-- only allow terms to appear once in a result set; this allows use of unique-only hint
+	
+	create unique index ux_htax_srchhlpr_full on htax_srchhlpr (key,parent_tid,tid) tablespace uam_idx_1;
+	
 -- for action findInconsistentData
 	drop table htax_inconsistent_terms;
 	
