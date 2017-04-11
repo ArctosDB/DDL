@@ -1,109 +1,3 @@
-["83661897","83661896","Chordata (phylum)"],["83661896","0","Animalia (kingdom)"]
-
-drop procedure test_hier_srch;
-drop function test_hier_srch;
-
-
-CREATE OR REPLACE procedure proc_htax_srch (dsid number, schterm varchar2,v_key number) 
-AS
-	v_pid number;
-	v_tid number;
-	v_c number;
-	err_num varchar2(4000);
-	err_msg varchar2(4000);
-	v_term varchar2(4000);
-	v_term_type varchar2(4000);
-begin
-	-- pass in a search term, dataset_id and hopefully-unique temp key (to access the data after this runs)
-	-- starting with the search term and working up until parent is null, find
-	-- tid, parent_tid, term, rank
-	-- store in table for later query
-	for seed in (select * from hierarchical_taxonomy where dataset_id=dsid and term like '%' || schterm || '%') loop
-		insert  /*+ ignore_row_on_dupkey_index(htax_srchhlpr,ux_htax_srchhlpr_full) */   into htax_srchhlpr (
-			key,
-			parent_tid,
-			tid,
-			term,
-			rank
-		) values (
-			v_key,
-			seed.parent_tid,
-			seed.tid,
-			seed.term,
-			seed.rank
-		);
-			
-		-- grab the parent for the next loop
-		v_pid:=seed.parent_tid;
-		-- assume this will never be >100 terms deep; nothing is close as of writing
-		for c in 1..100 loop
-			if v_pid is not null then
-				select term,rank,tid, parent_tid into v_term,v_term_type,v_tid,v_pid from 
-					hierarchical_taxonomy where dataset_id=dsid and
-					tid=v_pid;				
-				insert  /*+ ignore_row_on_dupkey_index(htax_srchhlpr,ux_htax_srchhlpr_full) */ into htax_srchhlpr (
-					key,
-					parent_tid,
-					tid,
-					term,
-					rank
-				) values (
-					v_key,
-					v_pid,
-					v_tid,
-					v_term,
-					v_term_type
-				);
-			end if;
-		end loop;
-	end loop;
-end;
-/
-
-sho err;
-
-
-create or replace public synonym proc_htax_srch for proc_htax_srch;
-grant execute on proc_htax_srch to manage_taxonomy;
-
-
-
-exec test_hier_srch(83661895,'Rattus',1);
-exec test_hier_srch(83890292,'Mus',12345);
-exec proc_htax_srch(83890292,'mus',12345);
-
-
-
-select test_hier_srch(83661895,'Rattus') from dual;
-
-
-/*
-
-			insert  /*+ ignore_row_on_dupkey_index(htax_srchhlpr,ux_htax_srchhlpr_full) */ into htax_srchhlpr (
-				key,
-				parent_tid,
-				tid,
-				term,
-				rank
-			) values (
-				v_key,
-				seed.parent_tid,
-				seed.tid,
-				seed.term,
-				seed.rank
-			);
-			
-	*/			
-
-	/*
-				
-			*/
-
-
-
-
-
-
 -- intent:
 
 	--	import Arctos data
@@ -114,27 +8,9 @@ select test_hier_srch(83661895,'Rattus') from dual;
 		-- maybe in another table linked by tid
 
 
-	- keys (tid, parent_tid) are assigned at import and have no realationship to taxon_name_id/anything
+	-- keys (tid, parent_tid) are assigned at import and have no realationship to taxon_name_id/anything
 
 	
-	--- for function getTaxTreeSrch
-	drop table htax_srchhlpr;
-	create table htax_srchhlpr (
-		-- one-time use key
-		key number not null,
-		-- what we need a list of
-		parent_tid number,
-		tid number,
-		term varchar2(255),
-		rank varchar2(255)
-	);
-	
-	create or replace public synonym htax_srchhlpr for htax_srchhlpr;
-	grant all on htax_srchhlpr to manage_taxonomy;
-	
-	-- only allow terms to appear once in a result set; this allows use of unique-only hint
-	
-	create unique index ux_htax_srchhlpr_full on htax_srchhlpr (key,parent_tid,tid) tablespace uam_idx_1;
 	
 -- for action findInconsistentData
 	drop table htax_inconsistent_terms;
@@ -160,7 +36,6 @@ select test_hier_srch(83661895,'Rattus') from dual;
 		comments varchar2(4000),
 		status varchar2(255)  default 'working' not null
 	);
-	alter table htax_dataset add source varchar2(255) not null;
 
 
 	-- status does stuff, so...
@@ -282,8 +157,7 @@ IS_CLASS_BOOL
 	create table htax_seed (
 		scientific_name varchar2(255) not null,
 		taxon_name_id number not null,
-		dataset_id number not null,
-
+		dataset_id number not null
 	);
 	create or replace public synonym htax_seed for htax_seed;
 	grant all on htax_seed to manage_taxonomy;
@@ -425,109 +299,7 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 	/
 sho err;
 
-exec proc_hierac_tax;
 
-
-
-select distinct status from htax_temp_hierarcicized;
-
-
-
-delete from htax_temp_hierarcicized where status like 'fail%';
-delete from htax_temp_hierarcicized where status = 'inserted_term';
-
-
-Elapsed: 00:00:00.31
-UAM@ARCTEST> select * from hierarchical_taxonomy where term like '%Disogmus%';
-
-       TID PARENT_TID
----------- ----------
-TERM
-------------------------------------------------------------------------------------------------------------------------
-RANK
-------------------------------------------------------------------------------------------------------------------------
-DATASET_ID
-----------
-  84286769   84044348
-Disogmus
-genus
-  83890292
-
-
-1 row selected.
-
-Elapsed: 00:00:00.47
-UAM@ARCTEST> select * from hierarchical_taxonomy where PARENT_TID=84286769;
-
-no rows selected
-
-
-
-
-
-
-select * from htax_seed where scientific_name like 'Felis domesticus';
-
-select * from htax_temp_hierarcicized where TAXON_NAME_ID=10030257;
- select * from hierarchical_taxonomy where term like 'Passeriformes%';
-
- 
- 
-
-Elapsed: 00:00:00.01
-UAM@ARCTEST> select * from htax_seed where scientific_name like 'Felis domesticus';
-
-SCIENTIFIC_NAME
-------------------------------------------------------------------------------------------------------------------------
-TAXON_NAME_ID DATASET_ID
-------------- ----------
-Felis domesticus
-     10030257	83661895
-
-
-1 row selected.
-
-Elapsed: 00:00:00.01
-UAM@ARCTEST> desc htax_temp_hierarcicized
- Name								   Null?    Type
- ----------------------------------------------------------------- -------- --------------------------------------------
- TAXON_NAME_ID							   NOT NULL NUMBER
- DATASET_ID							   NOT NULL NUMBER
- STATUS 								    VARCHAR2(255)
-
- 
- 
- 
- 
-
-SCIENTIFIC_NAME
-------------------------------------------------------------------------------------------------------------------------
-TAXON_NAME_ID DATASET_ID
-------------- ----------
-Anas platyrhynchos domestic
-     10001345	83465232
-
-
-1 row selected.
-
-Elapsed: 00:00:00.01
-UAM@ARCTEST> desc htax_temp_hierarcicized
- Name								   Null?    Type
- ----------------------------------------------------------------- -------- --------------------------------------------
- TAXON_NAME_ID							   NOT NULL NUMBER
-
- select * from hierarchical_taxonomy where term='platyrhynchos domestic';
-
- select * from htax_temp_hierarcicized where TAXON_NAME_ID=10001345;
-
- delete from htax_temp_hierarcicized where TAXON_NAME_ID=10001345;
- 
- 
- 
-BEGIN
-DBMS_SCHEDULER.DROP_JOB('J_PROC_HIERAC_TAX');
-END;
-/
 
 BEGIN
 DBMS_SCHEDULER.CREATE_JOB (
@@ -541,6 +313,90 @@ DBMS_SCHEDULER.CREATE_JOB (
    comments           =>  'PROCESS HIERARCHICAL TAXONOMY');
 END;
 /
+
+
+--- for function getTaxTreeSrch
+	drop table htax_srchhlpr;
+	create table htax_srchhlpr (
+		-- one-time use key
+		key number not null,
+		-- what we need a list of
+		parent_tid number,
+		tid number,
+		term varchar2(255),
+		rank varchar2(255)
+	);
+	
+	create or replace public synonym htax_srchhlpr for htax_srchhlpr;
+	grant all on htax_srchhlpr to manage_taxonomy;
+	
+	
+	-- only allow terms to appear once in a result set; this allows use of unique-only hint
+	create unique index ux_htax_srchhlpr_full on htax_srchhlpr (key,parent_tid,tid) tablespace uam_idx_1;
+
+CREATE OR REPLACE procedure proc_htax_srch (dsid number, schterm varchar2,v_key number) 
+AS
+	v_pid number;
+	v_tid number;
+	v_c number;
+	err_num varchar2(4000);
+	err_msg varchar2(4000);
+	v_term varchar2(4000);
+	v_term_type varchar2(4000);
+begin
+	-- pass in a search term, dataset_id and hopefully-unique temp key (to access the data after this runs)
+	-- starting with the search term and working up until parent is null, find
+	-- tid, parent_tid, term, rank
+	-- store in table for later query
+	for seed in (select * from hierarchical_taxonomy where dataset_id=dsid and term like '%' || schterm || '%') loop
+		insert  /*+ ignore_row_on_dupkey_index(htax_srchhlpr,ux_htax_srchhlpr_full) */   into htax_srchhlpr (
+			key,
+			parent_tid,
+			tid,
+			term,
+			rank
+		) values (
+			v_key,
+			seed.parent_tid,
+			seed.tid,
+			seed.term,
+			seed.rank
+		);
+			
+		-- grab the parent for the next loop
+		v_pid:=seed.parent_tid;
+		-- assume this will never be >100 terms deep; nothing is close as of writing
+		for c in 1..100 loop
+			if v_pid is not null then
+				select term,rank,tid, parent_tid into v_term,v_term_type,v_tid,v_pid from 
+					hierarchical_taxonomy where dataset_id=dsid and
+					tid=v_pid;				
+				insert  /*+ ignore_row_on_dupkey_index(htax_srchhlpr,ux_htax_srchhlpr_full) */ into htax_srchhlpr (
+					key,
+					parent_tid,
+					tid,
+					term,
+					rank
+				) values (
+					v_key,
+					v_pid,
+					v_tid,
+					v_term,
+					v_term_type
+				);
+			end if;
+		end loop;
+	end loop;
+end;
+/
+
+sho err;
+
+
+create or replace public synonym proc_htax_srch for proc_htax_srch;
+grant execute on proc_htax_srch to manage_taxonomy;
+
+
 
 
 
@@ -627,32 +483,6 @@ select STATE,LAST_RUN_DURATION,MAX_RUN_DURATION,LAST_START_DATE,NEXT_RUN_DATE fr
 select STATE,LAST_RUN_DURATION,MAX_RUN_DURATION,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_PROC_HIERAC_TAX_NC';
 
 select ':' || status || ':',count(*) from htax_temp_hierarcicized group by ':' || status || ':';
-
-exec proc_hierac_tax;
-
-BEGIN
-DBMS_SCHEDULER.DROP_JOB('J_PROC_HIERAC_TAX');
-END;
-/
-
-BEGIN
-DBMS_SCHEDULER.CREATE_JOB (
-   job_name           =>  'J_PROC_HIERAC_TAX',
-   job_type           =>  'STORED_PROCEDURE',
-   job_action         =>  'proc_hierac_tax',
-   start_date         =>  SYSTIMESTAMP,
-	repeat_interval    =>  'freq=minutely; interval=3',
-   enabled             =>  TRUE,
-   end_date           =>  NULL,
-   comments           =>  'PROCESS HIERARCHICAL TAXONOMY');
-END;
-/
-
-select STATE,LAST_RUN_DURATION,MAX_RUN_DURATION,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_PROC_HIERAC_TAX';
-
-
-
-
 
 
 
