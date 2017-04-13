@@ -195,7 +195,6 @@ create table htax_noclassterm (
 CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 	-- note: https://github.com/ArctosDB/arctos/issues/1000#issuecomment-290556611
 	-- this should always at least insert the seed term
-	
 	--declare
 		v_pid number;
 		v_tid number;
@@ -222,67 +221,62 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 				(htax_seed.taxon_name_id,htax_seed.dataset_id) not in (select taxon_name_id,dataset_id from htax_temp_hierarcicized) and
 				rownum<10000
 		) loop
-			
-			dbms_output.put_line('got in ' || t.scientific_name);
-			
-			-- see if there's any classification data
-			-- if not, just insert the term, I guess....
-			
-			
+			--dbms_output.put_line('got in ' || t.scientific_name);
+-			-- see if there's any classification data
+			-- if not, see what we can do....
 			select count(*) into v_c from taxon_term where 
-			taxon_term.taxon_name_id=t.taxon_name_id and
-						source=t.source and
-						position_in_classification is not null and
-						term_type != 'scientific_name';
-			dbms_output.put_line('terms:  ' || v_c);
+				taxon_term.taxon_name_id=t.taxon_name_id and
+				source=t.source and
+				position_in_classification is not null and
+				term_type != 'scientific_name';
+			--dbms_output.put_line('terms:  ' || v_c);
 			if v_c = 0 then
-				dbms_output.put_line('no classification data panic and fail!!!;');
-				
-					dbms_output.put_line('didnt find rank try to guess by structure');
-					if t.scientific_name like '% % %' then
-						v_term_type:='subspecies';
-						dbms_output.put_line('subspecies');
-						-- see if we can find a species
-						v_wrk:=substr(t.scientific_name,0,instr(t.scientific_name,' ',1,2));
-						dbms_output.put_line('species is ' || v_wrk);
-						
-						
-						
-						
-					elsif t.scientific_name like '% %' then
-						v_term_type:='species';
-						dbms_output.put_line('species');
-					elsif t.scientific_name like '% % % %' then
-						v_term_type:='too_many_spaces';
-						dbms_output.put_line('too_many_spaces');
-					else
-						v_term_type:='genus or something maybe IDK';
-						dbms_output.put_line('genus or something maybe IDK');
+				-- if all this fails, just insert as top-level term
+				v_pid:=NULL;
+				--dbms_output.put_line('no classification data panic and fail!!!;');
+				--dbms_output.put_line('didnt find rank try to guess by structure');
+				if t.scientific_name like '% % %' then
+					v_term_type:='subspecies';
+					--dbms_output.put_line('subspecies');
+					-- see if we can find a species
+					v_wrk:=substr(t.scientific_name,0,instr(t.scientific_name,' ',1,2));
+					--dbms_output.put_line('species is ' || v_wrk);
+					select count(*) into v_c from hierarchical_taxonomy where term=trim(v_wrk);
+					if v_c=1 then
+						select tid into v_pid from hierarchical_taxonomy where term=trim(v_wrk);
 					end if;
-				
-					-- just stuff it in below kingdom
-					
-				
-				
-					insert into hierarchical_taxonomy (
-						tid,
-						parent_tid,
-						term,
-						rank,
-						dataset_id
-					) values (
-						somerandomsequence.nextval,
-						v_pid,
-						t.scientific_name,
-						v_term_type,
-						t.dataset_id
-					);
-						
-					insert into htax_temp_hierarcicized (taxon_name_id,dataset_id,status) values (t.taxon_name_id,t.dataset_id,'guessed_at_rank_noclass');
-
-
+				elsif t.scientific_name like '% %' then
+					v_term_type:='species';
+					v_wrk:=substr(t.scientific_name,0,instr(t.scientific_name,' '));
+					--dbms_output.put_line('genus is ' || v_wrk);
+					select count(*) into v_c from hierarchical_taxonomy where term=trim(v_wrk);
+					if v_c=1 then
+						select tid into v_pid from hierarchical_taxonomy where term=trim(v_wrk);
+					end if;
+					--dbms_output.put_line('species');
+				elsif t.scientific_name like '% % % %' then
+					v_term_type:='too_many_spaces';
+					--dbms_output.put_line('too_many_spaces');
+				else
+					v_term_type:='genus or something maybe IDK';
+					--dbms_output.put_line('genus or something maybe IDK');
+				end if;
+				insert into hierarchical_taxonomy (
+					tid,
+					parent_tid,
+					term,
+					rank,
+					dataset_id
+				) values (
+					somerandomsequence.nextval,
+					v_pid,
+					t.scientific_name,
+					v_term_type,
+					t.dataset_id
+				);
+				insert into htax_temp_hierarcicized (taxon_name_id,dataset_id,status) values (t.taxon_name_id,t.dataset_id,'guessed_at_rank_noclass');
 			else
-				dbms_output.put_line('nrml:  ' || v_c);
+				--dbms_output.put_line('nrml:  ' || v_c);
 				begin
 				for r in (
 					select
@@ -301,7 +295,7 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 					-- assign to variables so we can use them in error reporting
 					v_term:=r.term;
 					v_term_type:=r.term_type;
-					dbms_output.put_line(v_term_type || '=' || v_term);
+					--dbms_output.put_line(v_term_type || '=' || v_term);
 					-- see if we already have one
 					select /*+ result_cache */ count(*) 
 						into v_c 
@@ -309,7 +303,7 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 						where term=v_term 
 							--and rank=r.term_type 
 							and dataset_id=t.dataset_id;
-					dbms_output.put_line('v_c=' || v_c);
+					--dbms_output.put_line('v_c=' || v_c);
 					if v_c=1 then
 						-- grab the ID for use on the next record, move on
 						select /*+ result_cache */ tid 
@@ -319,7 +313,7 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 						--and rank=r.term_type 
 						and dataset_id=t.dataset_id;
 						
-						dbms_output.put_line( 'already got one thx; for next record v_pid=' || v_pid);
+						--dbms_output.put_line( 'already got one thx; for next record v_pid=' || v_pid);
 					else
 						-- create the term
 						-- first grab the current ID
@@ -338,7 +332,7 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 							t.dataset_id
 						);
 
-						dbms_output.put_line( 'created term' );
+						--dbms_output.put_line( 'created term' );
 						-- now assign the term we just made's ID to parent so we can use it in the next loop
 						v_pid:=v_tid;
 					end if;
@@ -351,16 +345,16 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 					-- yay
 				-- log
 					insert into htax_temp_hierarcicized (taxon_name_id,dataset_id,status) values (t.taxon_name_id,t.dataset_id,'inserted_term');
-					 dbms_output.put_line('inserted_term: ');
+					--dbms_output.put_line('inserted_term: ');
 				else
 					insert into htax_temp_hierarcicized (taxon_name_id,dataset_id,status) values (t.taxon_name_id,t.dataset_id,'missed_taxonname');
-					 dbms_output.put_line('missed_taxonname: ');
+					 --dbms_output.put_line('missed_taxonname: ');
 				end if;
 				
 				exception when others then
 				  err_num := SQLCODE;
 			      err_msg := SQLERRM;
-			      dbms_output.put_line('fail with ' || t.scientific_name || ': ' || err_msg || ' at ' || v_term || '=' || v_term);
+			      --dbms_output.put_line('fail with ' || t.scientific_name || ': ' || err_msg || ' at ' || v_term || '=' || v_term);
 
 				insert into 
 					htax_temp_hierarcicized (
@@ -372,16 +366,23 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 						t.dataset_id,
 						'fail with ' || t.scientific_name || ': ' || err_msg || ' at ' || v_term || '=' || v_term);
 				end;
-			
 			end if;
-			
-			
 		end loop;
 	end;
 	/
 sho err;
 
 -- fix messy birds
+
+
+
+delete from hierarchical_taxonomy where term in (select htax_seed.scientific_name from htax_seed,htax_temp_hierarcicized where
+htax_seed.taxon_name_id=htax_temp_hierarcicized.taxon_name_id and htax_temp_hierarcicized.status='guessed_at_rank_noclass');
+
+delete from htax_temp_hierarcicized where status='guessed_at_rank_noclass';
+
+exec proc_hierac_tax;
+
 
 delete from htax_temp_hierarcicized where status='inserted_term';
 Elapsed: 00:00:00.00
