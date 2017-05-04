@@ -1,7 +1,102 @@
+-------- push a small dataset to the bulkloader
+alter table hierarchical_taxonomy add status varchar2(255);
+
+
+update hierarchical_taxonomy set status=null where status is not null;
+
+
+declare
+	v_tid number;
+	c number;
+	v_uid varchar2(255);
+	v_dsid number;
+begin
+	-- seed
+	-- grap a UID for this load
+	select SYS_GUID() into v_uid FROM dual;
+		dbms_output.put_line('v_uid: ' || v_uid);
+	
+	-- grab dataset_id from dataset_name
+	select dataset_id into v_dsid from htax_dataset where dataset_name='bird';
+		dbms_output.put_line('v_dsid: ' || v_dsid);
+	
+	-- set the seed
+	
+	
+	update hierarchical_taxonomy set status=v_uid where dataset_id=v_dsid and term='Dendrocolaptinae';
+	 -- now get children and their children etc.
+	 -- hopefully never have >100 steps
+	for i in 1..100 loop
+		dbms_output.put_line('loopy ' || i);
+		update hierarchical_taxonomy set status=v_uid where  status is null and parent_tid in (
+			select tid from hierarchical_taxonomy where status=v_uid
+		);
+
+
+		
+	end loop;
+	
+	
+	-- now set to load
+	update hierarchical_taxonomy set status='ready_to_push_bl' where status=v_uid;
+end;
+/
+
+
+update hierarchical_taxonomy set status='ready_to_push_bl' where status ='pushed_to_bl';
+
+select * from htax_noclassterm where tid in (select tid from hierarchical_taxonomy where status is not null) ;
 
 
 
 
+select distinct term_type from htax_noclassterm;
+
+
+create table htax_noclassterm (
+	nc_tid number not null,
+	tid number not null,
+	term_type varchar2(255) not null,
+	term_value varchar2(255) not null
+);
+
+
+-- oracle has stupid restrictions on sequences and we need to mass-insert nomen_code so....
+CREATE OR REPLACE TRIGGER trg_htax_noclassterm_sq
+ before insert  ON htax_noclassterm
+ for each row
+    begin
+	    IF :new.nc_tid IS NULL THEN
+    		select someRandomSequence.nextval into :new.nc_tid from dual;
+    	end if;
+    end;
+/
+sho err
+
+
+	
+	create table htax_dataset (
+		dataset_id number not null,
+		dataset_name varchar2(255) not null,
+		created_by varchar2(255) not null,
+		created_date date not null,
+		source varchar2(255) not null,
+		comments varchar2(4000),
+		status varchar2(255)  default 'working' not 
+
+UAM@ARCTOS> UAM@ARCTOS> UAM@ARCTOS> UAM@ARCTOS> desc hierarchical_taxonomy
+ Name								   Null?    Type
+ ----------------------------------------------------------------- -------- --------------------------------------------
+ TID								   NOT NULL NUMBER
+ PARENT_TID								    NUMBER
+ TERM									    VARCHAR2(255)
+ RANK									    VARCHAR2(255)
+ DATASET_ID							   NOT NULL NUMBER
+
+
+ 
+ 
+ 
 
 -- intent:
 
