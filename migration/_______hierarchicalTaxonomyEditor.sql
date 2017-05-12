@@ -1,46 +1,200 @@
+
+--- fix missing "required" data
+-- bird without nomenclatural_code
+begin
+	for r in (
+		select 
+			tid 
+		from 
+			hierarchical_taxonomy 
+		where 
+			dataset_id=(select dataset_id from htax_dataset where dataset_name='bird') and
+			tid not in (select tid from htax_noclassterm where TERM_TYPE='nomenclatural_code')
+	)	loop
+	
+		dbms_output.put_line(r.tid);
+		
+		insert into htax_noclassterm (
+			TID,
+			TERM_TYPE,
+			TERM_VALUE
+		) values (
+			r.tid,
+			'nomenclatural_code',
+			'ICZN'
+		);
+
+	end loop;
+end;
+/
+
+
+	
+
 -------- push a small dataset to the bulkloader
+-- table to hold stuff
+drop table htax_export;
+
+create table htax_export (
+	dataset_id number not null,
+	seed_term varchar2(255) not null,
+	username varchar2(255) not null,
+	status varchar2(255) not null,
+	export_id varchar2(255)
+);
+
+create public synonym htax_export for htax_export;
+grant all on htax_export to manage_taxonomy;
+
+
+delete from htax_export;
+delete from cf_temp_classification_fh;
+
+insert into htax_export (
+	dataset_id,
+	seed_term,
+	username,
+	status,
+	export_id
+) values (
+	114013137,
+	'Dendrocolaptinae',
+	'DLM',
+	'mark_to_export',
+	SYS_GUID() 
+);
+
+insert into htax_export (
+	dataset_id,
+	seed_term,
+	username,
+	status,
+	export_id
+) values (
+	114013137,
+	'Reptilia',
+	'DLM',
+	'mark_to_export',
+	SYS_GUID() 
+);
+
+
+
+
+create table htax_export_errors (
+	export_id varchar2(255),
+	term varchar2(255),
+	term_type varchar2(255),
+	message varchar2(255),
+	detail varchar2(255),
+	sql varchar2(4000)
+);
+
+alter table htax_export_errors modify sql varchar2(4000);
+
+delete from cf_temp_classification_fh;
+
+exec proc_hierac_tax_export;
+
+-- run cf job
+
+select * from htax_export;
+select * from cf_temp_classification_fh;
+
+select * from hierarchical_taxonomy where status='4F48782ADC66F761E0507281913464AA';
+
+
 alter table hierarchical_taxonomy add status varchar2(255);
 
+	select * from hierarchical_taxonomy where  status is null and parent_tid in (
+			select tid from hierarchical_taxonomy where status='4F41F72EACF79996E050728191340891'
+		);
+		
+		
+		
+		
+	update hierarchical_taxonomy set status='boogity' where dataset_id=114013137 and term='Aix';
 
+	update hierarchical_taxonomy set status='boogity' where status != 'boogity' and parent_tid in (
+			select tid from hierarchical_taxonomy where status='boogity'
+		);
+	
+		select * from hierarchical_taxonomy where (status is null or status != 'boogity') and parent_tid in (
+			select tid from hierarchical_taxonomy where status='boogity'
+		);
+		
+		
+		
+		
+		select * from hierarchical_taxonomy where status='boogity';
+		
+		
+		
+	
 update hierarchical_taxonomy set status=null where status is not null;
 
-
-declare
+CREATE OR REPLACE PROCEDURE proc_hierac_tax_export IS
 	v_tid number;
 	c number;
 	v_uid varchar2(255);
 	v_dsid number;
+	v_seed_term varchar2(255);
 begin
 	-- seed
 	-- grap a UID for this load
-	select SYS_GUID() into v_uid FROM dual;
-		dbms_output.put_line('v_uid: ' || v_uid);
+	select 
+		dataset_id,
+		seed_term,
+		export_id 
+	into 
+		v_dsid,
+		v_seed_term,
+		v_uid 
+	FROM
+		htax_export
+	where
+		status='mark_to_export';
 	
 	-- grab dataset_id from dataset_name
-	select dataset_id into v_dsid from htax_dataset where dataset_name='bird';
-		dbms_output.put_line('v_dsid: ' || v_dsid);
 	
 	-- set the seed
 	
 	
-	update hierarchical_taxonomy set status=v_uid where dataset_id=v_dsid and term='Dendrocolaptinae';
+	update hierarchical_taxonomy set status=v_uid where dataset_id=v_dsid and term=v_seed_term;
 	 -- now get children and their children etc.
 	 -- hopefully never have >100 steps
 	for i in 1..100 loop
-		dbms_output.put_line('loopy ' || i);
-		update hierarchical_taxonomy set status=v_uid where  status is null and parent_tid in (
+		update hierarchical_taxonomy set status=v_uid where (status is null or status != v_uid) and parent_tid in (
 			select tid from hierarchical_taxonomy where status=v_uid
 		);
-
-
-		
 	end loop;
 	
 	
 	-- now set to load
-	update hierarchical_taxonomy set status='ready_to_push_bl' where status=v_uid;
+	--update hierarchical_taxonomy set status='ready_to_push_bl' where status=v_uid;
+	update htax_export set status='ready_to_push_bl' where export_id=v_uid;
+	
+
 end;
 /
+
+
+BEGIN
+DBMS_SCHEDULER.CREATE_JOB (
+   job_name           =>  'J_proc_hierac_tax_export',
+   job_type           =>  'STORED_PROCEDURE',
+   job_action         =>  'proc_hierac_tax_export',
+   start_date         =>  SYSTIMESTAMP,
+	repeat_interval    =>  'freq=minutely; interval=1',
+   enabled             =>  TRUE,
+   end_date           =>  NULL,
+   comments           =>  'PROCESS HIERARCHICAL TAXONOMY for download');
+END;
+/
+
+
+
+
 
 
 update hierarchical_taxonomy set status='ready_to_push_bl' where status ='pushed_to_bl';
