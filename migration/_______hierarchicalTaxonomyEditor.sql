@@ -140,8 +140,6 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax_export IS
 	v_dsid number;
 	v_seed_term varchar2(255);
 begin
-	-- seed
-	-- grap a UID for this load
 	select 
 		dataset_id,
 		seed_term,
@@ -155,11 +153,8 @@ begin
 	where
 		status='mark_to_export';
 	
-	-- grab dataset_id from dataset_name
 	
 	-- set the seed
-	
-	
 	update hierarchical_taxonomy set status=v_uid where dataset_id=v_dsid and term=v_seed_term;
 	 -- now get children and their children etc.
 	 -- hopefully never have >100 steps
@@ -168,8 +163,6 @@ begin
 			select tid from hierarchical_taxonomy where status=v_uid
 		);
 	end loop;
-	
-	
 	-- now set to load
 	--update hierarchical_taxonomy set status='ready_to_push_bl' where status=v_uid;
 	update htax_export set status='ready_to_push_bl' where export_id=v_uid;
@@ -178,6 +171,7 @@ begin
 end;
 /
 
+select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_PROC_HIERAC_TAX_EXPORT';
 
 BEGIN
 DBMS_SCHEDULER.CREATE_JOB (
@@ -193,7 +187,55 @@ END;
 /
 
 
+create table htax_markdeletetree (
+	seed_tid number not null,
+	seed_term varchar2(255) not null,
+	username varchar2(255) not null,
+	delete_id varchar2(4000) not null,
+	status varchar2(4000)
+);
+create public synonym htax_markdeletetree for htax_markdeletetree;
+grant all on htax_markdeletetree to manage_taxonomy;
 
+
+CREATE OR REPLACE PROCEDURE proc_hierac_tax_deletefami IS
+	v_tid number;
+	v_uid varchar2(255);
+begin
+	select 
+		seed_tid,
+		delete_id
+	into 
+		v_tid,
+		v_uid 
+	FROM
+		htax_markdeletetree
+	where
+		status='mark_to_delete';
+	
+	
+	-- set the seed
+	update hierarchical_taxonomy set status=v_uid where tid=v_tid;
+	 -- now get children and their children etc.
+	 -- hopefully never have >100 steps
+	for i in 1..100 loop
+		update hierarchical_taxonomy set status=v_uid where (status is null or status != v_uid) and parent_tid in (
+			select tid from hierarchical_taxonomy where status=v_uid
+		);
+	end loop;
+	-- now set to load
+	delete from htax_noclassterm where tid in (select tid from hierarchical_taxonomy where status=v_uid);
+	delete from hierarchical_taxonomy where status=v_uid;
+	update htax_markdeletetree set status='deleted' where delete_id=v_uid;
+end;
+/
+
+
+
+
+select * from htax_markdeletetree;
+exec proc_hierac_tax_deletefami;
+select term from hierarchical_taxonomy where status='4F555EA60C2EF439E05072819134B38E' order by term;
 
 
 
@@ -238,19 +280,7 @@ sho err
 		comments varchar2(4000),
 		status varchar2(255)  default 'working' not 
 
-UAM@ARCTOS> UAM@ARCTOS> UAM@ARCTOS> UAM@ARCTOS> desc hierarchical_taxonomy
- Name								   Null?    Type
- ----------------------------------------------------------------- -------- --------------------------------------------
- TID								   NOT NULL NUMBER
- PARENT_TID								    NUMBER
- TERM									    VARCHAR2(255)
- RANK									    VARCHAR2(255)
- DATASET_ID							   NOT NULL NUMBER
 
-
- 
- 
- 
 
 -- intent:
 

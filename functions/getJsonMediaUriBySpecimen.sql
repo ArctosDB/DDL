@@ -66,14 +66,21 @@ begin
 		    numrec:=0;
 		END IF;
 	end loop;
-	reslt:='{"ROWCOUNT":' || numrec || ',"COLUMNS":["MEDIA_ID","MEDIA_TYPE","PREVIEW_URI","MEDIA_URI","MIME_TYPE","MIMECAT"],"DATA":{';
-	reslt:=reslt || '"media_id":[' || mid || '],';
-	reslt:=reslt || '"media_type":[';
-	reslt:=reslt || mt || '],"preview_uri":[';
-	reslt:=reslt || pu || '],"media_uri":[';
-	reslt:=reslt || mu || '],"mimecat":[';
-	reslt:=reslt || medtype || '],"mime_type":[';
-	reslt:=reslt || mimt || ']}}';
+	
+	-- edit for https://github.com/ArctosDB/arctos/issues/1130
+	-- return NULL is nothing is found
+	--if numrec > 0 then
+		reslt:='{"ROWCOUNT":' || numrec || ',"COLUMNS":["MEDIA_ID","MEDIA_TYPE","PREVIEW_URI","MEDIA_URI","MIME_TYPE","MIMECAT"],"DATA":{';
+		reslt:=reslt || '"media_id":[' || mid || '],';
+		reslt:=reslt || '"media_type":[';
+		reslt:=reslt || mt || '],"preview_uri":[';
+		reslt:=reslt || pu || '],"media_uri":[';
+		reslt:=reslt || mu || '],"mimecat":[';
+		reslt:=reslt || medtype || '],"mime_type":[';
+		reslt:=reslt || mimt || ']}}';
+	--else
+	--	reslt:=NULL;
+	--end if;
 		
 return reslt;
 
