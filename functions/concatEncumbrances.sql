@@ -1,10 +1,4 @@
 CREATE OR REPLACE function concatEncumbrances(p_key_val  in number )
-
-invalid copy from migration
-
-
-
-
     return varchar2
     as
         type rc is ref cursor;
@@ -14,13 +8,12 @@ invalid copy from migration
 
        l_cur    rc;
    begin
-
       open l_cur for 'select encumbrance_action
                          from encumbrance, coll_object_encumbrance
                         where encumbrance.encumbrance_id = coll_object_encumbrance.encumbrance_id
+						AND EXPIRATION_DATE > sysdate
                         AND coll_object_encumbrance.collection_object_id  = :x '
                           using p_key_val;
-
        loop
            fetch l_cur into l_val;
            exit when l_cur%notfound;
@@ -28,8 +21,6 @@ invalid copy from migration
            l_sep := '; ';
        end loop;
        close l_cur;
-
        return l_str;
   end;
 /
-

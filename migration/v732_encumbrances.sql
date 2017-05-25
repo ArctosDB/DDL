@@ -161,6 +161,9 @@ alter table encumbrance drop column EXPIRATION_EVENT;
 
 
 CREATE OR REPLACE TRIGGER tr_encumbrance_biu
+
+see triggers file 
+
 BEFORE UPDATE OR INSERT ON encumbrance
 FOR EACH ROW
 BEGIN
@@ -198,6 +201,10 @@ END;
 -- rewrite it to only pull current encumbrances
 
 CREATE OR REPLACE function concatEncumbrances(p_key_val  in number )
+
+-- copied to functions
+
+
     return varchar2
     as
         type rc is ref cursor;
@@ -230,6 +237,11 @@ CREATE OR REPLACE function concatEncumbrances(p_key_val  in number )
 -- runs nightly
 
 CREATE OR REPLACE PROCEDURE remove_expired_encumbrance IS 
+
+
+moved to procedures
+
+
 BEGIN
 	-- find encumbrances which have expired
 	-- and which hold specimens that are encumbered in flat
@@ -287,6 +299,10 @@ spool off;
 
 
 CREATE OR REPLACE FUNCTION concatEncumbranceDetails (p_key_val  in varchar2 )
+
+moved to functions
+
+
 	return varchar2 as
 		type rc is ref cursor;
 		l_str varchar2(4000);
