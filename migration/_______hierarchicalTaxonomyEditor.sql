@@ -151,8 +151,8 @@ begin
 	FROM
 		htax_export
 	where
-		status='mark_to_export';
-	
+		export_id in (select min (export_id) from htax_export where status='mark_to_export')
+	;
 	
 	-- set the seed
 	update hierarchical_taxonomy set status=v_uid where dataset_id=v_dsid and term=v_seed_term;
