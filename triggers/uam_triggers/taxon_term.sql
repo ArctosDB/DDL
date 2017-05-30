@@ -55,8 +55,9 @@ create or replace trigger trg_taxon_term_cts before insert or update on taxon_te
 		            );
 				end if;
 			end if;
-			
-			insert into cf_automaintain_taxonterms  (classification_id) values (:NEW.classification_id);
+			if :NEW.classification_id is not null then
+				insert into cf_automaintain_taxonterms  (classification_id) values (:NEW.classification_id);
+			end if;
 
 		END IF;
 	end;

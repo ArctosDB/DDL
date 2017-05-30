@@ -10,6 +10,7 @@ create table cf_automaintain_taxonterms (classification_id varchar2(4000) not nu
 drop table cf_autogen_display_name;
 
 
+
 -- modify DDL/triggers/taxon_term to insert
 
 -- procedure
@@ -24,29 +25,66 @@ create table temp_dispnamelog (
 	when date
 );
 
+-- old
+drop procedure proc_autogen_display_name;
+
+-- move taxon_term.scientific_name to nonclassification data
+update CTTAXON_TERM set RELATIVE_POSITION=null,IS_CLASSIFICATION=0 where TAXON_TERM='scientific_name';
+-- and update existing
+update taxon_term set POSITION_IN_CLASSIFICATION=null where source in ('Arctos','Arctos Plants') and term_type='scientific_name' and
+POSITION_IN_CLASSIFICATION is not null and rownum<500000;
 
 
-CREATE OR REPLACE PROCEDURE proc_autogen_taxonterm IS
+
+select distinct scientific_name
+from taxon_name where taxon_name_id in (select taxon_name_id from taxon_term where source in ('Arctos','Arctos Plants') and 
+term_type='scientific_name' and
+POSITION_IN_CLASSIFICATION is null);
+
+
+CREATE OR REPLACE PROCEDURE proc_autogen_taxonterms IS
 	dn varchar2(4000);
 	tid number;
 	src  varchar2(4000);
 	sttid number;
+	c number;
+	nsn varchar2(4000);
 begin
-	for r in (select distinct classification_id from cf_autogen_display_name) loop
-		-- flush any old stuff
-		dbms_output.put_line('classification_id: ' || r.classification_id);
-		delete from taxon_term where term_type='display_name' and classification_id=r.classification_id;
-		-- see if we can create one
-		select generateDisplayName(r.classification_id) into dn from dual;
-		
-		
-		dbms_output.put_line('dn: ' || dn);
-		
-		if dn is not null then
-			-- need some seed stuff
+	for r in (select distinct classification_id from cf_automaintain_taxonterms) loop
+		-- see if there's still anything to do;
+		-- sometimes a classification gets deleted
+		-- after being markedd for update
+		select count(*) into c from taxon_term where classification_id=r.classification_id;
+		if c > 0 then
+			-- flush any old stuff
+			dbms_output.put_line('classification_id: ' || r.classification_id);
+			delete from taxon_term where classification_id=r.classification_id and
+				term_type in ('display_name','scientific_name');
+			-- see if we can create one
+			select generateDisplayName(r.classification_id) into dn from dual;
+			dbms_output.put_line('dn: ' || dn);
 			select TAXON_NAME_ID,SOURCE into tid,src from taxon_term where TAXON_TERM_ID in (select min(TAXON_TERM_ID) from
-			taxon_term where classification_id=r.classification_id);
-			-- insert
+				taxon_term where classification_id=r.classification_id);
+			select scientific_name into nsn from taxon_name where taxon_name_id=tid;
+			
+			if dn is not null then
+				-- insert
+				insert into taxon_term (
+					TAXON_NAME_ID,
+					CLASSIFICATION_ID,
+					TERM,
+					TERM_TYPE,
+					SOURCE,
+					LASTDATE
+				) values (
+					tid,
+					r.classification_id,
+					dn,
+					'display_name',
+					src,
+					sysdate
+				);
+			end if;
 			insert into taxon_term (
 				TAXON_NAME_ID,
 				CLASSIFICATION_ID,
@@ -57,45 +95,48 @@ begin
 			) values (
 				tid,
 				r.classification_id,
-				dn,
-				'display_name',
+				nsn,
+				'scientific_name',
 				src,
 				sysdate
 			);
 			
-			
+			-- temp log
 			insert into temp_dispnamelog (cid,tid,when) values (r.classification_id,tid,sysdate);
-
-
-
 		end if;
 		-- clean up
-		delete from cf_autogen_display_name where classification_id=r.classification_id;
+		delete from cf_automaintain_taxonterms where classification_id=r.classification_id;
 	end loop;
 end;
 /
 sho err;
 
 
-exec proc_autogen_display_name;
+exec proc_autogen_taxonterms;
 
 
 select taxon_name_id from taxon_term where classification_id='5A29D2E4-0F5F-FADC-717C73704DA3A902';
 
 
 select * from temp_dispnamelog;
-select * from cf_autogen_display_name;
+select * from cf_automaintain_taxonterms;
 
 select scientific_name from taxon_name where taxon_name_id in (select tid from temp_dispnamelog);
 
-select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where lower(JOB_NAME)='j_proc_autogen_display_name';
+select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_PROC_AUTOGEN_TAXONTERMS';
+
+
+BEGIN
+DBMS_SCHEDULER.DROP_JOB('j_proc_autogen_display_name');
+END;
+/
 
 
 BEGIN
   DBMS_SCHEDULER.CREATE_JOB (
-    job_name    => 'J_proc_autogen_display_name',
+    job_name    => 'J_PROC_AUTOGEN_TAXONTERMS',
     job_type    => 'STORED_PROCEDURE',
-    job_action    => 'proc_autogen_display_name',
+    job_action    => 'PROC_AUTOGEN_TAXONTERMS',
     enabled     => TRUE,
     end_date    => NULL,
     start_date  =>  SYSTIMESTAMP,
