@@ -56,12 +56,17 @@ create or replace trigger trg_taxon_term_cts before insert or update on taxon_te
 				end if;
 			end if;
 			
-			insert into cf_autogen_display_name  (classification_id) values (:NEW.classification_id);
+			insert into cf_automaintain_taxonterms  (classification_id) values (:NEW.classification_id);
 
 		END IF;
 	end;
 /
 sho err;
+
+
+-- check
+
+
 
 
 

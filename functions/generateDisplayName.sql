@@ -74,7 +74,7 @@ BEGIN
 		dual;
 		
 		
-	dbms_output.put_line('v_nomenclatural_code: ' || v_nomenclatural_code);
+	--dbms_output.put_line('v_nomenclatural_code: ' || v_nomenclatural_code);
 	if v_nomenclatural_code is not null then
 		if v_nomenclatural_code='ICBN' then
 			v_fmttype:='icbn';
@@ -162,18 +162,18 @@ BEGIN
  				select distinct taxon_name.scientific_name into rtn from taxon_name,taxon_term where taxon_name.taxon_name_id=taxon_term.taxon_name_id and
  				taxon_term.classification_id=v_cid;
  			else
- 				rtn:='not_enough_info';
+ 				rtn:='';
  			end if;
  		end if;
 
  	else
- 		rtn:='not_enough_info';
+ 		rtn:='';
  	end if;
 
  	-- for testing only
- 	if rtn is null then
- 		rtn:='FAIL COULD NOT GENERATE';
- 	end if;
+ 	--if rtn is null then
+ 	--	rtn:='FAIL COULD NOT GENERATE';
+ 	--end if;
  	-- end testing return something dealio
 	rtn:=trim(rtn);
 	rtn:=replace(rtn,' ,',',');
