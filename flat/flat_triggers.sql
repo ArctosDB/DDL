@@ -509,3 +509,25 @@ BEGIN
 	WHERE collection_object_id = id;
 END;
 /
+
+CREATE OR REPLACE TRIGGER TR_SPECPARTatt_AIUD_FLAT
+AFTER INSERT OR UPDATE OR DELETE ON specimen_part_attribute
+FOR EACH ROW
+DECLARE id NUMBER;
+cid number;
+BEGIN
+	IF deleting THEN 
+		id := :OLD.collection_object_id;
+	ELSE 
+		id := :NEW.collection_object_id;
+	END IF;
+	    
+	select distinct derived_from_cat_item into cid from specimen_part where collection_object_id=id;
+	UPDATE flat
+	SET stale_flag = 1,
+	lastuser=sys_context('USERENV', 'SESSION_USER'),
+	lastdate=SYSDATE
+	WHERE collection_object_id = cid;
+END;
+/
+sho err;
