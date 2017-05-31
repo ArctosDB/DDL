@@ -1,6 +1,12 @@
+
+		
+
 /*
 	Code to build table FLAT (with minimal downtime)
 	Current 17 Oct 2007
+	
+	
+	this is broken....
 	
 */
 CREATE TABLE pre_flat AS
