@@ -15,6 +15,12 @@ sho err;
 	
 
 BEGIN
+DBMS_SCHEDULER.DROP_JOB('J_PRUNE_AUDIT_LOGS');
+END;
+/
+
+
+BEGIN
   DBMS_SCHEDULER.CREATE_JOB (
     job_name    => 'J_PRUNE_AUDIT_LOGS',
     job_type    => 'STORED_PROCEDURE',
