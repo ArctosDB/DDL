@@ -48,7 +48,7 @@ select OWNER || '.' || SEGMENT_NAME || ' @ ' || bytes from temp_is_eating_space 
 drop table TAXON_TERM20161107;
 drop table ARCTOS_AUDIT_2010;
 drop table TEMP_SPACENAME;
-drop table TAXONOMY_OLDNFLAT;
+drop table TAXONOMY_OLDNFLAT  CASCADE CONSTRAINTS;
 drop table CONTAINER20150512;
 drop table TEMP_ALL_ALA;
 drop table TEMP_COLL_OBJECT_20160616;
@@ -751,6 +751,8 @@ drop table VNMAP;
 drop table WTF;
 drop table XXCUMV_HERP_BULK;
 
+
+-- done at test; 
 
 
 
