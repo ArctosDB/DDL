@@ -57,12 +57,12 @@ begin
 		select count(*) into c from taxon_term where classification_id=r.classification_id;
 		if c > 0 then
 			-- flush any old stuff
-			dbms_output.put_line('classification_id: ' || r.classification_id);
+			--dbms_output.put_line('classification_id: ' || r.classification_id);
 			delete from taxon_term where classification_id=r.classification_id and
 				term_type in ('display_name','scientific_name');
 			-- see if we can create one
 			select generateDisplayName(r.classification_id) into dn from dual;
-			dbms_output.put_line('dn: ' || dn);
+			--dbms_output.put_line('dn: ' || dn);
 			select TAXON_NAME_ID,SOURCE into tid,src from taxon_term where TAXON_TERM_ID in (select min(TAXON_TERM_ID) from
 				taxon_term where classification_id=r.classification_id);
 			select scientific_name into nsn from taxon_name where taxon_name_id=tid;
@@ -121,7 +121,7 @@ select taxon_name_id from taxon_term where classification_id='5A29D2E4-0F5F-FADC
 select * from temp_dispnamelog;
 select * from cf_automaintain_taxonterms;
 
-select scientific_name from taxon_name where taxon_name_id in (select tid from temp_dispnamelog);
+select scientific_name from taxon_name where taxon_name_id in (select tid from temp_dispnamelog) order by scientific_name;
 
 select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_PROC_AUTOGEN_TAXONTERMS';
 
