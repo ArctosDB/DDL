@@ -50,7 +50,7 @@ CREATE OR REPLACE PROCEDURE proc_autogen_taxonterms IS
 	c number;
 	nsn varchar2(4000);
 begin
-	for r in (select distinct classification_id from cf_automaintain_taxonterms) loop
+	for r in (select distinct classification_id from cf_automaintain_taxonterms where rownum<5000) loop
 		-- see if there's still anything to do;
 		-- sometimes a classification gets deleted
 		-- after being markedd for update
@@ -117,18 +117,22 @@ exec proc_autogen_taxonterms;
 
 select taxon_name_id from taxon_term where classification_id='5A29D2E4-0F5F-FADC-717C73704DA3A902';
 
+select count(*) from cf_automaintain_taxonterms;
 
 select * from temp_dispnamelog;
 select * from cf_automaintain_taxonterms;
 
 select scientific_name from taxon_name where taxon_name_id in (select tid from temp_dispnamelog) order by scientific_name;
 
-select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_PROC_AUTOGEN_TAXONTERMS';
+select LAST_RUN_DURATION, STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_PROC_AUTOGEN_TAXONTERMS';
 
 
-BEGIN
-DBMS_SCHEDULER.DROP_JOB('j_proc_autogen_display_name');
-END;
+
+begin
+DBMS_SCHEDULER.DROP_JOB (
+job_name => 'J_PROC_AUTOGEN_TAXONTERMS',
+force => true); 
+end;
 /
 
 

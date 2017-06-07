@@ -1,4 +1,4 @@
-
+alter table HTAX_NOCLASSTERM modify TERM_VALUE VARCHAR2(4000);
 --- fix missing "required" data
 -- bird without nomenclatural_code
 begin

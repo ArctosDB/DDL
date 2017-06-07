@@ -46,6 +46,12 @@ END;
 
 select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_PRUNE_AUDIT_LOGS';
 
+
+
+select count(*) from arctos_audit;
+
+
+
 UAM@ARCTOSTE> select * from dba_extents where SEGMENT_NAME='BULKLOADER';
 
 
@@ -347,6 +353,41 @@ drop table CUMVMAMM.ACCESSIONAUTHORIZATIONS;
 drop table CUMVMAMM.ADDRESS;
 drop table CUMVMAMM.AGENT;
 drop table CUMVMAMM.AGENTADDRESS;
+
+
+
+select 'drop table DLM.' || table_name || ';' from all_tables where OWNER='DLM';
+
+
+'DROPTABLEDLM.'||TABLE_NAME||';'
+------------------------------------------------------------------------------------------------------------------------
+drop table DLM.TEMP_32212;
+drop table DLM.TEMP_76264;
+drop table DLM.TEMP_43184;
+drop table DLM.TEMP_19847;
+drop table DLM.TEMP_30245;
+drop table DLM.TEMP_12307;
+drop table DLM.CITATION_20090410;
+drop table DLM.MEDIA_20090410;
+drop table DLM.OBJECT_CONDITION20090424;
+drop table DLM.CONTAINER20090512;
+drop table DLM.CONTAINER20090611;
+drop table DLM.MEDIA_20090615;
+drop table DLM.COLLECTING_EVENT20090701;
+drop table DLM.PUBLICATION20090803;
+drop table DLM.PUBLICATIONAUTHORNAME20090803;
+drop table DLM.CTPUBLICATION_TYPE20090803;
+drop table DLM.ALA_PLANT_IMAGING20100129;
+drop table DLM.PROJTABLE1254705885900204;
+drop table DLM.CATALOGED_ITEM20100909;
+drop table DLM.TEMP2;
+drop table DLM.TEMP3;
+drop table DLM.TEMP;
+drop table DLM.WTF2;
+drop table DLM.WTF;
+
+drop table DLM.MY_TEMP_CF;
+
 
 
 UAM@ARCTOSTE> desc all_tables;
@@ -674,7 +715,6 @@ drop table T3;
 drop table TAXON_TERM_ENTO;
 drop table TAXON_TERM_ENTO_ORIG;
 drop table TAXON_TERM_NCBI;
-drop table TAXON_TERM_UPDATED;
 drop table TAXUPFAIL;
 
 

@@ -298,7 +298,13 @@ BEGIN
 
 	-- now loop through and use the bulkloader-checker to figure out what's MIA	
 	for rec in (select taxon_name from pre_bulk_taxa) loop
+	--DBMS_OUTPUT.PUT_LINE(rec.taxon_name);
 		has_problems:=0;
+		L_TAXA_FORMULA:=null;
+		TAXA_ONE:=null;
+		L_TAXON_NAME_ID_1:=null;
+		L_TAXON_NAME_ID_2:=null;
+		TAXA_TWO:=null;
 		if (instr(rec.taxon_name,' {') > 1 AND instr(rec.taxon_name,'}') > 1) then
 			l_taxa_formula := 'A {string}';
 			taxa_one := regexp_replace(rec.taxon_name,' {.*}$','');
@@ -341,8 +347,19 @@ BEGIN
 			) then
 				has_problems:=1;
 		end if;
+		
+		
+		--DBMS_OUTPUT.PUT_LINE('taxa_one=' || taxa_one);
+		--DBMS_OUTPUT.PUT_LINE('taxa_two=' || taxa_two);
+		--DBMS_OUTPUT.PUT_LINE('has_problems=' || has_problems);
+	
 		if taxa_one is not null then
 			select count(distinct(taxon_name_id)) into num from taxon_name where scientific_name = trim(taxa_one);
+			
+			
+			--DBMS_OUTPUT.PUT_LINE('num=' || num);
+		
+		
 			if num = 1 then
 				select distinct(taxon_name_id) into l_taxon_name_id_1 from taxon_name where scientific_name = trim(taxa_one);
 			else
@@ -357,7 +374,11 @@ BEGIN
 				has_problems:=1;
 			end if;
 		end if;
+		
+		
+			--DBMS_OUTPUT.PUT_LINE('final has_problems=' || has_problems);
 		if has_problems = 0 then
+			--DBMS_OUTPUT.PUT_LINE('deleting for...=' || rec.taxon_name);
 			delete from pre_bulk_taxa where taxon_name=rec.taxon_name;
 		end if;
 	end loop;
@@ -628,7 +649,10 @@ select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAM
 
 	
 	
-	exec DBMS_SCHEDULER.DROP_JOB('J_PRE_BULK_CHK');
+	exec DBMS_SCHEDULER.DROP_JOB(
+		job_name           =>  'J_PRE_BULK_CHK',
+		force => 'true'
+	);
 
 	
 	
@@ -636,7 +660,12 @@ select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAM
 	
 	
 	
-	
+	begin
+DBMS_SCHEDULER.DROP_JOB (
+job_name => 'J_PRE_BULK_CHK',
+force => true); 
+end;
+/
 	
 	
 	
