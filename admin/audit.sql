@@ -1122,6 +1122,7 @@ drop table XXCUMV_HERP_BULK;
 
 
 -- done at test; 
+-- and prod
 
 
 

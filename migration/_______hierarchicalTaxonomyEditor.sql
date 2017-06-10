@@ -201,18 +201,19 @@ grant all on htax_markdeletetree to manage_taxonomy;
 CREATE OR REPLACE PROCEDURE proc_hierac_tax_deletefami IS
 	v_tid number;
 	v_uid varchar2(255);
+	v_dsid number;
 begin
 	select 
-		seed_tid,
-		delete_id
+	    seed_tid,
+	    delete_id
 	into 
 		v_tid,
 		v_uid 
-	FROM
-		htax_markdeletetree
-	where
-		status='mark_to_delete';
-	
+ 	 FROM
+   	 htax_markdeletetree
+ 	 where
+    	delete_id in (select min(delete_id) from htax_markdeletetree where status='mark_to_delete');
+
 	
 	-- set the seed
 	update hierarchical_taxonomy set status=v_uid where tid=v_tid;
@@ -223,12 +224,41 @@ begin
 			select tid from hierarchical_taxonomy where status=v_uid
 		);
 	end loop;
-	-- now set to load
+	-- now delete
+	-- nonclassification terms
 	delete from htax_noclassterm where tid in (select tid from hierarchical_taxonomy where status=v_uid);
+	-- old temp processing table
+	-- just clear it all out
+	
+	delete from htax_temp_hierarcicized where DATASET_ID = (select dataset_id from hierarchical_taxonomy where tid=v_tid);
+	-- delete the tree-records	
 	delete from hierarchical_taxonomy where status=v_uid;
 	update htax_markdeletetree set status='deleted' where delete_id=v_uid;
 end;
 /
+
+
+
+
+select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_PROC_HIERAC_TAX_EXPORT';
+
+select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_PROC_HIERAC_TAX_DELETEFAMI';
+
+BEGIN
+DBMS_SCHEDULER.CREATE_JOB (
+   job_name           =>  'J_proc_hierac_tax_deletefami',
+   job_type           =>  'STORED_PROCEDURE',
+   job_action         =>  'proc_hierac_tax_deletefami',
+   start_date         =>  SYSTIMESTAMP,
+	repeat_interval    =>  'freq=minutely; interval=1',
+   enabled             =>  TRUE,
+   end_date           =>  NULL,
+   comments           =>  'delete HIERARCHICAL TAXONOMY ');
+END;
+/
+
+
+
 
 
 
