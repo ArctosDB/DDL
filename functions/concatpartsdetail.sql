@@ -34,8 +34,8 @@ CREATE OR REPLACE function concatpartsdetail (collobjid in integer)
                     partname,
                     part_name) loop
 	                    tmp:= tmp || '{';
-	                        tmp:= tmp || '"part_name" : "' || r.part_name || '",';
-	                        tmp:= tmp || '"lot_count" : "' || r.lot_count || '",';
+	                        tmp:= tmp || '"part_name":"' || r.part_name || '",';
+	                        tmp:= tmp || '"lot_count":"' || r.lot_count || '",';
 	                        tmp:= tmp || '"disposition" : "' || r.coll_obj_disposition || '",';
 	                        tmp:= tmp || '"condition" : "' || r.condition || '",';
 	                        tmp:= tmp || '"barcode" : "' || r.barcode || '",';
