@@ -34,8 +34,8 @@ CREATE OR REPLACE function concatpartsdetail (collobjid in integer)
                     partname,
                     part_name) loop
 	                    tmp:= tmp || '{';
-	                        tmp:= tmp || '"part_name":"' || r.part_name || '",';
-	                        tmp:= tmp || '"lot_count":"' || r.lot_count || '",';
+	                        tmp:= tmp || '"part_name" : "' || r.part_name || '",';
+	                        tmp:= tmp || '"lot_count" : "' || r.lot_count || '",';
 	                        tmp:= tmp || '"disposition" : "' || r.coll_obj_disposition || '",';
 	                        tmp:= tmp || '"condition" : "' || r.condition || '",';
 	                        tmp:= tmp || '"barcode" : "' || r.barcode || '",';
@@ -52,7 +52,11 @@ CREATE OR REPLACE function concatpartsdetail (collobjid in integer)
                                FROM
                                    specimen_part_attribute
                                WHERE
-                                   collection_object_id=r.collection_object_id) LOOP
+                                   collection_object_id=r.collection_object_id
+                               ORDER BY
+								attribute_type ASC,
+								DETERMINED_DATE DESC
+                               ) LOOP
 								tmp:= tmp || '{';
                                     tmp:= tmp || '"attribute_type" : "' || a.attribute_type || '",';
                                     tmp:= tmp || '"attribute_value" : "' || a.attribute_value || '",';
