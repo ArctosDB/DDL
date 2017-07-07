@@ -151,16 +151,36 @@ CREATE OR REPLACE TRIGGER GET_CONTAINER_HISTORY
 AFTER UPDATE or insert ON CONTAINER
 FOR EACH ROW
 BEGIN
-	INSERT INTO container_history (
-        container_id,
-        parent_container_id,
-        install_date,
-        username
-    ) VALUES (
-	    :NEW.container_id,
-	    :NEW.parent_container_id,
-	    SYSDATE,
-	    SYS_CONTEXT('USERENV', 'SESSION_USER')
-	 );
+	-- ignore if nothing we're logging has changed
+	if updating then
+		if :OLD.parent_container_id != :NEW.parent_container_id then
+			INSERT INTO container_history (
+		        container_id,
+		        parent_container_id,
+		        install_date,
+		        username
+		    ) VALUES (
+			    :NEW.container_id,
+			    :NEW.parent_container_id,
+			    SYSDATE,
+			    SYS_CONTEXT('USERENV', 'SESSION_USER')
+			 );
+		end if;
+	else
+		INSERT INTO container_history (
+		        container_id,
+		        parent_container_id,
+		        install_date,
+		        username
+		    ) VALUES (
+			    :NEW.container_id,
+			    :NEW.parent_container_id,
+			    SYSDATE,
+			    SYS_CONTEXT('USERENV', 'SESSION_USER')
+			 );
+	end if;
 END get_container_history;
 /
+
+
+select count(*) from container_history;

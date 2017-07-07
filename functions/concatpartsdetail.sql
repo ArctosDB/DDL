@@ -1,7 +1,7 @@
 CREATE OR REPLACE function concatpartsdetail (collobjid in integer)
     return varchar2
     as
-        tmp varchar2(4000);
+        tmp varchar2(32767);
     begin
       tmp:='[';
         FOR r IN (select 
@@ -70,10 +70,10 @@ CREATE OR REPLACE function concatpartsdetail (collobjid in integer)
                      tmp:= tmp || '},';
                     end loop;
         tmp:= tmp || ']';
-        tmp:=replace(tmp,'},]','}]');     
+        tmp:=replace(tmp,'},]','}]');
        return tmp;
        exception when others then
-       	 tmp:='["error":"concatpartsdetail failure"]';    
+       	 tmp:='{"error":"see specimen detail page"}';    
        	 return tmp;
    end;
 /
