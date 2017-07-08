@@ -5,8 +5,10 @@ CREATE OR REPLACE procedure movePartToContainer (
     -- barcode of part's new parent - required only if v_container_id is null
     v_container_id in number,
     -- container_id of part's new parent - required only if v_barcode is null
-    v_parent_container_type in varchar2
+    v_parent_container_type in varchar2,
     -- new container_type for part's new parent
+     v_parent_container_label in varchar2
+    -- new label for part's new parent
    ) is    
    		old_child container%rowtype;
 		new_child container%rowtype;
@@ -43,6 +45,12 @@ CREATE OR REPLACE procedure movePartToContainer (
 			parent.container_type:='cryovial';
 		end if;
 		
+		-- if it is null, just update to existing value
+		-- if not, update to new value
+		if v_parent_container_label is not null then
+			parent.LABEL:=v_parent_container_label;
+		end if;
+		
 		
 		--dbms_output.put_line('parent.container_type: ' || parent.container_type);
 		
@@ -64,7 +72,13 @@ CREATE OR REPLACE procedure movePartToContainer (
 		if msg is not null then
             raise_application_error(-20000, 'FAIL: ' || msg);
         else
-        	update container set CONTAINER_TYPE=parent.container_type where container_id=parent.container_id;
+        	update 
+        		container 
+        	set 
+        		CONTAINER_TYPE=parent.container_type,
+        		label=parent.LABEL
+        	where 
+        		container_id=parent.container_id;
         	update 
         		container 
         	set
