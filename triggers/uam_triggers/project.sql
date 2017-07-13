@@ -10,6 +10,11 @@ BEGIN
 	IF is_iso8601(:NEW.end_date) != 'valid' then
 		raise_application_error(-20001,'end_date: ' || is_iso8601(:NEW.end_date));
 	end if;
+	IF is_markdown(:NEW.project_description) != 'valid' then
+		raise_application_error(-20001,'project_description: ' || is_markdown(:NEW.project_description));
+	end if;
+	
+	
 
 END;
 /
