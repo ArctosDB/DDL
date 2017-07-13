@@ -7,7 +7,6 @@ AS
   s varchar2(10);
 begin
 	for r in (select part_name,COLLECTION_OBJECT_ID from specimen_part where specimen_part.derived_from_cat_item=cid) loop
-		dbms_output.put_line(r.part_name);
 		for a in (
 			SELECT ATTRIBUTE_VALUE FROM (
     			select 
@@ -24,7 +23,6 @@ begin
 			)
  			WHERE rnum = 1
 		) loop
-			dbms_output.put_line(a.ATTRIBUTE_VALUE);
 			ret:=ret||s||r.part_name || ':' || a.ATTRIBUTE_VALUE;
 			s:=';';
 		end loop;
