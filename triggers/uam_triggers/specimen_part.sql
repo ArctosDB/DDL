@@ -10,7 +10,7 @@ COMPOUND TRIGGER
 	label varchar2(255);
     institution_acronym varchar2(255);
     numrows number;
-	collectionCode varchar2(4);
+	collectionCode varchar2(10);
     BEFORE EACH ROW IS BEGIN
 	     if deleting then
 			-- coll_obj_cont_hist has a cascade delete through the keys
