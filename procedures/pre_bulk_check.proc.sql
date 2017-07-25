@@ -638,7 +638,7 @@ DBMS_SCHEDULER.CREATE_JOB (
    job_type           =>  'STORED_PROCEDURE',
    job_action         =>  'pre_bulk_check',
    start_date         =>  SYSTIMESTAMP,
-   repeat_interval    =>  'freq=hourly; byminute=5,15,25,35,44,55;',
+   repeat_interval    =>  'freq=hourly; byminute=0,5,15,25,35,44,55;',
    enabled             =>  TRUE,
    end_date           =>  NULL,
    comments           =>  'make some tables yo');

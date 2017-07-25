@@ -1,6 +1,5 @@
-CREATE OR REPLACE FUNCTION getLatestPartLocation(cid IN number)
- -- grab the latest part location for each part
- -- for UAM:EH; may not make much sense in other contexts
+CREATE OR REPLACE FUNCTION getLatestSinglePartLocation(pid IN number)
+ -- grab the latest part location for SPECIFIC part
 RETURN varchar2
 AS
   ret varchar2(4000);
