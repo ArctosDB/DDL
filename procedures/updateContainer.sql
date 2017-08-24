@@ -3,25 +3,6 @@
 
 
 CREATE OR REPLACE procedure updateContainer (
-
- exec updateContainer(
- 	12039138,
- 	16417770,
- 	'cryovial',
- 	'CC 3752',
- 	'',
- 	'',
- 	'MVZ105169',
- 	'',
- 	'',
- 	'',
- 	'',
- 	0,
- 	'MVZ');
-
- 
- 
- 
     v_container_id in number,
     v_parent_container_id in number,
     v_container_type in varchar2,
@@ -55,10 +36,8 @@ CREATE OR REPLACE procedure updateContainer (
         	select * into parent from container where container_id=v_parent_container_id;
         	 select count(*) into parent_position_count from container where container_type='position' and parent_container_id=v_parent_container_id;
         	select count(*) into parent_notposition_count from container where container_type != 'position' and parent_container_id=v_parent_container_id;
-    	
        	else
        		parent.container_id:=0;
-       		
 		end if;
 		
         select * into old_child from container where container_id=v_container_id;

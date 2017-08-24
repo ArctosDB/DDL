@@ -23,7 +23,10 @@ CREATE OR REPLACE TRIGGER trg_agent_biu
 	IF :NEW.agent_type='person' and regexp_like(:NEW.preferred_agent_name,'[A-Z][ ]') then
 		RAISE_APPLICATION_ERROR(-20001,'Person agents may not have a space after uppercase letters in preferred name.');
 	end if;
-	
+	IF :NEW.agent_type='person' and :NEW.preferred_agent_name like '%, Sr%' or :NEW.preferred_agent_name like '%, Jr%' then
+		RAISE_APPLICATION_ERROR(-20001,'Incorrect format detected.');
+	end if;
+
  END;
  /
          
