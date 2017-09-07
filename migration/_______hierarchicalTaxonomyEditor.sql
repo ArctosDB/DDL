@@ -936,6 +936,230 @@ select ':' || status || ':',count(*) from htax_temp_hierarcicized group by ':' |
 
 
 
+-------------------------------- misses -------------------------------
+
+drop table temp_missed_seed_terms;
+
+
+create table temp_missed_seed_terms (
+  tid number, 
+  term varchar2(255)
+);
+
+
+
+declare
+  tt varchar2(255);
+  dtid number;
+  c number;
+begin
+  -- get all taxa used by a collection and not in a 
+  -- hierarchy
+  for r in (
+    select
+      taxon_name.scientific_name,
+      taxon_name.taxon_name_id
+    from
+      taxon_name,
+      identification_taxonomy,
+      identification,
+      cataloged_item,
+      collection
+    where
+      taxon_name.taxon_name_id=identification_taxonomy.taxon_name_id and
+      identification_taxonomy.identification_id=identification.identification_id and
+      identification.collection_object_id=cataloged_item.collection_object_id and 
+      cataloged_item.collection_id=collection.collection_id and
+      collection.guid_prefix='DMNS:Inv' and
+      taxon_name.scientific_name not in (
+        select 
+          TERM 
+        from 
+          hierarchical_taxonomy,
+          htax_dataset
+        where
+          hierarchical_taxonomy.DATASET_ID=htax_dataset.DATASET_ID and
+          htax_dataset.DATASET_NAME='clams'
+      )
+    group by
+      taxon_name.scientific_name,
+      taxon_name.taxon_name_id
+    ) loop
+      dbms_output.put_line(r.scientific_name);
+      --- grab this term
+      insert into temp_missed_seed_terms (
+        tid,term
+      ) values (
+        r.taxon_name_id,r.scientific_name
+      );
+      -- grab any classification data
+      for t in (select term from taxon_term where taxon_name_id=r.taxon_name_id and
+        source='Arctos') loop
+         insert into temp_missed_seed_terms (
+          tid,term
+        ) values (
+          r.taxon_name_id,t.term
+        );
+      end loop;
+
+      
+
+      tt:=NULL;
+
+      if r.scientific_name like '% % %' then
+        -- if trinomial, try for bi
+        dbms_output.put_line('trinomial');
+        tt:=substr(r.scientific_name,1,instr(r.scientific_name,' ',1,2)-1);
+        dbms_output.put_line('===>' || tt);
+        -- if bi, try mono
+      elsif r.scientific_name like '% %' then
+        dbms_output.put_line('binomial');
+        tt:=substr(r.scientific_name,1,instr(r.scientific_name,' ',1,1)-1);
+        dbms_output.put_line('===>' || tt);
+      end if;
+
+      if tt is not null then
+        select count(*) into c from taxon_name where scientific_name=tt;
+        if c = 1 then
+          -- rock on
+          select taxon_name_id into dtid from taxon_name where scientific_name=tt;
+          insert into temp_missed_seed_terms (
+            tid,term
+          ) values (
+            dtid,tt
+          );
+          -- classifications
+          for t in (
+            select term from taxon_term where taxon_name_id=dtid and
+            source='Arctos'
+          ) loop
+            insert into temp_missed_seed_terms (
+              tid,term
+            ) values (
+              dtid,tt
+            );
+          end loop;
+        else
+          dbms_output.put_line('taxon does not exist: ' || tt);
+          insert into temp_missed_seed_terms (
+              tid,term
+            ) values (
+              -1,tt
+            );
+
+        end if;
+
+      end if;
+
+    end loop;
+  end;
+/
+
+
+-- taxa which may need created:
+
+select distinct term from temp_missed_seed_terms where tid=-1 order by term;
+
+-- confirm that these are taxa, then....
+
+begin
+	for r in (select distinct term from temp_missed_seed_terms where tid=-1 order by term )	loop
+		insert into taxon_name (taxon_name_id,scientific_name) values (sq_taxon_name_id.nextval,r.term);
+	end loop;
+end;
+/
+
+-- now open hier-editor and 'delete what you've seeded'
+
+-- gonna need this
+select dataset_id from htax_dataset where dataset_name='clams';
+
+DATASET_ID
+----------
+ 143488078
+
+-- make a unique table, why not...
+
+create table temp_u_missed_seed_terms as select distinct term,tid from temp_missed_seed_terms;
+-- 3462 records
+
+select count(*) from temp_u_missed_seed_terms where term in (select TERM from hierarchical_taxonomy where DATASET_ID=143488078);
+-- 1038
+
+-- just drop what we already have, no need to reprocess
+
+delete from temp_u_missed_seed_terms where term in (select TERM from hierarchical_taxonomy where DATASET_ID=143488078);
+
+
+-- now reseed whatever's left
+-- need the TIDs we just created
+
+declare
+	t number;
+begin
+	for r in (select distinct term from temp_u_missed_seed_terms where tid=-1 order by term )	loop
+		select taxon_name_id into t from taxon_name where scientific_name=r.term;
+		update temp_u_missed_seed_terms set tid=t where term=r.term;
+	end loop;
+end;
+/
+
+select
+	term,
+	tid
+from
+	temp_u_missed_seed_terms
+having count(*) > 1 group by term,tid;		
+		
+		
+-- wtf oh well...
+create table temp_uu_missed_seed_terms as select distinct term,tid from temp_u_missed_seed_terms;
+
+
+
+-- and seed
+insert into htax_seed (
+	SCIENTIFIC_NAME,
+	TAXON_NAME_ID,
+	DATASET_ID
+) (
+	select
+		term,
+		tid,
+		143488078
+	from
+		temp_uu_missed_seed_terms
+);
+
+create table temp_newseed as select 
+scientific_name from taxon_name where scientific_name in (select term from temp_uu_missed_seed_terms);
+
+ 
+ 
+Elapsed: 00:00:00.00
+UAM@ARCTOS> desc htax_seed;
+ Name								   Null?    Type
+ ----------------------------------------------------------------- -------- --------------------------------------------
+ SCIENTIFIC_NAME						   NOT NULL VARCHAR2(255)
+ TAXON_NAME_ID							   NOT NULL NUMBER
+ DATASET_ID							   NOT NULL NUMBER
+
+
+
+-------------------------------- END misses -------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

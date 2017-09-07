@@ -17,7 +17,7 @@ BEFORE UPDATE OR INSERT ON ATTRIBUTES
 FOR EACH ROW
 DECLARE
     numrows NUMBER := 0;
-	collectionCode VARCHAR2(4);
+	collectionCode collection.collection_cde%TYPE;
 	sqlString VARCHAR2(4000);
 	vct VARCHAR2(255);
 	uct VARCHAR2(255);
