@@ -4,7 +4,8 @@
 		- subsamples
 		- those with various "not here" dispositions
 		
-	call with  concatParts_nosubsample (cataloged_item.collection_object_id)
+	call with  
+		concatParts_nosubsample(cataloged_item.collection_object_id)
 	
 	
 	e.g.
