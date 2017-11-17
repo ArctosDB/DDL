@@ -8,12 +8,11 @@ begin
 		from 
 			hierarchical_taxonomy 
 		where 
-			dataset_id=(select dataset_id from htax_dataset where dataset_name='bird') and
+			dataset_id=(select dataset_id from htax_dataset where dataset_name='clams') and
 			tid not in (select tid from htax_noclassterm where TERM_TYPE='nomenclatural_code')
 	)	loop
 	
 		dbms_output.put_line(r.tid);
-		
 		insert into htax_noclassterm (
 			TID,
 			TERM_TYPE,
@@ -506,6 +505,11 @@ create table htax_noclassterm (
 
 	ALTER TABLE htax_noclassterm ADD CONSTRAINT fk_htaxnc_dataset_id  FOREIGN KEY (tid) REFERENCES hierarchical_taxonomy(tid);
 
+	
+	select count(*) from (select tid,TERM_TYPE,TERM_VALUE from htax_noclassterm having count(*) > 1 group by tid,TERM_TYPE,TERM_VALUE);
+
+	
+	
 	drop procedure proc_hierac_tax;
 
 CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
