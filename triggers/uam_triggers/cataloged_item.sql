@@ -76,3 +76,16 @@ BEGIN
     WHERE collection_object_id = :OLD.collection_object_id
     OR collection_object_id = :NEW.collection_object_id;
 END;
+
+
+CREATE OR REPLACE TRIGGER TR_CATITEM_BIU
+before insert or UPDATE ON CATALOGED_ITEM
+FOR EACH ROW
+BEGIN
+    if :NEW.cat_num like '%/%' then
+    	  raise_application_error(-20001,'Catnum may not contain forwward slash.');
+    end if;
+END;
+/
+sho err;
+
