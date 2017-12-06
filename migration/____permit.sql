@@ -424,3 +424,11 @@ insert into permit_agent (
 );
 
 
+-- delete later
+
+alter table permit modify ISSUED_BY_AGENT_ID null;
+alter table permit modify ISSUED_TO_AGENT_ID null;
+alter table permit modify PERMIT_TYPE null;
+
+
+
