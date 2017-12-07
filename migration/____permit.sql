@@ -1,5 +1,18 @@
 https://github.com/ArctosDB/arctos/issues/1139
 
+TODO:
+
+minimize 
+	ajax.js
+	SpecimenResults.js
+
+clean up now-unused table columns
+
+re-cache "docs" @ info/ctDocumentation.cfm
+
+
+
+
 
 
 create table ctpermit_regulation (
@@ -20,8 +33,18 @@ insert into ctpermit_regulation (permit_regulation,description) values ('ESA','E
 insert into ctpermit_regulation (permit_regulation,description) values ('MBTA','Migratory Bird Treaty Act');
 insert into ctpermit_regulation (permit_regulation,description) values ('WBCA','Wild Bird Conservation Act');
 insert into ctpermit_regulation (permit_regulation,description) values ('MMPA','Marine Mammal Protection Act');
+insert into ctpermit_regulation (permit_regulation,description) values ('LA','Lacey Act');
+insert into ctpermit_regulation (permit_regulation,description) values ('AECA','African Elephant Conservation Act');
+insert into ctpermit_regulation (permit_regulation,description) values ('AA','Antiquities Act');
+insert into ctpermit_regulation (permit_regulation,description) values ('AHPA','Archaeological and Historical Preservation Act');
+insert into ctpermit_regulation (permit_regulation,description) values ('NHPA','National Historic Preservation Act');
+insert into ctpermit_regulation (permit_regulation,description) values ('ARPA','Archaeological and Historical Preservation Act');
+																									
+																									
+																									
+																									
 																								
-	
+																									
 
 create table log_CTPERMIT_REGULATION (
 username varchar2(60),
@@ -114,7 +137,12 @@ END;
 
 
 
-
+collect	Authorization to collect and possess specimens or their parts (e.g., blood, feather samples). NOTE: Same as 'take/possess'																								
+export	Authorization to export specimens or their parts from one country to another.																								
+import	Authorization to import specimens or their parts from one country to another.																								
+research	Authorization to conduct research within a permitted jurisdiction. Usually also requires additional permits (e.g., collect, export). Examples: U.S. Forest Service research permit; Memorandum of Understanding; Convenio.																								
+salvage	Authorization to pick up and possess dead animals.																								
+transfer	Authorization to transfer specimens from one institution to another within the same country. Example: USDA Transport Permit for restricted materials between US institutions; USFWS authorization to transfer confiscated materials.																								
 
 
 insert into ctpermit_type (permit_type,description) values ('collect','Authorization to collect and possess specimens or their parts (e.g., blood, feather samples).');
@@ -159,6 +187,9 @@ grant all on permit_type to manage_transactions;
 
 create sequence sq_permit_type_id;
 
+create public synonym sq_permit_type_id for sq_permit_type_id;
+GRANT SELECT ON sq_permit_type_id TO PUBLIC;
+
 ALTER TABLE permit_type add CONSTRAINT pk_permit_type PRIMARY KEY (permit_type_id);
 
 CREATE OR REPLACE TRIGGER permit_type_trg before insert  ON permit_type  
@@ -194,6 +225,9 @@ create public synonym permit_agent for permit_agent;
 grant all on permit_agent to manage_transactions;
 
 create sequence sq_permit_agent_id;
+
+create public synonym sq_permit_agent_id for sq_permit_agent_id;
+GRANT SELECT ON sq_permit_agent_id TO PUBLIC;
 
 ALTER TABLE permit_agent add CONSTRAINT pk_permit_agent PRIMARY KEY (permit_agent_id);
 
@@ -424,6 +458,159 @@ insert into permit_agent (
 );
 
 
+
+-- make SQL easier
+
+CREATE OR REPLACE FUNCTION getPermitAgents (pid in number, prole in varchar2)
+return varchar2
+as
+	rstr varchar2(4000);
+	s varchar2(20);
+begin
+	for r in (select getPreferredAgentName(permit_agent.agent_id) name from permit_agent where permit_id=pid and agent_role=prole) loop
+		rstr:=rstr || s || r.name;
+		s:='; ';
+	end loop;
+	return rstr;
+  end;
+/
+show err
+
+create public synonym getPermitAgents for getPermitAgents;
+grant execute on getPermitAgents to public; 
+
+
+CREATE OR REPLACE FUNCTION getPermitTypeReg (pid in number)
+return varchar2
+as
+	rstr varchar2(4000);
+	s varchar2(20);
+begin
+	for r in (select permit_type, permit_regulation from permit_type where permit_id=pid) loop
+		rstr:=rstr || s || r.permit_type || ' - ' || r.permit_regulation;
+		s:='; ';
+	end loop;
+	return rstr;
+  end;
+/
+show err
+
+create public synonym getPermitTypeReg for getPermitTypeReg;
+grant execute on getPermitTypeReg to public; 
+
+
+
+-- require number
+update permit set permit_num='not assigned' where permit_num is null;
+
+alter table permit modify permit_num not null;
+
+-- deal with renewals
+ alter table permit modify permit_remarks varchar2(4000);
+ 
+ 
+ 
+begin
+	for r in (select * from permit where RENEWED_DATE is not null) loop
+		dbms_output.put_line(r.permit_id);
+		insert into permit (
+			PERMIT_ID,
+			ISSUED_DATE,
+			EXP_DATE,
+			PERMIT_NUM,
+			PERMIT_REMARKS
+		) values (
+			sq_permit_id.nextval,
+			r.RENEWED_DATE,
+			r.EXP_DATE,
+			r.PERMIT_NUM,
+			'Renewal of <a href="/Permit.cfm?Action=editPermit&permit_id=' || r.permit_id || '">' || r.permit_id || '</a>, original exp_date=' || r.EXP_DATE || ', original renewed_date=' || r.renewed_date || '. ' || r.PERMIT_REMARKS
+		);
+		
+		http://arctos-test.tacc.utexas.edu/Permit.cfm?Action=editPermit&permit_id=10001317
+		
+		
+		
+		for a in (select * from permit_agent where permit_id=r.permit_id) loop
+			insert into permit_agent (
+				permit_id,
+				agent_id,
+				agent_role
+			) values (
+				sq_permit_id.currval,
+				a.agent_id,
+				a.agent_role
+			);
+		end loop;
+		for t in (select * from permit_type where permit_id=r.permit_id) loop
+			insert into permit_type (
+				permit_id,
+				permit_type,
+				permit_regulation
+			) values (
+				sq_permit_id.currval,
+				t.permit_type,
+				t.permit_regulation
+			);
+		end loop;		
+	end loop;
+end;
+/
+
+http://arctos-test.tacc.utexas.edu/Permit.cfm?Action=editPermit&permit_id=10001317
+
+-- undo at test
+update permit set PERMIT_REMARKS=trim(substr(PERMIT_REMARKS,instr(PERMIT_REMARKS, '.')+1)) where permit_remarks like 'Renewal of permit_ID%'
+
+update permit set permit_remarks=
+	'Renewal of <a href="/Permit.cfm?Action=editPermit&permit_id=' || permit_id || '">' || permit_id || '</a>, original exp_date=' || EXP_DATE || ', original renewed_date=' || renewed_date || '. ' || PERMIT_REMARKS
+where
+	RENEWED_DATE is not null;
+	
+	
+	
+	
+select
+	PERMIT_REMARKS,
+from
+	permit
+where
+	RENEWED_DATE is not null
+;
+
+			'Renewal of <a href="/Permit.cfm?Action=editPermit&permit_id=' || r.permit_id || '">' || r.permit_id || '</a>, original exp_date=' || r.EXP_DATE || ', original renewed_date=' || r.renewed_date || '. ' || r.PERMIT_REMARKS
+
+			
+			
+			
+select
+	PERMIT_REMARKS,
+	
+from
+	permit
+where
+	permit_remarks like 'Renewal of permit_ID%'
+;
+
+Renewal of permit_ID=10001312, original exp_date=2012-12-31, original renewed_date=2011-01-01.
+
+
+ Name								   Null?    Type
+ ----------------------------------------------------------------- -------- --------------------------------------------
+ PERMIT_ID							   NOT NULL NUMBER
+ ISSUED_BY_AGENT_ID							    NUMBER
+ ISSUED_DATE								    DATE
+ ISSUED_TO_AGENT_ID							    NUMBER
+ RENEWED_DATE								    DATE
+ EXP_DATE								    DATE
+ PERMIT_NUM							   NOT NULL VARCHAR2(25)
+ PERMIT_TYPE								    VARCHAR2(50)
+ PERMIT_REMARKS 							    VARCHAR2(300)
+ CONTACT_AGENT_ID							    NUMBER
+
+ 
+ 
+ 
 -- delete later
 
 alter table permit modify ISSUED_BY_AGENT_ID null;
