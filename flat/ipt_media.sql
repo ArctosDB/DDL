@@ -27,7 +27,10 @@ as select
 	filtered_flat.collection_id collection_id,
 	'urn:occurrence:Arctos:' || filtered_flat.guid || ':' || specimen_event.specimen_event_id occurrenceID,
 	filtered_flat.guid guid,
-	'http://arctos.database.museum/media/' || media.media_id || '?open' identifier,
+	decode(
+		media.mime_type,
+		'text/html',NULL,
+		'http://arctos.database.museum/media/' || media.media_id || '?open') identifier,
 	'http://arctos.database.museum/exit.cfm?target=' || replace(media_uri,' ','%20') old_identifier,
 	'http://arctos.database.museum/media/' || media.media_id references,
 	decode(relatedMedia.related_primary_key,null,null,'http://arctos.database.museum/media/' || relatedMedia.related_primary_key) source,
@@ -90,7 +93,11 @@ CREATE OR REPLACE PROCEDURE temp_update_junk IS BEGIN
 			'urn:occurrence:Arctos:' || filtered_flat.guid || ':' || specimen_event.specimen_event_id,
 			filtered_flat.guid,
 			'http://arctos.database.museum/media/' || media.media_id || '?open',
-			'http://arctos.database.museum/exit.cfm?target=' || replace(media_uri,' ','%20'),
+			decode(
+				media.mime_type,
+				'text/html',NULL,
+				'http://arctos.database.museum/exit.cfm?target=' || replace(media_uri,' ','%20')
+			),
 			'http://arctos.database.museum/media/' || media.media_id,
 			decode(relatedMedia.related_primary_key,null,null,'http://arctos.database.museum/media/' || relatedMedia.related_primary_key),
 			media.mime_type,

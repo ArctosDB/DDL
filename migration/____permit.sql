@@ -8,7 +8,6 @@ minimize
 
 clean up now-unused table columns
 
-re-cache "docs" @ info/ctDocumentation.cfm
 
 
 
