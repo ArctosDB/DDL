@@ -234,8 +234,14 @@ ALTER TABLE permit_agent ADD CONSTRAINT fk_ctpermit_agent_role FOREIGN KEY (agen
 -- data migration
 -- waiting on feedback from https://github.com/ArctosDB/arctos/issues/1139#issuecomment-349457758 before completion, can do easy stuff now though
 
-other --> no permit types? Does a 'nothing very useful to say' option mean we DO NOT want to "require" permit type after all??
-transfer of property --> ??? Import?? Export?? Transport??? NULL??
+
+
+--pull CSV from https://docs.google.com/spreadsheets/d/1XnZ4Jt3SViLYkvDGSrF8A45I7mbMTEfLnBWKpuiBTuY/edit#gid=2122230195
+-- upload
+create table temp_permit_type_mign as select * from dlm.my_temp_cf;
+
+-- test at test
+delete from permit_type where permit_id in (select permit_id from temp_permit_type_mign);
 
 
 insert into permit_type (
@@ -247,12 +253,46 @@ insert into permit_type (
 	select
 		sq_permit_type_id.nextval,
 		permit_id,
-		'transport',
-		NULL
+		'export',
+		REGULATION
 	from
-		permit
+		temp_permit_type_mign
 	where
-		permit_type='transport'
+		PERMIT_TYPE_SHOULD_BE='collect + export'
+);
+
+insert into permit_type (
+	permit_type_id,
+	permit_id,
+	permit_type,
+	permit_regulation
+) (
+	select
+		sq_permit_type_id.nextval,
+		permit_id,
+		'collect',
+		REGULATION
+	from
+		temp_permit_type_mign
+	where
+		PERMIT_TYPE_SHOULD_BE='collect + export'
+);
+
+insert into permit_type (
+	permit_type_id,
+	permit_id,
+	permit_type,
+	permit_regulation
+) (
+	select
+		sq_permit_type_id.nextval,
+		permit_id,
+		'import',
+		REGULATION
+	from
+		temp_permit_type_mign
+	where
+		PERMIT_TYPE_SHOULD_BE='export + import'
 );
 
 
@@ -265,12 +305,215 @@ insert into permit_type (
 	select
 		sq_permit_type_id.nextval,
 		permit_id,
-		'transport',
+		'export',
+		REGULATION
+	from
+		temp_permit_type_mign
+	where
+		PERMIT_TYPE_SHOULD_BE='export + import'
+);
+
+
+insert into permit_type (
+	permit_type_id,
+	permit_id,
+	permit_type,
+	permit_regulation
+) (
+	select
+		sq_permit_type_id.nextval,
+		permit_id,
+		'import',
+		REGULATION
+	from
+		temp_permit_type_mign
+	where
+		PERMIT_TYPE_SHOULD_BE='collect + export + import'
+);
+
+
+insert into permit_type (
+	permit_type_id,
+	permit_id,
+	permit_type,
+	permit_regulation
+) (
+	select
+		sq_permit_type_id.nextval,
+		permit_id,
+		'export',
+		REGULATION
+	from
+		temp_permit_type_mign
+	where
+		PERMIT_TYPE_SHOULD_BE='collect + export + import'
+);
+
+insert into permit_type (
+	permit_type_id,
+	permit_id,
+	permit_type,
+	permit_regulation
+) (
+	select
+		sq_permit_type_id.nextval,
+		permit_id,
+		'collect',
+		REGULATION
+	from
+		temp_permit_type_mign
+	where
+		PERMIT_TYPE_SHOULD_BE='collect + export + import'
+);
+
+insert into permit_type (
+	permit_type_id,
+	permit_id,
+	permit_type,
+	permit_regulation
+) (
+	select
+		sq_permit_type_id.nextval,
+		permit_id,
+		'research',
+		REGULATION
+	from
+		temp_permit_type_mign
+	where
+		PERMIT_TYPE_SHOULD_BE='collect + research'
+);
+
+insert into permit_type (
+	permit_type_id,
+	permit_id,
+	permit_type,
+	permit_regulation
+) (
+	select
+		sq_permit_type_id.nextval,
+		permit_id,
+		'collect',
+		REGULATION
+	from
+		temp_permit_type_mign
+	where
+		PERMIT_TYPE_SHOULD_BE='collect + research'
+);
+
+
+insert into permit_type (
+	permit_type_id,
+	permit_id,
+	permit_type,
+	permit_regulation
+) (
+	select
+		sq_permit_type_id.nextval,
+		permit_id,
+		'transfer',
+		REGULATION
+	from
+		temp_permit_type_mign
+	where
+		PERMIT_TYPE_SHOULD_BE='transfer'
+);
+
+insert into permit_type (
+	permit_type_id,
+	permit_id,
+	permit_type,
+	permit_regulation
+) (
+	select
+		sq_permit_type_id.nextval,
+		permit_id,
+		'collect',
+		REGULATION
+	from
+		temp_permit_type_mign
+	where
+		PERMIT_TYPE_SHOULD_BE='collect'
+);
+
+
+insert into permit_type (
+	permit_type_id,
+	permit_id,
+	permit_type,
+	permit_regulation
+) (
+	select
+		sq_permit_type_id.nextval,
+		permit_id,
+		'export',
+		REGULATION
+	from
+		temp_permit_type_mign
+	where
+		PERMIT_TYPE_SHOULD_BE='export'
+);
+
+insert into permit_type (
+	permit_type_id,
+	permit_id,
+	permit_type,
+	permit_regulation
+) (
+	select
+		sq_permit_type_id.nextval,
+		permit_id,
+		'import',
+		REGULATION
+	from
+		temp_permit_type_mign
+	where
+		PERMIT_TYPE_SHOULD_BE='import'
+);
+
+
+
+
+
+
+
+
+
+
+insert into permit_type (
+	permit_type_id,
+	permit_id,
+	permit_type,
+	permit_regulation
+) (
+	select
+		sq_permit_type_id.nextval,
+		permit_id,
+		'transfer',
 		NULL
 	from
 		permit
 	where
-		permit_type='take/possess, transport'
+		permit_type='transport' and
+		permit_id not in (select permit_id from temp_permit_type_mign)
+);
+
+
+insert into permit_type (
+	permit_type_id,
+	permit_id,
+	permit_type,
+	permit_regulation
+) (
+	select
+		sq_permit_type_id.nextval,
+		permit_id,
+		'transfer',
+		NULL
+	from
+		permit
+	where
+		permit_type='take/possess, transport' and
+		permit_id not in (select permit_id from temp_permit_type_mign)
 );
 
 
@@ -288,7 +531,8 @@ insert into permit_type (
 	from
 		permit
 	where
-		permit_type='take/possess, transport'
+		permit_type='take/possess, transport' and
+		permit_id not in (select permit_id from temp_permit_type_mign)
 );
 
 
@@ -306,7 +550,8 @@ insert into permit_type (
 	from
 		permit
 	where
-		permit_type='take/possess, research'
+		permit_type='take/possess, research' and
+		permit_id not in (select permit_id from temp_permit_type_mign)
 );
 
 
@@ -324,7 +569,8 @@ insert into permit_type (
 	from
 		permit
 	where
-		permit_type='take/possess, research'
+		permit_type='take/possess, research' and
+		permit_id not in (select permit_id from temp_permit_type_mign)
 );
 
 
@@ -344,7 +590,8 @@ insert into permit_type (
 	from
 		permit
 	where
-		permit_type='research'
+		permit_type='research' and
+		permit_id not in (select permit_id from temp_permit_type_mign)
 );
 
 
@@ -363,7 +610,8 @@ insert into permit_type (
 	from
 		permit
 	where
-		permit_type='import'
+		permit_type='import' and
+		permit_id not in (select permit_id from temp_permit_type_mign)
 );
 
 
@@ -381,7 +629,8 @@ insert into permit_type (
 	from
 		permit
 	where
-		permit_type='take/possess'
+		permit_type='take/possess' and
+		permit_id not in (select permit_id from temp_permit_type_mign)
 );
 
 
