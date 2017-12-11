@@ -135,40 +135,25 @@ END;
 
 
 
-
-collect	Authorization to collect and possess specimens or their parts (e.g., blood, feather samples). NOTE: Same as 'take/possess'																								
-export	Authorization to export specimens or their parts from one country to another.																								
-import	Authorization to import specimens or their parts from one country to another.																								
-research	Authorization to conduct research within a permitted jurisdiction. Usually also requires additional permits (e.g., collect, export). Examples: U.S. Forest Service research permit; Memorandum of Understanding; Convenio.																								
-salvage	Authorization to pick up and possess dead animals.																								
-transfer	Authorization to transfer specimens from one institution to another within the same country. Example: USDA Transport Permit for restricted materials between US institutions; USFWS authorization to transfer confiscated materials.																								
-
-
 insert into ctpermit_type (permit_type,description) values ('collect','Authorization to collect and possess specimens or their parts (e.g., blood, feather samples).');
+
 insert into ctpermit_type (permit_type,description) values ('export','Authorization to export specimens or their parts from one country to another.');
-insert into ctpermit_type (permit_type,description) values ('salvage','Authorization to pick up and possess dead animals.');
-																							
-																									
+
 update ctpermit_type set 
 description='Authorization to import specimens or their parts from one country to another.'
 where
 permit_type='import';
 
-																										
-update ctpermit_type set 
-description='Authorization to transport specimens from one institution to another within the same country. Example: USDA Transport Permit for restricted materials between US institutions'
-where
-permit_type='transport';	
-
 update ctpermit_type set 
 description='Authorization to conduct research within a permitted jurisdiction. Usually also requires additional permits (e.g., collect, export). Examples: U.S. Forest Service research permit; Memorandum of Understanding; Convenio.'
 where
-permit_type='research';																						
-		
+permit_type='research';			
 
+insert into ctpermit_type (permit_type,description) values ('salvage','Authorization to pick up and possess dead animals.');
 
-
-
+insert into ctpermit_type (permit_type,description) values ('transfer','Authorization to transfer specimens from one institution to another within the same country. Example: USDA Transport Permit for restricted materials between US institutions; USFWS authorization to transfer confiscated materials.');
+																							
+insert into ctpermit_type (permit_type,description) values ('permit not required','Used for transactions under which a permit is explicitly not required. Clarify in permit_remarks.');
 
 
 
@@ -496,6 +481,83 @@ show err
 
 create public synonym getPermitTypeReg for getPermitTypeReg;
 grant execute on getPermitTypeReg to public; 
+
+-- type only, for GGBN
+CREATE OR REPLACE FUNCTION getPermitType (pid in number)
+return varchar2
+as
+	rstr varchar2(4000);
+	s varchar2(20);
+begin
+	for r in (select permit_type from permit_type where permit_id=pid) loop
+		rstr:=rstr || s || r.permit_type ;
+		s:='; ';
+	end loop;
+	return rstr;
+  end;
+/
+show err
+
+create or replace public synonym getPermitType for getPermitType;
+grant execute on getPermitType to public; 
+
+create public synonym getPermitType for getPermitType;
+grant execute on getPermitType to public; 
+
+select getPermitType(collection_object_id) from flat where guid='MVZ:Bird:182074';
+
+-- for GGBN, get permit text summary by specimen
+CREATE OR REPLACE FUNCTION getPermitText (cid in number)
+return varchar2
+as
+	rstr varchar2(4000);
+	s varchar2(20);
+begin
+	for r in (
+		select distinct 
+			permit.PERMIT_NUM,
+			getPermitAgents (permit.permit_id,'issued to') issuedTo,
+			getPermitAgents (permit.permit_id,'issued by') issuedBy,
+			permit.ISSUED_DATE,
+			permit.EXP_DATE,
+			getPermitTypeReg(permit.permit_id) type_and_reg			
+		from 
+			cataloged_item,
+			permit_trans,
+			permit 
+		where 
+			cataloged_item.accn_id=permit_trans.transaction_id and
+			permit_trans.permit_id=permit.permit_id and
+			cataloged_item.collection_object_id=cid) loop
+		rstr:=rstr || s || r.PERMIT_NUM || ' of type(s) ' || r.type_and_reg || ' issued to ' || r.issuedTo || ' by ' || r. issuedBy;
+		s:='; ';
+	end loop;
+	return rstr;
+  end;
+/
+show err
+
+select getPermitText(collection_object_id) from flat where guid='MVZ:Bird:182074';
+
+
+create public synonym getPermitText for getPermitText;
+grant execute on getPermitText to public; 
+
+				   Null?    Type
+ ----------------------------------------------------------------- -------- --------------------------------------------
+ PERMIT_ID							   NOT NULL NUMBER
+ ISSUED_BY_AGENT_ID							    NUMBER
+ ISSUED_DATE								    DATE
+ ISSUED_TO_AGENT_ID							    NUMBER
+ RENEWED_DATE								    DATE
+ EXP_DATE								    DATE
+ PERMIT_NUM							   NOT NULL VARCHAR2(25)
+ PERMIT_TYPE								    VARCHAR2(50)
+ PERMIT_REMARKS 							    VARCHAR2(4000)
+ CONTACT_AGENT_ID							    NUMBER
+
+UAM@ARCTOSTE> 
+
 
 
 
