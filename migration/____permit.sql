@@ -9,7 +9,7 @@ minimize
 clean up now-unused table columns
 
 
-
+create table permit_20171211 as select * from permit;
 
 
 
@@ -750,62 +750,8 @@ show err
 create or replace public synonym getPermitType for getPermitType;
 grant execute on getPermitType to public; 
 
-create public synonym getPermitType for getPermitType;
-grant execute on getPermitType to public; 
 
 select getPermitType(collection_object_id) from flat where guid='MVZ:Bird:182074';
-
--- for GGBN, get permit text summary by specimen
-CREATE OR REPLACE FUNCTION getPermitText (cid in number)
-return varchar2
-as
-	rstr varchar2(4000);
-	s varchar2(20);
-begin
-	for r in (
-		select distinct 
-			permit.PERMIT_NUM,
-			getPermitAgents (permit.permit_id,'issued to') issuedTo,
-			getPermitAgents (permit.permit_id,'issued by') issuedBy,
-			permit.ISSUED_DATE,
-			permit.EXP_DATE,
-			getPermitTypeReg(permit.permit_id) type_and_reg			
-		from 
-			cataloged_item,
-			permit_trans,
-			permit 
-		where 
-			cataloged_item.accn_id=permit_trans.transaction_id and
-			permit_trans.permit_id=permit.permit_id and
-			cataloged_item.collection_object_id=cid) loop
-		rstr:=rstr || s || r.PERMIT_NUM || ' of type(s) ' || r.type_and_reg || ' issued to ' || r.issuedTo || ' by ' || r. issuedBy;
-		s:='; ';
-	end loop;
-	return rstr;
-  end;
-/
-show err
-
-select getPermitText(collection_object_id) from flat where guid='MVZ:Bird:182074';
-
-
-create public synonym getPermitText for getPermitText;
-grant execute on getPermitText to public; 
-
-				   Null?    Type
- ----------------------------------------------------------------- -------- --------------------------------------------
- PERMIT_ID							   NOT NULL NUMBER
- ISSUED_BY_AGENT_ID							    NUMBER
- ISSUED_DATE								    DATE
- ISSUED_TO_AGENT_ID							    NUMBER
- RENEWED_DATE								    DATE
- EXP_DATE								    DATE
- PERMIT_NUM							   NOT NULL VARCHAR2(25)
- PERMIT_TYPE								    VARCHAR2(50)
- PERMIT_REMARKS 							    VARCHAR2(4000)
- CONTACT_AGENT_ID							    NUMBER
-
-UAM@ARCTOSTE> 
 
 
 
@@ -837,9 +783,6 @@ begin
 			'Renewal of <a href="/Permit.cfm?Action=editPermit&permit_id=' || r.permit_id || '">' || r.permit_id || '</a>, original exp_date=' || r.EXP_DATE || ', original renewed_date=' || r.renewed_date || '. ' || r.PERMIT_REMARKS
 		);
 		
-		http://arctos-test.tacc.utexas.edu/Permit.cfm?Action=editPermit&permit_id=10001317
-		
-		
 		
 		for a in (select * from permit_agent where permit_id=r.permit_id) loop
 			insert into permit_agent (
@@ -867,58 +810,11 @@ begin
 end;
 /
 
-http://arctos-test.tacc.utexas.edu/Permit.cfm?Action=editPermit&permit_id=10001317
-
--- undo at test
-update permit set PERMIT_REMARKS=trim(substr(PERMIT_REMARKS,instr(PERMIT_REMARKS, '.')+1)) where permit_remarks like 'Renewal of permit_ID%'
-
-update permit set permit_remarks=
-	'Renewal of <a href="/Permit.cfm?Action=editPermit&permit_id=' || permit_id || '">' || permit_id || '</a>, original exp_date=' || EXP_DATE || ', original renewed_date=' || renewed_date || '. ' || PERMIT_REMARKS
-where
-	RENEWED_DATE is not null;
-	
-	
-	
-	
-select
-	PERMIT_REMARKS,
-from
-	permit
-where
-	RENEWED_DATE is not null
-;
-
-			'Renewal of <a href="/Permit.cfm?Action=editPermit&permit_id=' || r.permit_id || '">' || r.permit_id || '</a>, original exp_date=' || r.EXP_DATE || ', original renewed_date=' || r.renewed_date || '. ' || r.PERMIT_REMARKS
-
-			
-			
-			
-select
-	PERMIT_REMARKS,
-	
-from
-	permit
-where
-	permit_remarks like 'Renewal of permit_ID%'
-;
-
-Renewal of permit_ID=10001312, original exp_date=2012-12-31, original renewed_date=2011-01-01.
 
 
- Name								   Null?    Type
- ----------------------------------------------------------------- -------- --------------------------------------------
- PERMIT_ID							   NOT NULL NUMBER
- ISSUED_BY_AGENT_ID							    NUMBER
- ISSUED_DATE								    DATE
- ISSUED_TO_AGENT_ID							    NUMBER
- RENEWED_DATE								    DATE
- EXP_DATE								    DATE
- PERMIT_NUM							   NOT NULL VARCHAR2(25)
- PERMIT_TYPE								    VARCHAR2(50)
- PERMIT_REMARKS 							    VARCHAR2(300)
- CONTACT_AGENT_ID							    NUMBER
 
- 
+
+
  
  
 -- delete later
@@ -926,6 +822,43 @@ Renewal of permit_ID=10001312, original exp_date=2012-12-31, original renewed_da
 alter table permit modify ISSUED_BY_AGENT_ID null;
 alter table permit modify ISSUED_TO_AGENT_ID null;
 alter table permit modify PERMIT_TYPE null;
+
+select count(*) from permit;
+select count(*) from permit_20171211;
+
+alter table permit drop column ISSUED_BY_AGENT_ID;
+alter table permit drop column ISSUED_TO_AGENT_ID;
+alter table permit drop column RENEWED_DATE;
+alter table permit drop column CONTACT_AGENT_ID;
+alter table permit drop column PERMIT_TYPE;
+
+
+select permit_type from ctpermit_type where permit_type not in (select permit_type from permit_type);
+
+delete from ctpermit_type where permit_type='transport';
+delete from ctpermit_type where permit_type='take/possess, transport';
+delete from ctpermit_type where permit_type='take/possess';
+delete from ctpermit_type where permit_type='transfer of property';
+delete from ctpermit_type where permit_type='other';
+delete from ctpermit_type where permit_type='take/possess, research';
+delete from ctpermit_type where permit_type='xxxx';
+
+
+select permit_type from permit_20171211 where permit_id not in (select permit_id from permit_type );
+
+
+select permit_type, permit_id from permit_20171211 where permit_id not in (select permit_id from permit_type );
+
+-- add a remark for permits with no type
+begin
+	for r in (select  permit_type, permit_id from permit_20171211 where permit_id not in (select permit_id from permit_type )) loop
+	
+	update permit set permit_remarks='original permit type=other; ' || permit_remarks where permit_id=r.permit_id;
+end loop;
+end;
+/
+
+
 
 
 
