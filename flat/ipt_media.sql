@@ -11,11 +11,130 @@
 -- and change specimen_event to map_specimen_event
 -- since media are mapped to specimens, not events, so we might as well have a nice one....
 
+--- UPDATE: set identifier to NULL when mime_type=text/html==when the media probably goes to a handler/wrapper instead
+--   of a binary
+
+
+-- UPDATE: build a temp table, then rename to mimimize downtime
 
 /* 
  	IPT "consumers" cache, our refresh rate is low, and things shuffle around on servers occasionally
  	SO, replace the above with this, which abstracts filepaths and will still work when stale
 */
+
+drop table ipt_better_media_temp;
+create table ipt_better_media_temp as select * from ipt_better_media where 1=2;
+-- no need to drop/create if no changes
+truncate table ipt_better_media_temp;
+-- populate; this is sort of slow
+CREATE OR REPLACE PROCEDURE ins_ipt_better_media_temp IS BEGIN 
+	insert into ipt_better_media_temp (
+		collection_id,
+		occurrenceID,
+		guid,
+		identifier,
+		old_identifier,
+		references,
+		source,
+		format,
+		type,
+		title,
+		description,
+		spatial,
+		latitude,
+		longitude,
+		created,
+		creator,
+		license,
+		last_updated,
+		occurrenceID2
+	) ( select
+			filtered_flat.collection_id,
+			'urn:occurrence:Arctos:' || filtered_flat.guid || ':' || specimen_event.specimen_event_id,
+			filtered_flat.guid,
+			'http://arctos.database.museum/media/' || media.media_id || '?open',
+			decode(
+				media.mime_type,
+				'text/html',NULL,
+				'http://arctos.database.museum/exit.cfm?target=' || replace(media_uri,' ','%20')
+			),
+			'http://arctos.database.museum/media/' || media.media_id,
+			decode(relatedMedia.related_primary_key,null,null,'http://arctos.database.museum/media/' || relatedMedia.related_primary_key),
+			media.mime_type,
+			media.media_type,
+			concatMediaDescription(media.media_id),
+			concatMediaDescription(media.media_id),
+			spec_locality,
+			dec_lat,
+			dec_long,
+			decode(is_iso8601(dcreat.label_value),'valid',dcreat.label_value,NULL),
+			concatMediaCreatedByAgent(media.media_id),
+			URI,
+			sysdate,
+			'http://arctos.database.museum/guid/'  || filtered_flat.guid || '?seid=' || specimen_event.specimen_event_id
+		from
+			media,
+			(select media_id,related_primary_key from media_relations where media_relationship='shows cataloged_item') catItemMR,
+			filtered_flat,
+			(select media_id,label_value from media_labels where media_label='made date') dcreat,
+			(select media_id,related_primary_key from media_relations where media_relationship='derived from media') relatedMedia,
+			ctmedia_license,
+			specimen_event
+		where
+			media.media_id=catItemMR.media_id and
+			catItemMR.related_primary_key=filtered_flat.collection_object_id and
+			media.media_id=dcreat.media_id (+) and
+			media.media_id=relatedMedia.media_id (+) and
+			media.media_license_id=ctmedia_license.media_license_id (+) and
+			filtered_flat.collection_object_id=specimen_event.collection_object_id and
+			specimen_event.specimen_event_id=getPrioritySpecimenEvent(filtered_flat.collection_object_id)
+	);
+end;
+/
+sho err;
+
+
+-- run the script to fill ipt_better_media_temp
+
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+    job_name    => 'j_ins_ipt_better_media_temp',
+    job_type    => 'STORED_PROCEDURE',
+    job_action    => 'ins_ipt_better_media_temp',
+    enabled     => TRUE,
+    end_date    => NULL
+  );
+END;
+/ 
+
+
+-- still working??
+select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where lower(JOB_NAME)='j_ins_ipt_better_media_temp';
+
+-- when ins_ipt_better_media_temp is done, drop the old table and replace with new
+-- this should be fairly fast
+drop table ipt_better_media;
+rename table ipt_better_media_temp to ipt_better_media;
+-- recreate, because why not....
+
+
+create or replace public synonym ipt_better_media for ipt_better_media;
+grant select on ipt_better_media to public;
+
+create or replace view digir_query.ipt_better_media as select * from uam.ipt_better_media;
+
+
+
+
+
+/*
+ * 
+ OLD n BUSTED follows
+
+
+
+
+
 
 
 /* too slow
@@ -158,9 +277,6 @@ create or replace view digir_query.ipt_better_media as select * from uam.ipt_bet
 
 
 
-/*
- * 
- OLD n BUSTED
 
 drop table ipt_media_table2;
 drop public synonym ipt_media_table2;
