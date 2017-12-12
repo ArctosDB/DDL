@@ -114,14 +114,17 @@ select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where lower(J
 -- when ins_ipt_better_media_temp is done, drop the old table and replace with new
 -- this should be fairly fast
 drop table ipt_better_media;
-rename table ipt_better_media_temp to ipt_better_media;
+rename ipt_better_media_temp to ipt_better_media;
 -- recreate, because why not....
-
 
 create or replace public synonym ipt_better_media for ipt_better_media;
 grant select on ipt_better_media to public;
 
 create or replace view digir_query.ipt_better_media as select * from uam.ipt_better_media;
+
+
+
+
 
 
 
