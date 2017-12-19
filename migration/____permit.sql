@@ -22,6 +22,7 @@ create table ctpermit_regulation (
 create public synonym ctpermit_regulation for ctpermit_regulation;
 
 grant all on ctpermit_regulation to manage_codetables;
+grant select on ctpermit_regulation to public;
 
 ALTER TABLE ctpermit_regulation add CONSTRAINT pk_ctpermit_regulation PRIMARY KEY (permit_regulation);
 
@@ -93,6 +94,7 @@ create public synonym ctpermit_agent_role for ctpermit_agent_role;
 
 grant all on ctpermit_agent_role to manage_codetables;
 
+grant select on ctpermit_agent_role to public;
 ALTER TABLE ctpermit_agent_role add CONSTRAINT pk_ctpermit_agent_role PRIMARY KEY (permit_agent_role);
 
 insert into ctpermit_agent_role (permit_agent_role,description)	values ('issued by','Agent issuing permit');	
@@ -155,6 +157,7 @@ insert into ctpermit_type (permit_type,description) values ('transfer','Authoriz
 																							
 insert into ctpermit_type (permit_type,description) values ('permit not required','Used for transactions under which a permit is explicitly not required. Clarify in permit_remarks.');
 
+grant select on ctpermit_type to public;
 
 
 create table permit_type (

@@ -115,6 +115,7 @@ sho err;
 
 
 --- keep the PRAGMA autonomous_transaction out of the compound trigger, because
+-- drop this for GGBN: there's an explicit request from Mariel and Carla to subsample subsamples
 CREATE OR REPLACE TRIGGER tr_specpart_sampfr_biupa
 BEFORE INSERT OR UPDATE ON specimen_part
 FOR EACH ROW

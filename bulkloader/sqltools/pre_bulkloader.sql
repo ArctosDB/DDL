@@ -42,6 +42,43 @@ alter table FILTERED_FLAT modify COLLECTING_METHOD VARCHAR2(4000);
 -- fix this stuff
 select column_name from user_tab_cols where table_name=upper('YYYOOUURRTTAABBLLEE') and column_name not in (select column_name from user_tab_cols where table_name='BULKLOADER');
 
+select column_name from user_tab_cols where table_name=upper('temp_pre_bulkloader') and column_name not in (select column_name from user_tab_cols where table_name='BULKLOADER');
+
+
+COLUMN_NAME
+------------------------------------------------------------------------------------------
+COLL_OBJECT_ID
+ATTRIBUTE_DET_METHOD_5
+ATTRIBUTE_DET_METHOD_4
+ATTRIBUTE_DET_METHOD_3
+ATTRIBUTE_DET_METHOD_2
+
+
+alter table temp_pre_bulkloader rename column COLL_OBJECT_ID to COLLECTION_OBJECT_ID;
+alter table temp_pre_bulkloader rename column ATTRIBUTE_DET_METHOD_5 to ATTRIBUTE_DET_METH_5;
+alter table temp_pre_bulkloader rename column ATTRIBUTE_DET_METHOD_4 to ATTRIBUTE_DET_METH_4;
+alter table temp_pre_bulkloader rename column ATTRIBUTE_DET_METHOD_3 to ATTRIBUTE_DET_METH_3;
+alter table temp_pre_bulkloader rename column ATTRIBUTE_DET_METHOD_2 to ATTRIBUTE_DET_METH_2;
+
+
+ ATTRIBUTE_DET_METH_9							    VARCHAR2(50)
+
+ 
+declare 
+	s varchar2(4000);
+	clist varchar2(4000);
+	sep varchar2(20);
+begin
+	for r in (select column_name from user_tab_cols where table_name=upper('temp_pre_bulkloader')) loop 
+		clist:=clist || sep || r.column_name;
+		sep := ',';
+	end loop;
+	s:='insert into pre_bulkloader (' || clist || ') ( select ' || clist || ' from temp_pre_bulkloader)';
+	dbms_output.put_line(s);
+	execute immediate s;
+end;
+/
+
 
 
 -- example of column-merger-code
