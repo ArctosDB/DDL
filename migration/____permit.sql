@@ -741,11 +741,18 @@ as
 	rstr varchar2(4000);
 	s varchar2(20);
 begin
-	for r in (select permit_type from permit_type where permit_id=pid) loop
-		rstr:=rstr || s || r.permit_type ;
-		s:='; ';
-	end loop;
-	return rstr;
+	if pid is null then
+		return NULL;
+	else
+		for r in (select permit_type from permit_type where permit_id=pid) loop
+			rstr:=rstr || s || r.permit_type ;
+			s:='; ';
+		end loop;
+		if rstr is null then
+			rstr:='permit type not recorded';
+		end if;
+		return rstr;
+	end if;
   end;
 /
 show err

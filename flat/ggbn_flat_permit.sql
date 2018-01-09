@@ -1,23 +1,37 @@
+drop table temp_ggbn_permit;
+
 create 
 --or replace 
 --view digir_query.ggbn_flat_permit 
 -- table for performance reasons; this is not a viable long-term solution, we need a way to maintain these data
-table temp_ggbn_permit as select
-	-- key to Occurrences
+table temp_ggbn_permit as select distinct
+	-- each tissue may have multiple permits
+	-- each permit may apply to multiple tissues
+	-- I don't think these data need a primary key and I have no idea what we'll use if they do
+	--
+	-- foreign key to tissues
+	specimen_part.collection_object_id UnitID,
+	-- key to Occurrences; probably don't need this here but why not...
 	'http://arctos.database.museum/guid/' || filtered_flat.guid || '?seid=' || specimen_event.specimen_event_id OccurrenceID,
 	-- each permit can have multiple types
 	-- doesn't seem right to normalize this further so concat them in
 	-- this does NOT include permit_regulation
 	getPermitType(permit_trans.permit_id) permitType,
-	--- when permit type is permit not required then that
+	--- when permit type is 'permit not required' then that
 	--- if there's no permit and the event ended before 2014, then "pre-Nagoya"
 	-- if there's no permit and the event ended after 2014, 
-	case when getPermitType(permit_trans.permit_id) = 'permit not required' then 'Permit not required'
-	when getPermitType(permit_trans.permit_id) is null then
-		CASE when collecting_event.ENDED_DATE < '2014' then 'pre-Nagoya; no permit required'
-	    else 'Permit not available'
-	    END
-	else 'Permit available'
+	case 
+		when getPermitType(permit_trans.permit_id) = 'permit not required' then 
+			'Permit not required'
+		when getPermitType(permit_trans.permit_id) is null then
+			CASE 
+				when collecting_event.ENDED_DATE < '2014' then 
+					'pre-Nagoya; no permit required'
+	    		else 
+	    			'Permit not available'
+	    	END
+		else 
+			'Permit available'
 	end permitStatus,
 	decode (
 		getPermitType(permit_trans.permit_id),

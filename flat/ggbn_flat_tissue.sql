@@ -1,5 +1,9 @@
 create or replace view digir_query.ggbn_flat_tissue as select
-	-- key to Occurrences
+	-- primary key for tissue samples
+	-- barcode is not unique in this context - a barcode may contain multiple tissues
+	--   so use the only unique (if ephemeral) ID we have available 
+	specimen_part.collection_object_id UnitID,
+	-- key to Occurrences; this is a foreign key here
 	'http://arctos.database.museum/guid/' || filtered_flat.guid || '?seid=' || specimen_event.specimen_event_id OccurrenceID,
 	-- the only type of materialSample we have at the moment
 	'tissue' materialSampleType,
