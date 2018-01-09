@@ -10,6 +10,7 @@ create or replace view digir_query.ggbn_flat_tissue as select
 	-- it should become available as we do more with part attributes
 	' ' preparationMaterials,
 	-- this isn't quite correct, but I have no better data at the moment
+	-- will update with more Attributes as collections begin using them
 	getPreferredAgentName(part_coll_object.ENTERED_PERSON_ID) preparationStaff
 from
 	filtered_flat,
