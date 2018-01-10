@@ -34,6 +34,26 @@ end;
 -- search 42 to know why
 -- I'm so sorry
 
+
+
+-- reconstitute this for absolute rules
+CREATE OR REPLACE TRIGGER trg_container_bupins before UPDATE OR INSERT ON CONTAINER
+FOR EACH ROW
+DECLARE
+    msg varchar2(4000);
+BEGIN
+	if :NEW.container_type='collection object' and :NEW.barcode is not null then
+		raise_application_error(-20000, 'FAIL: collection objects may not have barcodes');
+	end if;
+end;
+/
+
+
+
+
+
+
+
 CREATE OR REPLACE TRIGGER 
 
 deprecated use procedures

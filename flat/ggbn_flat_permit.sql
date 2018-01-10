@@ -18,21 +18,17 @@ table temp_ggbn_permit as select distinct
 	-- this does NOT include permit_regulation
 	getPermitType(permit_trans.permit_id) permitType,
 	--- when permit type is 'permit not required' then that
-	--- if there's no permit and the event ended before 2014, then "pre-Nagoya"
-	-- if there's no permit and the event ended after 2014, 
+	-- if no permit then Permit not available
+	-- if there is a permit then Permit available
 	case 
 		when getPermitType(permit_trans.permit_id) = 'permit not required' then 
 			'Permit not required'
 		when getPermitType(permit_trans.permit_id) is null then
-			CASE 
-				when collecting_event.ENDED_DATE < '2014' then 
-					'pre-Nagoya; no permit required'
-	    		else 
-	    			'Permit not available'
-	    	END
+    		'Permit not available'
 		else 
 			'Permit available'
 	end permitStatus,
+	--- "required" to provide info when permit not required 
 	decode (
 		getPermitType(permit_trans.permit_id),
 		'permit not required','no requirement for permit at date of access',
