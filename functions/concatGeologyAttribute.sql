@@ -15,11 +15,13 @@ CREATE OR REPLACE function concatGeologyAttribute(colobjid  in number )
 	              geology_attributes,
 	              locality,
 	              collecting_event,
+	              specimen_event,
 	              cataloged_item
 	          where
 	           geology_attributes.locality_id=locality.locality_id AND
 	           locality.locality_id=collecting_event.locality_id AND
-	           collecting_event.collecting_event_id=cataloged_item.collecting_event_id AND
+	           collecting_event.collecting_event_id=specimen_event.collecting_event_id and
+	           specimen_event.collection_object_id=cataloged_item.collection_object_id AND
 	           cataloged_item.collection_object_id=colobjid)
 	 LOOP
 	     l_str := l_str || l_sep || r.oneAtt;
