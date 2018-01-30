@@ -46,7 +46,7 @@ BEGIN
     IF (numrows = 0) THEN
         raise_application_error(
             -20001,
-            'Invalid attribute_type');
+            'Invalid attribute_type: ' || :NEW.attribute_type || ' (' || CollectionCode || ')');
     END IF;
         
     SELECT COUNT(*) INTO numrows

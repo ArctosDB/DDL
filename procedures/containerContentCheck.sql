@@ -61,7 +61,7 @@ CREATE OR REPLACE procedure containerContentCheck (
 	  
 			-- don't allow mixing of positions and other junk
 		   	if new_child.container_type='position' and parent_notposition_count > 0 then
-				msg := msg || sep || 'Parent contains not-positions and cannot contain position containers';
+				msg := msg || sep || 'Parent ' || parent.barcode || ' contains not-positions and cannot contain position containers';
 				sep := '; ';
 			end if;
 			-- limit the number of positions to parent's number_positions or fewer
@@ -72,7 +72,7 @@ CREATE OR REPLACE procedure containerContentCheck (
 			end if;
 			-- Containers which contain positions cannot contain anything else
 			if new_child.container_type != 'position' and parent_position_count > 0 then
-				msg := msg || sep || 'Parent contains positions and cannot contain not-position containers';
+				msg := msg || sep || 'Parent ' || parent.barcode || ' contains positions and cannot contain not-position containers';
 				sep := '; ';
 			end if;
 			/*

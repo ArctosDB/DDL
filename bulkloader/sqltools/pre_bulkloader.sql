@@ -99,11 +99,11 @@ declare
 	clist varchar2(4000);
 	sep varchar2(20);
 begin
-	for r in (select column_name from user_tab_cols where table_name=upper('YYYOOUURRTTAABBLLEE')) loop 
+	for r in (select column_name from user_tab_cols where table_name=upper('pre_bulkloader')) loop 
 		clist:=clist || sep || r.column_name;
 		sep := ',';
 	end loop;
-	s:='insert into pre_bulkloader (' || clist || ') ( select ' || clist || ' from YYYOOUURRTTAABBLLEE)';
+	s:='insert into bulkloader (' || clist || ') ( select ' || clist || ' from pre_bulkloader)';
 	dbms_output.put_line(s);
 	--execute immediate s;
 end;

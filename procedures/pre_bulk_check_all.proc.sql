@@ -40,12 +40,18 @@ END;
 
 select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_PRE_BULK_CHK_ALL';
 
-	
+	J_PRE_BULK_CHK_ALL
 	
 	exec DBMS_SCHEDULER.DROP_JOB('J_PRE_BULK_ALL');
 
 	
 	
+BEGIN
+  DBMS_SCHEDULER.drop_job (
+   job_name => 'J_PRE_BULK_CHK_ALL',
+   force    => TRUE);
+END;
+/
 	
 	
 	

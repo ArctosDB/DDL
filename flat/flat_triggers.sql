@@ -291,6 +291,10 @@ END;
 
 --COLL_OBJECT
 --SELECT dbms_metadata.get_ddl('TRIGGER','TR_COLLOBJECT_AIU_FLAT') FROM dual;
+
+ SELECT trigger_name, status FROM user_triggers where trigger_name='';
+ 
+ 
 CREATE OR REPLACE TRIGGER TR_COLLOBJECT_AIU_FLAT
 AFTER INSERT OR UPDATE ON coll_object
 FOR EACH ROW
@@ -302,19 +306,7 @@ BEGIN
     	lastdate=SYSDATE
         WHERE collection_object_id = :NEW.collection_object_id;
         
-        INSERT INTO edit_history (
-	    collection_object_id,
-	    lastuser,
-	    lastdate,
-	    edited_from_table,
-	    pushed_to_flat
-	) VALUES (
-	    :NEW.collection_object_id,
-	    sys_context('USERENV', 'SESSION_USER'),
-	    SYSDATE,
-	    'update coll_object',
-	    0
-	);
+      
 	
 	
 	END LOOP;
