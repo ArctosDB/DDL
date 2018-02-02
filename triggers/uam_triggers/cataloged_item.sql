@@ -83,7 +83,10 @@ before insert or UPDATE ON CATALOGED_ITEM
 FOR EACH ROW
 BEGIN
     if :NEW.cat_num like '%/%' then
-    	  raise_application_error(-20001,'Catnum may not contain forwward slash.');
+    	  raise_application_error(-20001,'Catnum may not contain forward slash.');
+    end if;
+    if :NEW.cat_num like '% %' then
+    	  raise_application_error(-20001,'Catnum may not contain space.');
     end if;
 END;
 /
