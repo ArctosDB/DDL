@@ -73,7 +73,7 @@ CREATE OR REPLACE FUNCTION isValidTaxonName (name  in varchar)
 		botabbr:='agamosp.|agamovar.|convar.|f.|lus.|modif.|monstr.|mut.|nm.|nothof.|nothosubsp.|nothovar.|prol.|subf.|subhybr.|subsp.|subsubvar.|subf.|subvar.|var.';
 		if name like '%.%' then
 			-- only allow dots in botanical abbreviations
-			temp:=regexp_replace(name, botabbr, '');
+			temp:=regexp_replace(name, ' ' || botabbr || ' ', ' ');
 			-- if there's still a dot, die
 			if temp like '%.%' then
 				return 'Invalid abbreviation.';
@@ -91,7 +91,9 @@ CREATE OR REPLACE FUNCTION isValidTaxonName (name  in varchar)
 				return 'Too many terms or invalid infraspecific rank';
 			end if;
 		end if;
-		
+		if name like '%cf.%' then
+			return 'identification terminology';
+		end if;
 		
 		if name like '%(%' then
 			-- ICZN subgenus. Allow
