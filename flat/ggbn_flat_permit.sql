@@ -56,3 +56,12 @@ where
 	filtered_flat.collection_object_id=specimen_event.collection_object_id and
 	specimen_event.collecting_event_id=collecting_event.collecting_event_id
 ;
+
+
+-- and a view for digir_query
+
+grant select on temp_ggbn_permit to digir_query;
+
+
+create or replace view digir_query.ggbn_flat_permit as select * from uam.temp_ggbn_permit;
+
