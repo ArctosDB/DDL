@@ -95,4 +95,15 @@ select count(*) from filtered_flat where has_tissues=1;
 
 
 
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+    job_name    => 'J_TEMP_UPDATE_JUNK',
+    job_type    => 'STORED_PROCEDURE',
+    job_action    => 'REFRESH_FILTERED_FLAT',
+    enabled     => TRUE,
+    end_date    => NULL
+  );
+END;
+/ 
+
 
