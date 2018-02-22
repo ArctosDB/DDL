@@ -182,7 +182,8 @@ BEGIN
 		ATTRIBUTES,
 		ENCUMBRANCES,
 		PARTS,
-		INDIVIDUALCOUNT
+		INDIVIDUALCOUNT,
+		has_tissues
 	) = (SELECT
 			cataloged_item.CAT_NUM,
 			cataloged_item.ACCN_ID,
@@ -221,7 +222,8 @@ BEGIN
 			concatattribute(cataloged_item.collection_object_id),
 			concatEncumbrances(cataloged_item.collection_object_id),
 			concatParts(cataloged_item.collection_object_id),
-			getIndividualCount(cataloged_item.collection_object_id)
+			getIndividualCount(cataloged_item.collection_object_id),
+			getIfTissues(cataloged_item.collection_object_id)
 		from
 			cataloged_item,
 			collection,

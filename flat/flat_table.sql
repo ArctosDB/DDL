@@ -1,3 +1,14 @@
+/*
+ 
+  	https://github.com/ArctosDB/arctos/issues/1447
+  	
+  	 add has_tissues NUMBER for performance
+  	 
+  	  see migration folder 
+ 
+ */
+
+
 
 		
 

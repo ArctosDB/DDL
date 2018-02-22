@@ -41,6 +41,7 @@ CREATE or replace view pre_filtered_flat AS
         orig_elev_units,
         identification_id,
         individualcount,
+        has_tissues,
         coll_obj_disposition,
         -- mask collector
         CASE
@@ -215,6 +216,11 @@ CREATE or replace view pre_filtered_flat AS
    
         
         alter table filtered_flat add ISPUBLISHED VARCHAR2(10);
+        
+        
+
+                
+                
  --- now we have what we want in a view, make a snapshot of it....
  create table filtered_flat as select * from pre_filtered_flat;
  -- prod runtime @ 2015-05-21: Elapsed: 00:04:03.47
@@ -260,7 +266,7 @@ select index_name,column_name from all_ind_columns where table_name='FLAT' and c
 -- dammit wtf
 connect sys as sysdba;
 
-create public synonym DBMS_COMPARISON for DBMS_COMPARISON;
+create or replace public synonym DBMS_COMPARISON for DBMS_COMPARISON;
 
 grant execute on DBMS_COMPARISON to uam;
 
