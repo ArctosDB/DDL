@@ -88,7 +88,6 @@ CREATE INDEX ix_f_flat_hastissues ON filtered_flat(has_tissues) TABLESPACE uam_i
 select count(*) from flat where has_tissues=1;
 
 
-
 select count(*) from filtered_flat where has_tissues=1;
 
 
