@@ -36,7 +36,6 @@ GRANT EXECUTE ON getIfTissues TO PUBLIC;
 
 
 
-
 -- rebuild flat_procedures/UPDATE_FLAT
 
 CREATE OR REPLACE PROCEDURE UPDATE_FLAT (collobjid IN NUMBER) IS....
@@ -83,7 +82,6 @@ select count(*) from flat where has_tissues=1;
 
 
 select count(*) from filtered_flat where has_tissues=1;
-
 
 
 BEGIN
