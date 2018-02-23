@@ -95,4 +95,20 @@ BEGIN
 END;
 / 
 
+-- reset the normal job
+
+BEGIN
+DBMS_SCHEDULER.CREATE_JOB (
+    job_name           =>  'e',
+    job_type           =>  'STORED_PROCEDURE',
+	job_action         =>  'refresh_filtered_flat',
+	repeat_interval    =>  'freq=daily; byhour=2',
+	enabled            =>  TRUE,
+	end_date           =>  NULL,
+	comments           =>  'synchronize filtered_flat');
+END;
+/
+
+
+
 
