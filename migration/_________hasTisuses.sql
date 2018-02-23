@@ -73,7 +73,6 @@ select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAM
 
 
 
-
 alter table filtered_flat add has_tissues number;
 
 
