@@ -30,7 +30,6 @@ end;
 sho err;
 
 
-
 CREATE or replace PUBLIC SYNONYM getIfTissues FOR getIfTissues;
 GRANT EXECUTE ON getIfTissues TO PUBLIC;
 
