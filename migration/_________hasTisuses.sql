@@ -152,7 +152,7 @@ DBMS_SCHEDULER.CREATE_JOB (
 	comments           =>  'synchronize filtered_flat');
 END;
 /
-s
+
 
 
 
