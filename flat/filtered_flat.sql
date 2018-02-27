@@ -246,12 +246,15 @@ select index_name,column_name from all_ind_columns where table_name='FLAT' and c
 
 /*
  	-- to get rid of old comparison
-	exec DBMS_COMPARISON.DROP_COMPARISON('compare_filtered_flat');
+	exec DBMS_COMPARISON.DROP_COMPARISON('SYS.COMPARE_FILTERED_FLAT');
+		exec DBMS_COMPARISON.DROP_COMPARISON('UAM.COMPARE_FILTERED_FLAT');
+		exec DBMS_COMPARISON.DROP_COMPARISON('COMPARE_FILTERED_FLAT2');
+
 	-- to create comparison, on which this is based
 	
 	BEGIN
 		DBMS_COMPARISON.CREATE_COMPARISON ( 
-			comparison_name => 'compare_filtered_flat'
+			comparison_name => 'COMPARE_FILTERED_FLAT2'
   			, schema_name     => 'UAM'
   			, object_name     => 'pre_filtered_flat'
   			, dblink_name     => null
@@ -266,9 +269,9 @@ select index_name,column_name from all_ind_columns where table_name='FLAT' and c
 -- dammit wtf
 connect sys as sysdba;
 
-create or replace public synonym DBMS_COMPARISON for DBMS_COMPARISON;
+create or replace public synonym COMPARE_FILTERED_FLAT2 for COMPARE_FILTERED_FLAT2;
 
-grant execute on DBMS_COMPARISON to uam;
+grant execute on COMPARE_FILTERED_FLAT2 to uam;
 
 exit
 
@@ -282,13 +285,13 @@ IS
 	scan_info    DBMS_COMPARISON.COMPARISON_TYPE;
 BEGIN
 	consistent := DBMS_COMPARISON.COMPARE ( 
-		comparison_name => 'compare_filtered_flat'
+		comparison_name => 'compare_filtered_flat2'
         , scan_info       => scan_info
         , perform_row_dif => TRUE
     );
     IF consistent != TRUE THEN
     	DBMS_COMPARISON.CONVERGE (
-    		comparison_name  => 'compare_filtered_flat'
+    		comparison_name  => 'compare_filtered_flat2'
   			, scan_id          => scan_info.scan_id
   			, scan_info        => scan_info
   			, converge_options => DBMS_COMPARISON.CMP_CONVERGE_LOCAL_WINS

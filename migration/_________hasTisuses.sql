@@ -98,6 +98,16 @@ BEGIN
    force    => TRUE);
 END;
 /
+
+BEGIN
+  DBMS_SCHEDULER.drop_job (
+   job_name => 'J_REFRESH_FILTERED_FLAT',
+   force    => TRUE);
+END;
+/
+
+
+
 BEGIN
   DBMS_SCHEDULER.drop_job (
    job_name => 'E',
@@ -131,10 +141,9 @@ select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAM
 
 
 -- reset the normal job
-
 BEGIN
 DBMS_SCHEDULER.CREATE_JOB (
-    job_name           =>  'e',
+    job_name           =>  'J_REFRESH_FILTERED_FLAT',
     job_type           =>  'STORED_PROCEDURE',
 	job_action         =>  'refresh_filtered_flat',
 	repeat_interval    =>  'freq=daily; byhour=2',
@@ -143,7 +152,7 @@ DBMS_SCHEDULER.CREATE_JOB (
 	comments           =>  'synchronize filtered_flat');
 END;
 /
-
+s
 
 
 
