@@ -63,6 +63,9 @@ BEGIN
 END;
 / 
 
+
+
+
 select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_TEMP_UPDATE_JUNK';
 
 
@@ -84,6 +87,25 @@ select count(*) from flat where has_tissues=1;
 select count(*) from filtered_flat where has_tissues=1;
 
 
+refresh_filtered_flat
+
+
+
+
+BEGIN
+  DBMS_SCHEDULER.drop_job (
+   job_name => 'REFRESH_FILTERED_FLAT',
+   force    => TRUE);
+END;
+/
+BEGIN
+  DBMS_SCHEDULER.drop_job (
+   job_name => 'E',
+   force    => TRUE);
+END;
+/
+
+
 BEGIN
   DBMS_SCHEDULER.CREATE_JOB (
     job_name    => 'J_TEMP_UPDATE_JUNK',
@@ -94,6 +116,19 @@ BEGIN
   );
 END;
 / 
+
+
+
+select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_TEMP_UPDATE_JUNK';
+
+
+
+
+
+
+
+
+
 
 -- reset the normal job
 

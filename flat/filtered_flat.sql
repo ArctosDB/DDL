@@ -301,7 +301,7 @@ END;
 
 BEGIN
 DBMS_SCHEDULER.CREATE_JOB (
-    job_name           =>  'e',
+    job_name           =>  'J_REFRESH_FILTERED_FLAT',
     job_type           =>  'STORED_PROCEDURE',
 	job_action         =>  'refresh_filtered_flat',
 	repeat_interval    =>  'freq=daily; byhour=2',
@@ -324,6 +324,8 @@ select
 	REPEAT_INTERVAL,
 	LAST_RUN_DURATION,
 	MAX_RUN_DURATION  from all_scheduler_jobs where lower(JOB_NAME)='j_refresh_filtered_flat';
+	
+	
 select 
 	* from all_scheduler_jobs where lower(JOB_NAME)='j_refresh_filtered_flat';
 
