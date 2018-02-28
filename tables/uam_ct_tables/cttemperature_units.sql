@@ -56,6 +56,6 @@ END;
 	
 
 insert into cttemperature_units (temperature_units,DESCRIPTION) values ('celsius','https://en.wikipedia.org/wiki/Celsius');
-insert into cttemperature_units (temperature_units,DESCRIPTION) values ('celsius','https://en.wikipedia.org/wiki/Fahrenheit');
+insert into cttemperature_units (temperature_units,DESCRIPTION) values ('fahrenheit','https://en.wikipedia.org/wiki/Fahrenheit');
 insert into cttemperature_units (temperature_units,DESCRIPTION) values ('kelvin','https://en.wikipedia.org/wiki/Kelvin');
 
