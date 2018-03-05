@@ -2,11 +2,27 @@
 
 
 --on hold waiting resolution of https://github.com/ArctosDB/arctos/issues/739
+-- #739 is now https://github.com/ArctosDB/arctos/issues/1023
+-- go go go!
 
 
 
+/*
+ * 
+ 
+ Final event type vocabulary:
+ 
+ 
+    use - Event at which an item was used. Generally refers to human use of cultural items.
+    manufacture - Event at which an item was manufactured. Generally refers to human manufacture of cultural items, but could be extended to e.g., nests.
+    encounter - Individual Specimen was encountered and not killed or removed from context; Biological Samples were taken. Biopsies belong here.
+    observation - IndividualSpecimen was detected and not killed or removed from context; No biological samples were taken. Human sightings, camera traps, and GPS telemetry data are appropriate here.
+    collection - Specimen was collected. The specimen was killed, found dead, or removed from functional cultural, biological, ecological, or archeological context.
 
 
+
+ *
+ */
 
 
 
@@ -41,7 +57,7 @@ CREATE OR REPLACE TRIGGER trg_SPECIMEN_EVENT_biu
         	:new.VERIFICATIONSTATUS:='unverified';
         end if;
         if :new.specimen_event_type is null then
-        	:new.specimen_event_type:='accepted place of collection';
+        		:new.specimen_event_type:='collection';
         end if;
         status:=is_iso8601(:NEW.verified_date);
     	IF status != 'valid' THEN
@@ -51,25 +67,35 @@ CREATE OR REPLACE TRIGGER trg_SPECIMEN_EVENT_biu
 /
 
 
-
 insert into CTSPECIMEN_EVENT_TYPE (SPECIMEN_EVENT_TYPE,DESCRIPTION) values 
-	('collection','Specimen was collected. For biological specimens, the specimen was killed or found dead at the event.');
+	('collection','Specimen was collected. The specimen was killed, found dead, or removed from functional cultural, biological, ecological, or archeological context.');
+
 
 update CTSPECIMEN_EVENT_TYPE set 
-	DESCRIPTION='Specimen was encountered alive and not killed. Samples or recordings may have been taken; see parts and media for more information.' 
+	DESCRIPTION='Specimen was encountered and not killed or removed from context; Biological Samples were taken. Biopsies belong here.' 
 	where SPECIMEN_EVENT_TYPE='encounter';
-
-
-insert into CTSPECIMEN_EVENT_TYPE (SPECIMEN_EVENT_TYPE,DESCRIPTION) values 
-	('','Specimen was encountered alive and not killed. Samples or recordings may have been taken; see parts and media for more information.');
-
-insert into CTSPECIMEN_EVENT_TYPE (SPECIMEN_EVENT_TYPE,DESCRIPTION) values 
-	('manufacture','Specimen was manufactured. Generally refers to human manufacture of cultural items, but could be extended to e.g., nests.');
-
-insert into CTSPECIMEN_EVENT_TYPE (SPECIMEN_EVENT_TYPE,DESCRIPTION) values 
-	('use','Specimen was used. Generally refers to human use of cultural items.');
+	
+update CTSPECIMEN_EVENT_TYPE set 
+	DESCRIPTION='Specimen was detected and not killed or removed from context; No biological samples were taken. Human sightings, camera traps, and GPS telemetry data are appropriate here.' 
+	where SPECIMEN_EVENT_TYPE='encounter';
 	
 	
+	insert into CTSPECIMEN_EVENT_TYPE (SPECIMEN_EVENT_TYPE,DESCRIPTION) values 
+	('use','Event at which an item was used. Generally refers to human use of cultural items.');
+	
+	
+	
+
+insert into CTSPECIMEN_EVENT_TYPE (SPECIMEN_EVENT_TYPE,DESCRIPTION) values 
+	('manufacture','Event at which an item was manufactured. Generally refers to human manufacture of cultural items, but could be extended to e.g., nests.');
+
+	
+
+
+    
+    
+
+
 
 	
 update CTVERIFICATIONSTATUS set 
@@ -126,10 +152,96 @@ where
 ;
 
 
+-- this is super-slow so...
 
 
-update specimen_event set verificationstatus='unaccepted' where specimen_event_type='unaccepted place of collection';
-update specimen_event set verificationstatus='unaccepted' where specimen_event_type='unaccepted place of collection';
+CREATE OR REPLACE PROCEDURE temp_update_junk IS
+begin
+  update specimen_event set verificationstatus='unaccepted' where specimen_event_type='unaccepted place of collection';
+end;
+/
+
+
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+    job_name    => 'J_TEMP_UPDATE_JUNK',
+    job_type    => 'STORED_PROCEDURE',
+    job_action    => 'temp_update_junk',
+    enabled     => TRUE,
+    end_date    => NULL
+  );
+END;
+/ 
+
+select STATE,LAST_START_DATE,NEXT_RUN_DATE,LAST_RUN_DURATION from all_scheduler_jobs where JOB_NAME='J_TEMP_UPDATE_JUNK';
+
+
+CREATE OR REPLACE PROCEDURE temp_update_junk IS
+begin
+  update specimen_event set specimen_event_type='collection' where specimen_event_type='unaccepted place of collection';
+end;
+/
+
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+    job_name    => 'J_TEMP_UPDATE_JUNK',
+    job_type    => 'STORED_PROCEDURE',
+    job_action    => 'temp_update_junk',
+    enabled     => TRUE,
+    end_date    => NULL
+  );
+END;
+/ 
+
+select STATE,LAST_START_DATE,NEXT_RUN_DATE,LAST_RUN_DURATION from all_scheduler_jobs where JOB_NAME='J_TEMP_UPDATE_JUNK';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE temp_update_junk IS
+begin
+  update specimen_event set specimen_event_type='collection' where specimen_event_type='accepted place of collection';
+end;
+/
+
+CREATE OR REPLACE PROCEDURE temp_update_junk IS
+begin
+  update specimen_event set specimen_event_type='manufacture' where specimen_event_type='place of manufacture';
+end;
+/
+
+
+CREATE OR REPLACE PROCEDURE temp_update_junk IS
+begin
+  update specimen_event set specimen_event_type='use' where specimen_event_type='place of use';
+end;
+/
+
+
+
+
+
+delete from ctspecimen_event_type where specimen_event_type='accepted place of collection';
+delete from ctspecimen_event_type where specimen_event_type='place of manufacture';
+delete from ctspecimen_event_type where specimen_event_type='place of use';
+delete from ctspecimen_event_type where specimen_event_type='unaccepted place of collection';
+
+
+
+
+
+    
+
 
 select 
 	specimen_event_id,
