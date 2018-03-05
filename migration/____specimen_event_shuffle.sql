@@ -197,28 +197,46 @@ select STATE,LAST_START_DATE,NEXT_RUN_DATE,LAST_RUN_DURATION from all_scheduler_
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 CREATE OR REPLACE PROCEDURE temp_update_junk IS
 begin
   update specimen_event set specimen_event_type='collection' where specimen_event_type='accepted place of collection';
 end;
 /
 
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+    job_name    => 'J_TEMP_UPDATE_JUNK',
+    job_type    => 'STORED_PROCEDURE',
+    job_action    => 'temp_update_junk',
+    enabled     => TRUE,
+    end_date    => NULL
+  );
+END;
+/ 
+
+select STATE,LAST_START_DATE,NEXT_RUN_DATE,LAST_RUN_DURATION from all_scheduler_jobs where JOB_NAME='J_TEMP_UPDATE_JUNK';
+
+
 CREATE OR REPLACE PROCEDURE temp_update_junk IS
 begin
   update specimen_event set specimen_event_type='manufacture' where specimen_event_type='place of manufacture';
 end;
 /
+
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+    job_name    => 'J_TEMP_UPDATE_JUNK',
+    job_type    => 'STORED_PROCEDURE',
+    job_action    => 'temp_update_junk',
+    enabled     => TRUE,
+    end_date    => NULL
+  );
+END;
+/ 
+
+select STATE,LAST_START_DATE,NEXT_RUN_DATE,LAST_RUN_DURATION from all_scheduler_jobs where JOB_NAME='J_TEMP_UPDATE_JUNK';
+
+
 
 
 CREATE OR REPLACE PROCEDURE temp_update_junk IS
@@ -228,12 +246,28 @@ end;
 /
 
 
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+    job_name    => 'J_TEMP_UPDATE_JUNK',
+    job_type    => 'STORED_PROCEDURE',
+    job_action    => 'temp_update_junk',
+    enabled     => TRUE,
+    end_date    => NULL
+  );
+END;
+/ 
 
+select STATE,LAST_START_DATE,NEXT_RUN_DATE,LAST_RUN_DURATION from all_scheduler_jobs where JOB_NAME='J_TEMP_UPDATE_JUNK';
 
+select count(*) from specimen_event where specimen_event_type='unaccepted place of collection';
+
+select count(*) from specimen_event where specimen_event_type='place of manufacture';
 
 delete from ctspecimen_event_type where specimen_event_type='accepted place of collection';
 delete from ctspecimen_event_type where specimen_event_type='place of manufacture';
 delete from ctspecimen_event_type where specimen_event_type='place of use';
+
+
 delete from ctspecimen_event_type where specimen_event_type='unaccepted place of collection';
 
 
