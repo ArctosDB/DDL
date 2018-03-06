@@ -33,7 +33,10 @@
 
 
 
+-- delay flat updates
 
+
+ exec DBMS_SCHEDULER.DROP_JOB (JOB_NAME => 'check_flat_stale', FORCE => TRUE);
 
 
 
@@ -272,70 +275,89 @@ delete from ctspecimen_event_type where specimen_event_type='unaccepted place of
 
 
 
+UAM@ARCTOSTE> desc specimen_event
+ Name								   Null?    Type
+ ----------------------------------------------------------------- -------- --------------------------------------------
+ SPECIMEN_EVENT_ID						   NOT NULL NUMBER
+ COLLECTION_OBJECT_ID						   NOT NULL NUMBER
+ COLLECTING_EVENT_ID						   NOT NULL NUMBER
+ ASSIGNED_BY_AGENT_ID						   NOT NULL NUMBER
+ ASSIGNED_DATE							   NOT NULL DATE
+ SPECIMEN_EVENT_REMARK							    VARCHAR2(4000)
+ SPECIMEN_EVENT_TYPE						   NOT NULL VARCHAR2(60)
+ COLLECTING_METHOD							    VARCHAR2(4000)
+ COLLECTING_SOURCE							    VARCHAR2(60)
+ VERIFICATIONSTATUS						   NOT NULL VARCHAR2(60)
+ HABITAT								    VARCHAR2(4000)
+ VERIFIED_BY_AGENT_ID							    NUMBER
+ VERIFIED_DATE								    VARCHAR2(30)
 
+ select * from ctverification_status;
+ 
+
+ 
+ select count(*) from specimen_event where VERIFICATIONSTATUS='unaccepted';
+ select count(*) from specimen_event where VERIFICATIONSTATUS='accepted';
+ select count(*) from specimen_event where VERIFICATIONSTATUS='checked by curator';
+ 
+ 
+ select distinct SPECIMEN_EVENT_REMARK from specimen_event where VERIFICATIONSTATUS='accepted' order by SPECIMEN_EVENT_REMARK;
+ 
+
+
+ update specimen_event set VERIFICATIONSTATUS='accepted', 
+ SPECIMEN_EVENT_REMARK=decode(SPECIMEN_EVENT_REMARK,
+ 	null,'Former verification status: checked by curator.',
+ 	SPECIMEN_EVENT_REMARK || '; Former verification status: checked by curator.')
+ where VERIFICATIONSTATUS='checked by curator';
+ 
+ 
+ 
+  update specimen_event set VERIFICATIONSTATUS='accepted', 
+ SPECIMEN_EVENT_REMARK=decode(SPECIMEN_EVENT_REMARK,
+ 	null,'Former verification status: checked by curator.',
+ 	SPECIMEN_EVENT_REMARK || '; Former verification status: checked by curator.')
+ where VERIFICATIONSTATUS='checked by curator';
+ 
+   update specimen_event set VERIFICATIONSTATUS='accepted', 
+ SPECIMEN_EVENT_REMARK=decode(SPECIMEN_EVENT_REMARK,
+ 	null,'Former verification status: checked by collector.',
+ 	SPECIMEN_EVENT_REMARK || '; Former verification status: checked by collector.')
+ where VERIFICATIONSTATUS='checked by collector';
+ 
+ 
+ 
+    update specimen_event set VERIFICATIONSTATUS='verified and locked', 
+ SPECIMEN_EVENT_REMARK=decode(SPECIMEN_EVENT_REMARK,
+ 	null,'Former verification status: verified by collector.',
+ 	SPECIMEN_EVENT_REMARK || '; Former verification status: verified by collector.')
+ where VERIFICATIONSTATUS='verified by collector';
+ 
+   update specimen_event set VERIFICATIONSTATUS='verified and locked', 
+ SPECIMEN_EVENT_REMARK=decode(SPECIMEN_EVENT_REMARK,
+ 	null,'Former verification status: verified by curator.',
+ 	SPECIMEN_EVENT_REMARK || '; Former verification status: verified by curator.')
+ where VERIFICATIONSTATUS='verified by curator';
+
+ 
+ 
+ 
 
     
-
-
-select 
-	specimen_event_id,
-	agent_id 
-from
-	specimen_event,
-	collector
-where
-	specimen_event.COLLECTION_OBJECT_ID=collector.COLLECTION_OBJECT_ID(+) and
-	collector_role='collector' and
-	coll_order=1 and
-	verificationstatus='verified by collector'
-order by agent_id desc;
-	
-	
-	
-verified_by_agent_id
-
-Proposed vocabulary for specimen_event_type:
-
-(Currently: http://arctos.database.museum/info/ctDocumentation.cfm?table=CTSPECIMEN_EVENT_TYPE)
-
-collection
-Definition: Specimen was collected. For biological specimens, the specimen was killed or found dead at the event.
-Migration Path: �Accepted place of collection� plus �unaccepted place of collection� merge here.
-�unaccepted place of collection� will first change verificationstatus to �unaccepted.�
-
-encounter
-Definition: Specimen was encountered alive and not killed. Samples or recordings may have been taken; see parts and media for more information.
-Migration Path: �Encounter� and �observation� merge here.
-
-manufacture
-Definition: Specimen was manufactured. Generally refers to human manufacture of cultural items, but could be extended to e.g., nests.
-Migration Path: Vocabulary change only, from �place of manufacture.�
-
-use
-Definition: Specimen was used. Generally refers to human use of cultural items.
-Migration Path: Vocabulary change only, from �place of use.�
-
-
-Proposed vocabulary for verification status:
-
-(Currently: http://arctos.database.museum/info/ctDocumentation.cfm?table=CTVERIFICATIONSTATUS)
-
-unverified
-Definition: No assertion regarding the accuracy of the place and time information is made.
-Migration Path: No changes.
-
-unaccepted
-Definition: The place and time information as entered was reviewed and determined to be incorrect, or less correct or complete than other available data.
-Migration Path: New concept, will be assigned to all specimen events which are currently of type �unaccepted place of collection.�
-
-accepted
-Definition: The place and time information as entered was checked and determined to be correct against the information available from Arctos; original data were not consulted, and transcription or omission errors are possible.
-Migration Path: �Checked by curator� and �checked by collector� merge here. See �new fields� below.
-
-verified and locked
-Definition: The place and time information as entered was checked against all available data, including labels, fieldnotes, collector itineraries, and associated digital data, and determined to be correct. Changes should only be made in the extremely unlikely event of more authoritative data surfacing. This value LOCKS linked Locality and Event data.
-Migration Path: �Verified by curator� and �verified by collector� merge here. See �new fields� below.
-
+ -- turn flat updates back on
+ 
+    BEGIN
+DBMS_SCHEDULER.CREATE_JOB (
+    job_name           =>  'check_flat_stale',
+    job_type           =>  'STORED_PROCEDURE',
+	job_action         =>  'IS_FLAT_STALE',
+	start_date         =>  SYSTIMESTAMP,
+	repeat_interval    =>  'freq=minutely; interval=1',
+	enabled            =>  TRUE,
+	end_date           =>  NULL,
+	comments           =>  'check flat for records marked as stale and update them');
+END;
+/
 
 
 

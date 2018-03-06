@@ -81,10 +81,10 @@ BEGIN
 		    flat 
 		WHERE 
 		    stale_flag = 1 AND 
-		    ROWNUM < 500
+		    ROWNUM < 1500
 	) LOOP
 			BEGIN
-		dbms_output.put_line(r.collection_object_id);
+		--dbms_output.put_line(r.collection_object_id);
 		-- update flat_media set stale_fg=1 where collection_object_id = r.collection_object_id;
 		update_flat(r.collection_object_id);
 		
@@ -99,6 +99,26 @@ BEGIN
 END;
 /
 sho err;
+
+
+-- time testing
+-- in TEST
+-- 20180306
+-- init: <500
+
+#recs--time------------------sec/rec
+1: Elapsed: 00:00:00.02     .02/rec
+20:Elapsed: 00:00:01.58     .079
+200:Elapsed: 00:00:08.04     0402
+400:Elapsed: 00:00:26.45     066
+600:Elapsed: 00:00:37.84     063
+800: Elapsed: 00:00:45.99    057
+1000:Elapsed: 00:00:53.81    053
+1200:Elapsed: 00:00:57.82    048
+1500:Elapsed: 00:00:59.46    039
+
+-- gonna try 1500 recs for a while
+
 
 
 
