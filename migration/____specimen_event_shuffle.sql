@@ -340,7 +340,18 @@ UAM@ARCTOSTE> desc specimen_event
  where VERIFICATIONSTATUS='verified by curator';
 
  
- 
+ delete from ctVERIFICATIONSTATUS where VERIFICATIONSTATUS='verified by curator';
+  delete from ctVERIFICATIONSTATUS where VERIFICATIONSTATUS='verified by collector';
+ delete from ctVERIFICATIONSTATUS where VERIFICATIONSTATUS='checked by curator';
+  delete from ctVERIFICATIONSTATUS where VERIFICATIONSTATUS='checked by collector';
+
+  
+  
+  select 
+  	VERIFICATIONSTATUS, 
+  	SPECIMEN_EVENT_REMARK from specimen_event group by VERIFICATIONSTATUS, 
+  	SPECIMEN_EVENT_REMARK order by SPECIMEN_EVENT_REMARK;
+
  
 
     
