@@ -1,25 +1,22 @@
+-- get general outline of locality stuff for specimenresults
+-- do not pull remarks, other long text fields
+-- in an attempt to not break this thing
 create or replace function getJsonEventBySpecimen (colObjId IN number)
 return varchar2
 as
-     numrec number :=0;
-     reslt varchar2(4000);
-     mt varchar2(4000);
-     pu varchar2(4000);
-     mu varchar2(4000);
-     mimt varchar2(4000);
-     medtype varchar2(4000);
-     sep varchar2(10);
-     strlen NUMBER;
-     mid varchar2(4000);
-     cursor mcur is
+	jsond varchar2(4000) :='[';
+	rsep varchar2(1);
+	dsep varchar2(1);
 begin
 	for r in (
 		select 
 			SPECIMEN_EVENT.SPECIMEN_EVENT_ID,
-			getPreferredAgentName(SPECIMEN_EVENT.ASSIGNED_BY_AGENT_ID) EventAssignedByAgent,
-			to_char(SPECIMEN_EVENT.ASSIGNED_DATE,'YYYY-MM-DD') EventAssignedDate,
-			SPECIMEN_EVENT.SPECIMEN_EVENT_REMARK,
 			SPECIMEN_EVENT.SPECIMEN_EVENT_TYPE,
+			getPreferredAgentName(SPECIMEN_EVENT.ASSIGNED_BY_AGENT_ID) ASSIGNEDBY,
+			to_char(SPECIMEN_EVENT.ASSIGNED_DATE,'YYYY-MM-DD') ASSIGNEDDATE,
+			getPreferredAgentName(SPECIMEN_EVENT.VERIFIED_BY_AGENT_ID) VERIFIEDBY,
+			SPECIMEN_EVENT.VERIFIED_DATE VERIFIEDDATE,
+			SPECIMEN_EVENT.SPECIMEN_EVENT_REMARK,
 			SPECIMEN_EVENT.COLLECTING_METHOD,
 			SPECIMEN_EVENT.COLLECTING_SOURCE,
 			SPECIMEN_EVENT.VERIFICATIONSTATUS,
@@ -30,14 +27,19 @@ begin
 			COLLECTING_EVENT.BEGAN_DATE,
 			COLLECTING_EVENT.ENDED_DATE,
 			LOCALITY.SPEC_LOCALITY,
-			LOCALITY.DEC_LAT,
-			LOCALITY.DEC_LONG,
-			LOCALITY.MINIMUM_ELEVATION,
-			LOCALITY.MAXIMUM_ELEVATION,
-			LOCALITY.ORIG_ELEV_UNITS,
-			LOCALITY.MIN_DEPTH,
-			LOCALITY.MAX_DEPTH,
-			LOCALITY.DEPTH_UNITS,
+			decode(locality.DEC_LAT,null,null, locality.DEC_LAT || ',' || locality.DEC_LONG) COORDINATES,
+			decode(locality.MAX_ERROR_UNITS,
+				null,null,
+				locality.MAX_ERROR_DISTANCE ||  ' ' || locality.MAX_ERROR_UNITS
+			) COORDINATE_ERROR,
+			decode(locality.ORIG_ELEV_UNITS,
+						null,null,
+						locality.MINIMUM_ELEVATION || '-' || locality.MAXIMUM_ELEVATION || ' ' || locality.ORIG_ELEV_UNITS
+					) ELEVATION,
+			decode(locality.DEPTH_UNITS,
+						null,null,
+						locality.MIN_DEPTH || '-' || locality.MAX_DEPTH || ' ' || locality.DEPTH_UNITS
+					) DEPTH,
 			LOCALITY.MAX_ERROR_DISTANCE,
 			LOCALITY.MAX_ERROR_UNITS,
 			LOCALITY.DATUM,
@@ -45,15 +47,10 @@ begin
 			LOCALITY.GEOREFERENCE_SOURCE,
 			LOCALITY.GEOREFERENCE_PROTOCOL,
 			LOCALITY.LOCALITY_NAME,
-			decode(LOCALITY.WKT_POLYGON,
-				NULL,'',
-				'data available'
-			) hasLocalityWKT,
+			--decode(LOCALITY.WKT_POLYGON,NULL,'','data available') hasLocalityWKT,
 			geog_auth_rec.HIGHER_GEOG,
-			decode(geog_auth_rec.WKT_POLYGON,
-				NULL,'',
-				'data available'
-			) hasLocalityWKT
+			--decode(geog_auth_rec.WKT_POLYGON,NULL,'','data available') hasGeographyWKT,
+			concatGeologyAttribute(SPECIMEN_EVENT.COLLECTION_OBJECT_ID) GEOLOGY
 		from
 			SPECIMEN_EVENT,
 			COLLECTING_EVENT,
@@ -65,97 +62,44 @@ begin
 			locality.geog_auth_rec_id=geog_auth_rec.geog_auth_rec_id and
 			SPECIMEN_EVENT.COLLECTION_OBJECT_ID=colObjId
 	) loop
-		dbms_output.put_line(r.SPECIMEN_EVENT_TYPE);
+		jsond:=jsond || rsep || '{';
+		jsond:=jsond || '"SPECIMEN_EVENT_TYPE":"' || r.SPECIMEN_EVENT_TYPE || '"';
+		jsond:=jsond || ',"VERIFICATIONSTATUS":"' || r.VERIFICATIONSTATUS || '"';
+		jsond:=jsond || ',"VERIFIEDBY":"' || r.VERIFIEDBY || '"';
+		jsond:=jsond || ',"VERIFIEDDATE":"' || r.VERIFIEDDATE || '"';
+		jsond:=jsond || ',"ASSIGNEDBY":"' || r.ASSIGNEDBY || '"';
+		jsond:=jsond || ',"ASSIGNEDDATE":"' || r.ASSIGNEDDATE || '"';
+		jsond:=jsond || ',"SPECIMEN_EVENT_REMARK":"' || r.SPECIMEN_EVENT_REMARK || '"';
+		jsond:=jsond || ',"COLLECTING_METHOD":"' || r.COLLECTING_METHOD || '"';
+		jsond:=jsond || ',"COLLECTING_SOURCE":"' || r.COLLECTING_SOURCE || '"';
+		jsond:=jsond || ',"BEGAN_DATE":"' || r.BEGAN_DATE || '"';
+		jsond:=jsond || ',"ENDED_DATE":"' || r.ENDED_DATE || '"';
+		jsond:=jsond || ',"VERBATIM_DATE":"' || r.VERBATIM_DATE || '"';
+		jsond:=jsond || ',"VERBATIM_LOCALITY":"' || r.VERBATIM_LOCALITY || '"';
+		jsond:=jsond || ',"HABITAT":"' || r.HABITAT || '"';
+		jsond:=jsond || ',"SPEC_LOCALITY":"' || r.SPEC_LOCALITY || '"';
+		jsond:=jsond || ',"COORDINATES":"' || r.COORDINATES || '"';
+		jsond:=jsond || ',"COORDINATE_ERROR":"' || r.COORDINATE_ERROR || '"';
+		jsond:=jsond || ',"ELEVATION":"' || r.ELEVATION || '"';
+		jsond:=jsond || ',"DEPTH":"' || r.DEPTH || '"';
+		jsond:=jsond || ',"DATUM":"' || r.DATUM || '"';
+		jsond:=jsond || ',"HIGHER_GEOG":"' || r.HIGHER_GEOG || '"';
+		jsond:=jsond || ',"GEOLOGY":"' || r.GEOLOGY || '"';	
+		jsond:=jsond || ',"COLL_EVENT_REMARKS":"' || r.COLL_EVENT_REMARKS || '"';				
+		jsond:=jsond || '}';
+		rsep:=',';
 	end loop;
-	
-	 Name								   Null?    Type
- ----------------------------------------------------------------- -------- --------------------------------------------
- 						   NOT NULL NUMBER
- COLLECTION_OBJECT_ID						   NOT NULL NUMBER
- COLLECTING_EVENT_ID						   NOT NULL NUMBER
- 						   NOT NULL NUMBER
- 							   NOT NULL DATE
- SPECIMEN_EVENT_REMARK							    VARCHAR2(4000)
- 						   NOT NULL VARCHAR2(60)
- 							    VARCHAR2(4000)
- 							    VARCHAR2(60)
- 						   NOT NULL VARCHAR2(60)
- 								    VARCHAR2(4000)
-	
-
-'lo' rType,preview_uri,media_uri,mime_type,media_type,media.media_id
-from 
-	media,
-	media_relations,
-	flat
-where
-	flat.locality_id = media_relations.related_primary_key and
-	media_relations.media_id=media.media_id and
-	SUBSTR(media_relationship,instr(media_relationship,' ',-1)+1)='locality' and
-	flat.collection_object_id = colObjId
-union
-select 
-	'ci' rType,preview_uri,media_uri,mime_type,media_type,media.media_id
-from 
-	media,
-	media_relations,
-	flat
-where
-	flat.collection_object_id = media_relations.related_primary_key and
-	media_relations.media_id=media.media_id and
-	SUBSTR(media_relationship,instr(media_relationship,' ',-1)+1)='cataloged_item' and
-	flat.collection_object_id = colObjId
-union
-select 
-	'ce' rType,preview_uri,media_uri,mime_type,media_type,media.media_id
-from 
-	media,
-	media_relations,
-	flat
-where
-	flat.collecting_event_id = media_relations.related_primary_key and
-	media_relations.media_id=media.media_id and
-	SUBSTR(media_relationship,instr(media_relationship,' ',-1)+1)='collecting_event' and
-	flat.collection_object_id = colObjId
-;
-begin	
-	for r in mcur loop
-		numrec:=numrec+1;
-		dbms_output.put_line(r.rType);
-		strlen:=nvl(length(medtype),0) + nvl(length(mid),0) + nvl(length(mt),0) + nvl(length(pu),0) + nvl(length(mu),0) + nvl(length(mimt),0) + nvl(length(sep),0) +  
-		    nvl(length(r.rType),0) + nvl(length(r.preview_uri),0) + nvl(length(r.media_uri),0) + nvl(length(r.mime_type),0) + 10;
-		IF strlen < 3000 THEN
-    		mid:=mid || sep || '"' || r.media_id || '"';
-    		mt:=mt || sep || '"' || r.rType || '"';
-    		pu:=pu || sep || '"' ||  r.preview_uri || '"';
-    		mu:=mu || sep || '"' || r.media_uri || '"';
-    		mimt:=mimt || sep || '"' || r.mime_type || '"';
-    		medtype:=medtype || sep || '"' || r.media_type || '"';
-    		sep:=',';
-		ELSE
-		    numrec:=0;
-		END IF;
-	end loop;
-	
-	-- edit for https://github.com/ArctosDB/arctos/issues/1130
-	-- return NULL is nothing is found
-	--if numrec > 0 then
-		reslt:='{"ROWCOUNT":' || numrec || ',"COLUMNS":["MEDIA_ID","MEDIA_TYPE","PREVIEW_URI","MEDIA_URI","MIME_TYPE","MIMECAT"],"DATA":{';
-		reslt:=reslt || '"media_id":[' || mid || '],';
-		reslt:=reslt || '"media_type":[';
-		reslt:=reslt || mt || '],"preview_uri":[';
-		reslt:=reslt || pu || '],"media_uri":[';
-		reslt:=reslt || mu || '],"mimecat":[';
-		reslt:=reslt || medtype || '],"mime_type":[';
-		reslt:=reslt || mimt || ']}}';
-	--else
-	--	reslt:=NULL;
-	--end if;
-		
-return reslt;
-
+	jsond:=jsond || ']';
+	return jsond;
+	exception when others then
+		jsond:='[ ERROR CREATING JSON ]';
+		return jsond;
 end;
 /
+
+sho err;
+
+select getJsonEventBySpecimen(23950531) from dual;
 
 
 create or replace public synonym getJsonEventBySpecimen for getJsonEventBySpecimen;

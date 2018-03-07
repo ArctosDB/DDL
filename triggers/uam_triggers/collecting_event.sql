@@ -29,9 +29,9 @@ BEGIN
         specimen_event
     WHERE
         specimen_event.collecting_event_id=:OLD.collecting_event_id AND
-        specimen_event.VERIFICATIONSTATUS LIKE 'verified by %';
-    IF num > 0 THEN       raise_application_error(-20001,'This collecting event is used in verified specimen/events and
- may not be changed or deleted.');
+        specimen_event.VERIFICATIONSTATUS LIKE 'verified and locked';
+    IF num > 0 THEN
+    		raise_application_error(-20001,'This collecting event is used in verified specimen/events and may not be changed or deleted.');
     END IF;
     SELECT SYS_CONTEXT('USERENV','SESSION_USER') INTO username FROM dual;
     SELECT SYS.GET_COLLEVENTID_COUNT(:OLD.collecting_event_id) INTO allrec FROM dual;

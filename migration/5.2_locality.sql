@@ -1473,7 +1473,6 @@ IS
 BEGIN    EXECUTE IMMEDIATE 'SELECT COUNT(*)
         FROM uam.specimen_event se, uam.cataloged_item ci
         WHERE ci.collection_object_id = se.collection_object_id
-
         AND se.collecting_event_id = ' || ceid
     INTO x;
 

@@ -370,6 +370,20 @@ DBMS_SCHEDULER.CREATE_JOB (
 END;
 /
 
+CREATE OR REPLACE TRIGGER TR_COLLECTINGEVENT_BUD....
+
+
+
+ajas.js
+specimenresults.js
+
+
+create or replace function getJsonEventBySpecimen (colObjId IN number)....
+
+
+add to popdocs
+json_locality	JSON Locality			Locality stack in JSON				locality	99	yes	no	getJsonEventBySpecimen(flatTableName.collection_object_id)
+
 
 
 
