@@ -10,7 +10,7 @@ as
 begin
 	for r in (
 		select 
-			SPECIMEN_EVENT.SPECIMEN_EVENT_ID,
+			--SPECIMEN_EVENT.SPECIMEN_EVENT_ID,
 			SPECIMEN_EVENT.SPECIMEN_EVENT_TYPE,
 			getPreferredAgentName(SPECIMEN_EVENT.ASSIGNED_BY_AGENT_ID) ASSIGNEDBY,
 			to_char(SPECIMEN_EVENT.ASSIGNED_DATE,'YYYY-MM-DD') ASSIGNEDDATE,
@@ -23,7 +23,7 @@ begin
 			SPECIMEN_EVENT.HABITAT,
 			COLLECTING_EVENT.VERBATIM_DATE,
 			COLLECTING_EVENT.VERBATIM_LOCALITY,
-			COLLECTING_EVENT.COLL_EVENT_REMARKS,
+			--COLLECTING_EVENT.COLL_EVENT_REMARKS,
 			COLLECTING_EVENT.BEGAN_DATE,
 			COLLECTING_EVENT.ENDED_DATE,
 			LOCALITY.SPEC_LOCALITY,
@@ -33,17 +33,17 @@ begin
 				locality.MAX_ERROR_DISTANCE ||  ' ' || locality.MAX_ERROR_UNITS
 			) COORDINATE_ERROR,
 			decode(locality.ORIG_ELEV_UNITS,
-						null,null,
-						locality.MINIMUM_ELEVATION || '-' || locality.MAXIMUM_ELEVATION || ' ' || locality.ORIG_ELEV_UNITS
-					) ELEVATION,
+				null,null,
+				locality.MINIMUM_ELEVATION || '-' || locality.MAXIMUM_ELEVATION || ' ' || locality.ORIG_ELEV_UNITS
+			) ELEVATION,
 			decode(locality.DEPTH_UNITS,
-						null,null,
-						locality.MIN_DEPTH || '-' || locality.MAX_DEPTH || ' ' || locality.DEPTH_UNITS
-					) DEPTH,
+				null,null,
+				locality.MIN_DEPTH || '-' || locality.MAX_DEPTH || ' ' || locality.DEPTH_UNITS
+			) DEPTH,
 			LOCALITY.MAX_ERROR_DISTANCE,
 			LOCALITY.MAX_ERROR_UNITS,
 			LOCALITY.DATUM,
-			LOCALITY.LOCALITY_REMARKS,
+			--LOCALITY.LOCALITY_REMARKS,
 			LOCALITY.GEOREFERENCE_SOURCE,
 			LOCALITY.GEOREFERENCE_PROTOCOL,
 			LOCALITY.LOCALITY_NAME,
@@ -85,7 +85,7 @@ begin
 		jsond:=jsond || ',"DATUM":"' || r.DATUM || '"';
 		jsond:=jsond || ',"HIGHER_GEOG":"' || r.HIGHER_GEOG || '"';
 		jsond:=jsond || ',"GEOLOGY":"' || r.GEOLOGY || '"';	
-		jsond:=jsond || ',"COLL_EVENT_REMARKS":"' || r.COLL_EVENT_REMARKS || '"';				
+		--jsond:=jsond || ',"COLL_EVENT_REMARKS":"' || r.COLL_EVENT_REMARKS || '"';				
 		jsond:=jsond || '}';
 		rsep:=',';
 	end loop;

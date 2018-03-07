@@ -243,6 +243,9 @@ CREATE OR REPLACE TRIGGER TR_COLLEVENT_AU_FLAT
 AFTER UPDATE ON collecting_event
 FOR EACH ROW
 BEGIN
+	
+	update cache_anygeog set stale_fg=1 where collecting_event_id = :NEW.collecting_event_id;
+
     UPDATE flat
 	SET stale_flag = 1,
 	lastuser=sys_context('USERENV', 'SESSION_USER'),
@@ -380,6 +383,9 @@ CREATE OR REPLACE TRIGGER TR_GEOGAUTHREC_AU_FLAT
 AFTER UPDATE ON geog_auth_rec
 FOR EACH ROW
 BEGIN
+	update cache_anygeog set stale_fg=1 where geog_auth_rec_id = :NEW.geog_auth_rec_id;
+
+		
 	if :NEW.higher_geog != :OLD.higher_geog then
 		UPDATE flat
 		SET stale_flag = 1,
@@ -389,6 +395,18 @@ BEGIN
 	end if;
 END;
 /
+
+--SELECT dbms_metadata.get_ddl('TRIGGER','TR_GEOGAUTHREC_AU_FLAT') FROM dual;
+CREATE OR REPLACE TRIGGER TR_geog_search_term_AU_FLAT
+AFTER UPDATE ON geog_search_term
+FOR EACH ROW
+BEGIN
+	update cache_anygeog set stale_fg=1 where geog_auth_rec_id = :NEW.geog_auth_rec_id;
+END;
+/
+
+
+
 
 --IDENTIFICATION
 --SELECT dbms_metadata.get_ddl('TRIGGER','TR_IDENTIFICATION_AIU_FLAT') FROM dual;
@@ -452,7 +470,12 @@ CREATE OR REPLACE TRIGGER TR_LOCALITY_AU_FLAT
 AFTER UPDATE ON locality
 FOR EACH ROW
 BEGIN
-    -- DO not log updates to the service data as "specimen changes."
+	
+	-- DO update the geo cache
+	
+	update cache_anygeog set stale_fg=1 where locality_id = :NEW.locality_id;
+	
+    -- DO NOT log updates to the service data as "specimen changes."
     if :NEW.GEOG_AUTH_REC_ID != :OLD.GEOG_AUTH_REC_ID or
     	nvl(:NEW.SPEC_LOCALITY,'OK') != nvl(:OLD.SPEC_LOCALITY,'OK') or
     	nvl(:NEW.DEC_LAT,0) != nvl(:OLD.DEC_LAT,0) or
