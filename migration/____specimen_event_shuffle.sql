@@ -373,10 +373,10 @@ END;
 CREATE OR REPLACE TRIGGER TR_COLLECTINGEVENT_BUD....
 
 
-
-ajas.js
+compress and swap
+ajax.js
 specimenresults.js
-
+style.css
 
 create or replace function getJsonEventBySpecimen (colObjId IN number)....
 
@@ -387,7 +387,7 @@ json_locality	JSON Locality			Locality stack in JSON				locality	99	yes	no	getJs
 
 
 -- cache any_geog search
-
+-- get this going at prod
 
 create table cache_anygeog (
 	specimen_event_id number,
@@ -545,6 +545,15 @@ sho err;
 	
 	CREATE OR REPLACE TRIGGER TR_COLLEVENT_AU_FLAT....
 	
+	
+	-- indexes
+	
+    create index ix_cache_anygeog_seid on cache_anygeog (specimen_event_id) tablespace uam_idx_1; 
+    create index ix_cache_anygeog_geostr on cache_anygeog (geostring) tablespace uam_idx_1; 
+	
+    
+    
+    
 	-- and a new job to maintain
 	-- in flat_jobs
 	
@@ -559,10 +568,17 @@ DBMS_SCHEDULER.CREATE_JOB (
 
 	-- index
 	
-    create index ix_cache_anygeog_seid on cache_anygeog (specimen_event_id) tablespace uam_idx_1; 
-    create index ix_cache_anygeog_geostr on cache_anygeog (geostring) tablespace uam_idx_1; 
-	
-	
+	select distinct 
+	higher_geog,
+	spec_locality,
+	cache_anygeog.locality_id,
+	--s$geography,
+	geostring from cache_anygeog, specimen_event, flat where
+	cache_anygeog.specimen_event_id=specimen_event.specimen_event_id and 
+	specimen_event.collection_object_id=flat.collection_object_id and guid=
+	'DMNS:Bird:10311';
+
+locality_id=10222786;
     
     
     

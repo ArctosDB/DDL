@@ -16,7 +16,7 @@ begin
 			to_char(SPECIMEN_EVENT.ASSIGNED_DATE,'YYYY-MM-DD') ASSIGNEDDATE,
 			getPreferredAgentName(SPECIMEN_EVENT.VERIFIED_BY_AGENT_ID) VERIFIEDBY,
 			SPECIMEN_EVENT.VERIFIED_DATE VERIFIEDDATE,
-			SPECIMEN_EVENT.SPECIMEN_EVENT_REMARK,
+			--SPECIMEN_EVENT.SPECIMEN_EVENT_REMARK,
 			SPECIMEN_EVENT.COLLECTING_METHOD,
 			SPECIMEN_EVENT.COLLECTING_SOURCE,
 			SPECIMEN_EVENT.VERIFICATIONSTATUS,
@@ -69,15 +69,15 @@ begin
 		jsond:=jsond || ',"VERIFIEDDATE":"' || r.VERIFIEDDATE || '"';
 		jsond:=jsond || ',"ASSIGNEDBY":"' || r.ASSIGNEDBY || '"';
 		jsond:=jsond || ',"ASSIGNEDDATE":"' || r.ASSIGNEDDATE || '"';
-		jsond:=jsond || ',"SPECIMEN_EVENT_REMARK":"' || r.SPECIMEN_EVENT_REMARK || '"';
-		jsond:=jsond || ',"COLLECTING_METHOD":"' || r.COLLECTING_METHOD || '"';
-		jsond:=jsond || ',"COLLECTING_SOURCE":"' || r.COLLECTING_SOURCE || '"';
+		--jsond:=jsond || ',"SPECIMEN_EVENT_REMARK":"' || r.SPECIMEN_EVENT_REMARK || '"';
+		jsond:=jsond || ',"COLLECTING_METHOD":"' || escape_json(r.COLLECTING_METHOD) || '"';
+		jsond:=jsond || ',"COLLECTING_SOURCE":"' || escape_json(r.COLLECTING_SOURCE) || '"';
 		jsond:=jsond || ',"BEGAN_DATE":"' || r.BEGAN_DATE || '"';
 		jsond:=jsond || ',"ENDED_DATE":"' || r.ENDED_DATE || '"';
-		jsond:=jsond || ',"VERBATIM_DATE":"' || r.VERBATIM_DATE || '"';
-		jsond:=jsond || ',"VERBATIM_LOCALITY":"' || r.VERBATIM_LOCALITY || '"';
-		jsond:=jsond || ',"HABITAT":"' || r.HABITAT || '"';
-		jsond:=jsond || ',"SPEC_LOCALITY":"' || r.SPEC_LOCALITY || '"';
+		jsond:=jsond || ',"VERBATIM_DATE":"' || escape_json(r.VERBATIM_DATE) || '"';
+		jsond:=jsond || ',"VERBATIM_LOCALITY":"' || escape_json(r.VERBATIM_LOCALITY) || '"';
+		jsond:=jsond || ',"HABITAT":"' || escape_json(r.HABITAT) || '"';
+		jsond:=jsond || ',"SPEC_LOCALITY":"' || escape_json(r.SPEC_LOCALITY) || '"';
 		jsond:=jsond || ',"COORDINATES":"' || r.COORDINATES || '"';
 		jsond:=jsond || ',"COORDINATE_ERROR":"' || r.COORDINATE_ERROR || '"';
 		jsond:=jsond || ',"ELEVATION":"' || r.ELEVATION || '"';
@@ -99,7 +99,7 @@ end;
 
 sho err;
 
-select getJsonEventBySpecimen(23950531) from dual;
+select getJsonEventBySpecimen(22980151) from dual;
 
 
 create or replace public synonym getJsonEventBySpecimen for getJsonEventBySpecimen;
