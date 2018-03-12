@@ -18,3 +18,14 @@ CREATE OR REPLACE TRIGGER trg_SPECIMEN_EVENT_biu
     	END IF;
     end;
 /
+
+
+
+CREATE OR REPLACE TRIGGER trg_SPECIMEN_EVENT_AD
+    after delete ON SPECIMEN_EVENT
+    FOR EACH ROW
+    BEGIN
+	    delete from cache_anygeog where specimen_event_id=:OLD.specimen_event_id;
+    end;
+/
+

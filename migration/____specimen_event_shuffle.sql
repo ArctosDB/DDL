@@ -38,7 +38,7 @@
 
  exec DBMS_SCHEDULER.DROP_JOB (JOB_NAME => 'check_flat_stale', FORCE => TRUE);
 
-
+LOCK TABLE specimen_event IN EXCLUSIVE MODE NOWAIT;
 
 alter table specimen_event add verified_by_agent_id number;
 
@@ -274,24 +274,6 @@ delete from ctspecimen_event_type where specimen_event_type='place of use';
 delete from ctspecimen_event_type where specimen_event_type='unaccepted place of collection';
 
 
-
-UAM@ARCTOSTE> desc specimen_event
- Name								   Null?    Type
- ----------------------------------------------------------------- -------- --------------------------------------------
- SPECIMEN_EVENT_ID						   NOT NULL NUMBER
- COLLECTION_OBJECT_ID						   NOT NULL NUMBER
- COLLECTING_EVENT_ID						   NOT NULL NUMBER
- ASSIGNED_BY_AGENT_ID						   NOT NULL NUMBER
- ASSIGNED_DATE							   NOT NULL DATE
- SPECIMEN_EVENT_REMARK							    VARCHAR2(4000)
- SPECIMEN_EVENT_TYPE						   NOT NULL VARCHAR2(60)
- COLLECTING_METHOD							    VARCHAR2(4000)
- COLLECTING_SOURCE							    VARCHAR2(60)
- VERIFICATIONSTATUS						   NOT NULL VARCHAR2(60)
- HABITAT								    VARCHAR2(4000)
- VERIFIED_BY_AGENT_ID							    NUMBER
- VERIFIED_DATE								    VARCHAR2(30)
-
  select * from ctverification_status;
  
 
@@ -386,8 +368,11 @@ json_locality	JSON Locality			Locality stack in JSON				locality	99	yes	no	getJs
 
 
 
+
+
+
 -- cache any_geog search
--- get this going at prod
+-- get this going at prod - BELOW HERE IS DONE AT PROD
 
 create table cache_anygeog (
 	specimen_event_id number,
@@ -425,84 +410,109 @@ CREATE OR REPLACE TRIGGER trg_SPECIMEN_EVENT_aiu
 CREATE OR REPLACE PROCEDURE UPDATE_cache_anygeog IS 
 	lid number;
 	gid number;
+	s varchar2(4000);
 begin
-	-- 100 rows takes about a minute
-	-- roughly 1s/CID
-	for r in (select collecting_event_id from cache_anygeog where stale_fg=1 and rownum<100 group by collecting_event_id) loop
+	for r in (
+		select collecting_event_id from (
+			select collecting_event_id,lastdate from cache_anygeog group by collecting_event_id,lastdate order by lastdate
+		) where rownum<5000 group by collecting_event_id
+	) loop
+		--dbms_output.put_line('collecting_event_id: ' || r.collecting_event_id);
 		--- first grab identifiers
-		select
-			locality.locality_id,
-			locality.geog_auth_rec_id
-		INTO
-			lid,
-			gid
-		from
-			collecting_event,
-			locality
-		where
-			collecting_event.locality_id=locality.locality_id and
-			collecting_event.collecting_event_id=r.collecting_event_id;
-		
-		update cache_anygeog set 
-			stale_fg=0,
-			locality_id=lid,
-			geog_auth_rec_id=gid,
-			geostring=(
-			select substr(terms,0,4000) from (
-				select listagg(term,', ') within group(order by term) terms
-				  from (
-						select
-					    		upper(geog_search_term.search_term) term
-					    	from
-							collecting_event,locality,geog_search_term
-						where
-							collecting_event.collecting_event_id=r.collecting_event_id and
-							collecting_event.locality_id=locality.locality_id and
-							locality.geog_auth_rec_id=geog_search_term.geog_auth_rec_id
-						UNION
+		-- sometimes something gets deleted - ignore it
+		begin
+			select
+				locality.locality_id,
+				locality.geog_auth_rec_id
+			INTO
+				lid,
+				gid
+			from
+				collecting_event,
+				locality
+			where
+				collecting_event.locality_id=locality.locality_id and
+				collecting_event.collecting_event_id=r.collecting_event_id
+			;
+			--dbms_output.put_line('lid: ' || lid);
+			--dbms_output.put_line('gid: ' || gid);
+
+			update cache_anygeog set 
+				stale_fg=0,
+				locality_id=lid,
+				geog_auth_rec_id=gid,
+				lastdate=sysdate,
+				geostring=(
+				select substr(terms,0,4000) from (
+					select listagg(term,', ') within group(order by term) terms
+					  from (
 							select
-								upper(spec_locality) term
-							from
-								collecting_event,locality
+						    		upper(geog_search_term.search_term) term
+						    	from
+								collecting_event,locality,geog_search_term
 							where
+								geog_search_term.search_term is not null and
 								collecting_event.collecting_event_id=r.collecting_event_id and
-								collecting_event.locality_id=locality.locality_id 
-						UNION
-							select
-								upper(higher_geog) term
-							from
-								collecting_event,locality,geog_auth_rec
-							where
-							collecting_event.collecting_event_id=r.collecting_event_id and
 								collecting_event.locality_id=locality.locality_id and
-								locality.geog_auth_rec_id=geog_auth_rec.geog_auth_rec_id 
-						UNION
-							select
-								upper(S$GEOGRAPHY) term
-							from
-								collecting_event,locality
-							where
-							collecting_event.collecting_event_id=r.collecting_event_id and
-								collecting_event.locality_id=locality.locality_id
-								UNION
-							select
-								upper(LOCALITY_NAME) term
-							from
-								specimen_event,collecting_event,locality
-							where
-							collecting_event.collecting_event_id=r.collecting_event_id and
-								collecting_event.locality_id=locality.locality_id
-						UNION
-							select
-								upper(verbatim_locality) term
-							from
-								collecting_event
-							where
-							collecting_event.collecting_event_id=r.collecting_event_id 
-				    )
-				)
-			) where
-			collecting_event_id=r.collecting_event_id;
+								locality.geog_auth_rec_id=geog_search_term.geog_auth_rec_id
+							UNION
+								select
+									upper(spec_locality) term
+								from
+									collecting_event,locality
+								where
+									spec_locality is not null and
+									collecting_event.collecting_event_id=r.collecting_event_id and
+									collecting_event.locality_id=locality.locality_id 
+							UNION
+								select
+									upper(higher_geog) term
+								from
+									collecting_event,locality,geog_auth_rec
+								where
+									collecting_event.collecting_event_id=r.collecting_event_id and
+									collecting_event.locality_id=locality.locality_id and
+									locality.geog_auth_rec_id=geog_auth_rec.geog_auth_rec_id 
+							UNION
+								select
+									upper(S$GEOGRAPHY) term
+								from
+									collecting_event,locality
+								where
+									S$GEOGRAPHY is not null and
+									collecting_event.collecting_event_id=r.collecting_event_id and
+									collecting_event.locality_id=locality.locality_id
+							UNION
+								select
+									upper(LOCALITY_NAME) term
+								from
+									collecting_event,locality
+								where
+									LOCALITY_NAME is not null and
+									collecting_event.collecting_event_id=r.collecting_event_id and
+									collecting_event.locality_id=locality.locality_id
+							UNION
+								select
+									upper(verbatim_locality) term
+								from
+									collecting_event
+								where
+									verbatim_locality is not null and
+									collecting_event.collecting_event_id=r.collecting_event_id 
+					    )
+					)
+				) where
+				collecting_event_id=r.collecting_event_id;
+			exception when others then
+				--null;
+				s:=SQLERRM;
+				update cache_anygeog set 
+				stale_fg=0,
+				geostring='ERROR: ' || s
+				where
+				collecting_event_id=r.collecting_event_id ;
+				--dbms_output.put_line('im handling errors');
+			end;
 	end loop;
 end;
 /
@@ -533,7 +543,28 @@ sho err;
 		specimen_event
 	);
 	
+
 	
+	
+	
+	
+	
+	exec DBMS_SCHEDULER.DROP_JOB (JOB_NAME => 'J_UPDATE_CACHE_ANYGEOG', FORCE => TRUE);
+	alter table cache_anygeog add lastdate date;
+	
+	update cache_anygeog set lastdate=to_date('2018-03-01');
+	
+	
+	select collecting_event_id from cache_anygeog where stale_fg=1 and rownum<100 group by collecting_event_id
+	
+	select collecting_event_id from (
+		select collecting_event_id,lastdate from cache_anygeog where stale_fg=1 group by collecting_event_id order by lastdate
+	) where rownum<100 group by collecting_event_id;
+	
+	select * from (
+	select collecting_event_id,ASSIGNED_DATE from specimen_event group by collecting_event_id,ASSIGNED_DATE order by ASSIGNED_DATE
+	) where rownum<100;
+
 	
 	-- now triggers to set the stale flag
 	--in flat_triggers
@@ -546,13 +577,14 @@ sho err;
 	CREATE OR REPLACE TRIGGER TR_COLLEVENT_AU_FLAT....
 	
 	
+	
+	
 	-- indexes
 	
     create index ix_cache_anygeog_seid on cache_anygeog (specimen_event_id) tablespace uam_idx_1; 
     create index ix_cache_anygeog_geostr on cache_anygeog (geostring) tablespace uam_idx_1; 
-	
-    
-    
+	create index ix_cache_anygeog_ceid on cache_anygeog (collecting_event_id) tablespace uam_idx_1; 
+
     
 	-- and a new job to maintain
 	-- in flat_jobs
@@ -562,26 +594,28 @@ DBMS_SCHEDULER.CREATE_JOB (
     job_name           =>  'J_UPDATE_CACHE_ANYGEOG',
     ....
     
+    
+    
+    
+    
+    
+    
     select stale_fg,count(*) from cache_anygeog group by stale_fg;
+    
+    select count(*) from cache_anygeog where geostring like '%RUSSIA%';
+    
+    
+    
+    
     
     select count(*) from cache_anygeog where geostring is not null;
 
 	-- index
 	
-	select distinct 
-	higher_geog,
-	spec_locality,
-	cache_anygeog.locality_id,
-	--s$geography,
-	geostring from cache_anygeog, specimen_event, flat where
-	cache_anygeog.specimen_event_id=specimen_event.specimen_event_id and 
-	specimen_event.collection_object_id=flat.collection_object_id and guid=
-	'DMNS:Bird:10311';
 
-locality_id=10222786;
-    
-    
-    
+
+
+CREATE OR REPLACE TRIGGER trg_SPECIMEN_EVENT_AD....
     --- garbage below
     
     
@@ -595,185 +629,3 @@ locality_id=10222786;
     
     
     
-    
-    
-    
-    
-    
-    
-    
-	
-
-select substr(terms,0,20) from (
-select listagg(term,', ') within group(order by term) terms
-  from (
-select
-	    		upper(geog_search_term.search_term) term
-	    	from
-			collecting_event,locality,geog_search_term
-		where
-			collecting_event.collecting_event_id=10207700 and
-			collecting_event.locality_id=locality.locality_id and
-			locality.geog_auth_rec_id=geog_search_term.geog_auth_rec_id
-      	UNION
-			select
-				upper(spec_locality) term
-			from
-				collecting_event,locality
-			where
-				collecting_event.collecting_event_id=10207700 and
-				collecting_event.locality_id=locality.locality_id 
-	UNION
-			select
-				upper(higher_geog) term
-			from
-				collecting_event,locality,geog_auth_rec
-			where
-			collecting_event.collecting_event_id=10207700 and
-				collecting_event.locality_id=locality.locality_id and
-				locality.geog_auth_rec_id=geog_auth_rec.geog_auth_rec_id 
-	UNION
-			select
-				upper(S$GEOGRAPHY) term
-			from
-				collecting_event,locality
-			where
-			collecting_event.collecting_event_id=10207700 and
-				collecting_event.locality_id=locality.locality_id
-				UNION
-			select
-				upper(LOCALITY_NAME) term
-			from
-				specimen_event,collecting_event,locality
-			where
-			collecting_event.collecting_event_id=10207700 and
-				collecting_event.locality_id=locality.locality_id
-		UNION
-			select
-				upper(verbatim_locality) term
-			from
-				collecting_event
-			where
-			collecting_event.collecting_event_id=10207700 				
-			));
-      		
-
--- can't make anygeog search work - try a cache??
-
-alter table specimen_event add anygeogcache varchar2(4000);
-
-
-	    select substr(terms,0,20) into :NEW.anygeogcache from (
-			select listagg(term,', ') within group(order by term) terms from (
-				select
-	    				upper(geog_search_term.search_term) term
-	    			from
-					collecting_event,locality,geog_search_term
-				where
-					collecting_event.collecting_event_id=:NEW.collecting_event_id and
-					collecting_event.locality_id=locality.locality_id and
-					locality.geog_auth_rec_id=geog_search_term.geog_auth_rec_id
-      			UNION
-				select
-					upper(spec_locality) term
-				from
-					collecting_event,locality
-				where
-					collecting_event.collecting_event_id=:NEW.collecting_event_id and
-					collecting_event.locality_id=locality.locality_id 
-				UNION
-				select
-					upper(higher_geog) term
-				from
-					collecting_event,locality,geog_auth_rec
-				where
-				collecting_event.collecting_event_id=:NEW.collecting_event_id and
-				collecting_event.locality_id=locality.locality_id and
-				locality.geog_auth_rec_id=geog_auth_rec.geog_auth_rec_id 
-				UNION
-				select
-					upper(S$GEOGRAPHY) term
-				from
-					collecting_event,locality
-				where
-				collecting_event.collecting_event_id=:NEW.collecting_event_id and
-				collecting_event.locality_id=locality.locality_id
-				UNION
-				select
-					upper(LOCALITY_NAME) term
-				from
-					specimen_event,collecting_event,locality
-				where
-				collecting_event.collecting_event_id=:NEW.collecting_event_id and
-				collecting_event.locality_id=locality.locality_id
-				UNION
-				select
-					upper(verbatim_locality) term
-				from
-					collecting_event
-				where
-				collecting_event.collecting_event_id=:NEW.collecting_event_id 				
-			));
-    end;
-/
-
-
-
-
-	<cfset basQual = " #basQual# AND #session.flatTableName#.collection_object_id IN (
-		select
-			specimen_event.collection_object_id
-		from
-			specimen_event,collecting_event,locality,geog_search_term
-		where
-			specimen_event.collecting_event_id=collecting_event.collecting_event_id and
-			collecting_event.locality_id=locality.locality_id and
-			locality.geog_auth_rec_id=geog_search_term.geog_auth_rec_id and
-      		upper(geog_search_term.search_term) like '%#ucase(escapeQuotes(any_geog2))#%'
-		UNION
-			select
-				specimen_event.collection_object_id
-			from
-				specimen_event,collecting_event,locality
-			where
-				specimen_event.collecting_event_id=collecting_event.collecting_event_id and
-				collecting_event.locality_id=locality.locality_id and
-				upper(spec_locality) LIKE '%#ucase(escapeQuotes(any_geog2))#%'
-		UNION
-			select
-				specimen_event.collection_object_id
-			from
-				specimen_event,collecting_event,locality,geog_search_term
-			where
-				specimen_event.collecting_event_id=collecting_event.collecting_event_id and
-				collecting_event.locality_id=locality.locality_id and
-				locality.geog_auth_rec_id=geog_search_term.geog_auth_rec_id and
-				upper(higher_geog) LIKE '%#ucase(escapeQuotes(any_geog2))#%'
-		UNION
-			select
-				specimen_event.collection_object_id
-			from
-				specimen_event,collecting_event,locality
-			where
-				specimen_event.collecting_event_id=collecting_event.collecting_event_id and
-				collecting_event.locality_id=locality.locality_id and
-				upper(S$GEOGRAPHY) LIKE '%#ucase(escapeQuotes(any_geog2))#%'
-		UNION
-			select
-				specimen_event.collection_object_id
-			from
-				specimen_event,collecting_event,locality
-			where
-				specimen_event.collecting_event_id=collecting_event.collecting_event_id and
-				collecting_event.locality_id=locality.locality_id and
-				upper(LOCALITY_NAME) LIKE '%#ucase(escapeQuotes(any_geog2))#%'
-		UNION
-			select
-				specimen_event.collection_object_id
-			from
-				specimen_event,collecting_event
-			where
-				specimen_event.collecting_event_id=collecting_event.collecting_event_id and
-				upper(verbatim_locality) LIKE '%#ucase(escapeQuotes(any_geog2))#%'
-
-
