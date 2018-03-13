@@ -35,10 +35,10 @@
 
 -- delay flat updates
 
+LOCK TABLE specimen_event IN EXCLUSIVE MODE NOWAIT;
 
  exec DBMS_SCHEDULER.DROP_JOB (JOB_NAME => 'check_flat_stale', FORCE => TRUE);
 
-LOCK TABLE specimen_event IN EXCLUSIVE MODE NOWAIT;
 
 alter table specimen_event add verified_by_agent_id number;
 
@@ -80,7 +80,7 @@ update CTSPECIMEN_EVENT_TYPE set
 	
 update CTSPECIMEN_EVENT_TYPE set 
 	DESCRIPTION='Specimen was detected and not killed or removed from context; No biological samples were taken. Human sightings, camera traps, and GPS telemetry data are appropriate here.' 
-	where SPECIMEN_EVENT_TYPE='encounter';
+	where SPECIMEN_EVENT_TYPE='observation';
 	
 	
 	insert into CTSPECIMEN_EVENT_TYPE (SPECIMEN_EVENT_TYPE,DESCRIPTION) values 
@@ -200,9 +200,15 @@ select STATE,LAST_START_DATE,NEXT_RUN_DATE,LAST_RUN_DURATION from all_scheduler_
 
 
 
+alter trigger TRG_SPECIMEN_EVENT_AU_FLAT disable;
+alter trigger  trg_SPECIMEN_EVENT_aiu disable;
+
+
+
+
 CREATE OR REPLACE PROCEDURE temp_update_junk IS
 begin
-  update specimen_event set specimen_event_type='collection' where specimen_event_type='accepted place of collection';
+  update specimen_event set specimen_event_type='collection' where specimen_event_type='accepted place of collection' and rownum<250000;
 end;
 /
 
@@ -218,6 +224,18 @@ END;
 / 
 
 select STATE,LAST_START_DATE,NEXT_RUN_DATE,LAST_RUN_DURATION from all_scheduler_jobs where JOB_NAME='J_TEMP_UPDATE_JUNK';
+
+delete from ctspecimen_event_type where specimen_event_type='accepted place of collection';
+
+
+
+select count(*) from specimen_event where specimen_event_type='accepted place of collection';
+
+
+
+select stale_flag,count(*) from flat group by stale_flag;
+
+
 
 
 CREATE OR REPLACE PROCEDURE temp_update_junk IS
@@ -266,7 +284,6 @@ select count(*) from specimen_event where specimen_event_type='unaccepted place 
 
 select count(*) from specimen_event where specimen_event_type='place of manufacture';
 
-delete from ctspecimen_event_type where specimen_event_type='accepted place of collection';
 delete from ctspecimen_event_type where specimen_event_type='place of manufacture';
 delete from ctspecimen_event_type where specimen_event_type='place of use';
 
@@ -338,6 +355,17 @@ delete from ctspecimen_event_type where specimen_event_type='unaccepted place of
 
     
  -- turn flat updates back on
+ 
+  	
+  	alter trigger TRG_SPECIMEN_EVENT_AU_FLAT enable;
+alter trigger  trg_SPECIMEN_EVENT_aiu enable;
+
+  	update flat set stale_flag=1 where stale_flag=0 and rownum<1000000;
+  	
+  	
+  	select stale_flag,count(*) from flat group by stale_flag;
+  	
+  	
  
     BEGIN
 DBMS_SCHEDULER.CREATE_JOB (
@@ -602,7 +630,7 @@ DBMS_SCHEDULER.CREATE_JOB (
     
     select stale_fg,count(*) from cache_anygeog group by stale_fg;
     
-    select count(*) from cache_anygeog where geostring like '%RUSSIA%';
+    select count(*) from cache_anygeog where geostring like '%CALIFORNIA%';
     
     
     
