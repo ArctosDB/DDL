@@ -6,7 +6,7 @@
 	
 	* specimen_event_type
 		* heavily favor "manufacture" - this should always win when present
-		* slightly favor 'collect' 
+		* slightly favor 'collection' 
 	* coordiantes
     		* slight favor for having coordinates
 	* verificationstatus
