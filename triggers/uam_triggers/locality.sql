@@ -21,7 +21,10 @@ END;
 
 -- triger  LOCALITY_CT_CHECK is obsolete and may be deleted
 
-CREATE OR REPLACE TRIGGER TR_LOCALITY_AU_FLAT
+CREATE OR REPLACE TRIGGER 
+
+see flat_triggers
+TR_LOCALITY_AU_FLAT
 	-- update cached specimen data when locality stuff changes
 AFTER UPDATE ON LOCALITY
 FOR EACH ROW
@@ -60,7 +63,7 @@ END;
 
 CREATE OR REPLACE TRIGGER 
 	TR_LOCALITY_BUD
-	-- lock localities used by "verified by" specimens
+	-- lock localities used by "verified and locked" specimens
 	-- EDIT 2016-11: allow access by anyone, change logs are now being maintained
 	-- block only verified
 	
@@ -102,11 +105,11 @@ BEGIN
 	    FROM collecting_event, specimen_event
 	    WHERE collecting_event.collecting_event_id=specimen_event.collecting_event_id
 	    AND collecting_event.locality_id=:OLD.locality_id
-	    AND specimen_event.verificationstatus LIKE 'verified by %';
+	    AND specimen_event.verificationstatus = 'verified and locked';
 	
 	    IF num > 0 THEN
 	        raise_application_error(-20001,
-	        'This locality is used in verified specimen/events and may not be changed or deleted.');
+	        'This locality is used in verified and locked specimen/events and may not be changed or deleted.');
 	    END IF;
 	
 	 end if;

@@ -7,6 +7,14 @@ CREATE OR REPLACE function concatGeologyAttributeDetail(locid  in number )
        l_val    varchar2(4000);
 /*
 	returns a pipe-delimited list of geology attribute determinations
+	
+	IMPORTANT: this is used to find and merge duplicate localities. Order is critical. Do not change...
+	
+	... 
+		order by geology_attribute,geo_att_value
+	...
+	
+	
 */
    begin
     FOR r IN (

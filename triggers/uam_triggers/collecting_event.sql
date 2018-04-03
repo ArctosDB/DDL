@@ -21,6 +21,10 @@ DECLARE
     vpdrec INTEGER;
     username VARCHAR2(30);
 BEGIN
+	if :NEW.admin_flag = 'proc auto_merge_locality' then
+		:NEW.admin_flag := NULL;
+		return;
+	end if;
     SELECT
         COUNT(*)
     INTO

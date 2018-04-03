@@ -56,11 +56,23 @@ begin
 	jsond:=jsond || ']';
 	return jsond;
 	exception when others then
-		jsond:='[ ERROR CREATING JSON ]';
+		jsond:='[';
+		jsond:=jsond || '{"STATUS":"Error Creating JSON"},';
+		jsond:=jsond || '{"MEDIA_ACCESS_URL":https://arctos.database.museum/MediaSearch.cfm?collection_object_id=' || colObjId || '"}';
+		jsond:=jsond || ']';
 		return jsond;
 end;
 /
 
+
+
+[{"STATUS":"Error Creating JSON"},
+{"MEDIA_ACCESS_URL":""}]
+select collection_object_id from specimen_part where derived_from_cat_item=22827974 ;
+
+
+
+https://arctos.database.museum/MediaSearch.cfm?collection_object_id=24637414
 sho err;
 
 select getJsonMediaUriBySpecimen(collection_object_id) from flat where guid='MVZ:Egg:12';
