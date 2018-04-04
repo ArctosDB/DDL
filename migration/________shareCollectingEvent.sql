@@ -112,6 +112,10 @@ CREATE OR REPLACE TRIGGER trg_collecting_event_archive
 /
 sho err;
 
+
+-- clean up UAM stuff
+delete from collecting_event_archive where whodunit='UAM';
+
 select count(*)  from collecting_event_archive;
 
 CREATE OR REPLACE TRIGGER TR_COLLECTINGEVENT_BUD
@@ -119,3 +123,5 @@ CREATE OR REPLACE TRIGGER TR_COLLECTINGEVENT_BUD
 
 
 -- add info/collectingEventArchive.cfm to form control
+-- add /ScheduledTasks/collectingEventChangeAlert.cfm to form control
+-- create scheduled task for /ScheduledTasks/collectingEventChangeAlert.cfm
