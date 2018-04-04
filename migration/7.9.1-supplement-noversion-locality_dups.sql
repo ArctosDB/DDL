@@ -1,16 +1,7 @@
 
 -- this is not a version
 -- it just adds duplicate checking localities
-
-
-
-
-
-
-
-
-
-
+-- could be incorporated most anywhere
 
 
 
@@ -35,7 +26,7 @@ select count(*) from locality
 		)
 ;
 
-
+create table bak_locality20180403 as select * from locality;
 
 
 lock table locality in exclusive mode nowait;
@@ -82,6 +73,11 @@ alter table collecting_event add admin_flag varchar2(40);
 -- rebuild the trigger to use this
 CREATE OR REPLACE TRIGGER TR_COLLECTINGEVENT_BUD....
 
+
+
+-- add a column to locality
+
+alter table locality add last_dup_check_date date;
 
 
 CREATE OR REPLACE PROCEDURE auto_merge_locality 
@@ -221,6 +217,9 @@ select count(*) from temp_pre_dup_locality where merged_as_duplicate_of_locid is
 
 select to_char(last_dup_check_date,'yyyy-mm-dd'), count(*) from locality group by to_char(last_dup_check_date,'yyyy-mm-dd');
 
+
+select (select count(*) from bak_locality20180403) - (select count(*) from locality) from dual;
+
 select stale_flag,count(*) from flat group by stale_flag;
 
 
@@ -237,6 +236,8 @@ DBMS_SCHEDULER.CREATE_JOB (
 	comments           =>  '');
 END;
 /
+
+
  select START_DATE,REPEAT_INTERVAL,END_DATE,ENABLED,STATE,RUN_COUNT,FAILURE_COUNT,LAST_START_DATE,LAST_RUN_DURATION,NEXT_RUN_DATE from all_scheduler_jobs where lower(job_name)='j_auto_merge_locality';
 
 

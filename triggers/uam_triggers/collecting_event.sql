@@ -37,6 +37,7 @@ BEGIN
     IF num > 0 THEN
     		raise_application_error(-20001,'This collecting event is used in verified specimen/events and may not be changed or deleted.');
     END IF;
+    /*
     SELECT SYS_CONTEXT('USERENV','SESSION_USER') INTO username FROM dual;
     SELECT SYS.GET_COLLEVENTID_COUNT(:OLD.collecting_event_id) INTO allrec FROM dual;
     EXECUTE IMMEDIATE 'SELECT COUNT(*)
@@ -48,6 +49,7 @@ BEGIN
         raise_application_error(-20001,
             'This collecting event is shared and may not be changed or deleted.');
     END IF;
+    */
 END;
 /
 

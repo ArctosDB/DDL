@@ -12,7 +12,7 @@ git checkout v7.5.8
 -
 -
 -
--In the DDL/migration/{version}.sql file, keeep notes referencing Issues
+-In the DDL/migration/{version}.sql file, keep notes referencing Issues
 -
 -Close issues with...
 -
