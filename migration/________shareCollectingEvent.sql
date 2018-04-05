@@ -75,7 +75,7 @@ CREATE OR REPLACE TRIGGER trg_collecting_event_archive
 	    		return;
 	    	end if;
 	    		
-	    		--dbms_output.put_line('got change');  
+	    		dbms_output.put_line('got change');  
 	    		 -- now just grab all of the :OLD values
 		        -- :NEWs are current data in locality, no need to do anything with them
 		
@@ -125,3 +125,130 @@ CREATE OR REPLACE TRIGGER TR_COLLECTINGEVENT_BUD
 -- add info/collectingEventArchive.cfm to form control
 -- add /ScheduledTasks/collectingEventChangeAlert.cfm to form control
 -- create scheduled task for /ScheduledTasks/collectingEventChangeAlert.cfm
+
+
+-- and https://github.com/ArctosDB/arctos/issues/1491 while we're here
+
+alter table collecting_event add last_dup_check_date date;
+
+create table bak_collecting_event20180405 as select * from collecting_event;
+
+-- for test only, so we can monitor this
+
+alter table bak_collecting_event20180405 add merged_into_cid number;
+
+
+CREATE OR REPLACE PROCEDURE auto_merge_collecting_event 
+IS
+	i number :=0;
+	c number;
+BEGIN
+	-- run this on new stuff and recheck every month or so
+	-- need to monitor and adjust the "every month or so" bits
+	-- collecting_event_name is unique so those will never be duplicates
+	-- but grab them anyway so we can flag them as being checked
+	for r in (
+		select * from collecting_event where rownum<2 and (last_dup_check_date is null or sysdate-last_dup_check_date > 30)
+	) loop
+			dbms_output.put_line(r.collecting_event_id);
+			dbms_output.put_line(r.VERBATIM_LOCALITY);
+			--dbms_output.put_line(r.last_dup_check_date);
+		for dups in (
+			select * from collecting_event where
+				collecting_event_id != r.collecting_event_id and
+				LOCALITY_ID=r.LOCALITY_ID and
+				nvl(VERBATIM_DATE,'NULL')=nvl(r.VERBATIM_DATE,'NULL') and
+				nvl(VERBATIM_LOCALITY,'NULL')=nvl(r.VERBATIM_LOCALITY,'NULL') and
+				nvl(COLL_EVENT_REMARKS,'NULL')=nvl(r.COLL_EVENT_REMARKS,'NULL') and
+				nvl(BEGAN_DATE,'NULL')=nvl(r.BEGAN_DATE,'NULL') and
+				nvl(ENDED_DATE,'NULL')=nvl(r.ENDED_DATE,'NULL') and
+				nvl(VERBATIM_COORDINATES,'NULL')=nvl(r.VERBATIM_COORDINATES,'NULL') and
+				nvl(COLLECTING_EVENT_NAME,'NULL')=nvl(r.COLLECTING_EVENT_NAME,'NULL') 
+			) loop
+		--	BEGIN
+				i:=i+1;
+				dbms_output.put_line('dup evt ID: ' || dups.collecting_event_id);
+				-- log; probably won't go to prod
+				update bak_collecting_event20180405 set merged_into_cid = r.collecting_event_id where collecting_event_id=dups.collecting_event_id;
+				dbms_output.put_line('gonna update specimen_event');
+				update 
+					specimen_event 
+				set 
+					collecting_event_id=r.collecting_event_id
+				where 
+					collecting_event_id=dups.collecting_event_id;
+				
+				update 
+					tag 
+				set 
+					collecting_event_id=r.collecting_event_id 
+				where 
+					collecting_event_id=dups.collecting_event_id;
+
+				update 
+					media_relations 
+				set 
+					related_primary_key=r.collecting_event_id 
+				where
+					media_relationship like '% collecting_event' and
+					related_primary_key =dups.collecting_event_id;
+
+				update 
+					bulkloader 
+				set 
+					collecting_event_id=r.collecting_event_id 
+				where 
+					collecting_event_id=dups.collecting_event_id;
+
+
+				-- and delete the duplicate locality
+				dbms_output.put_line('gonna delete collecting_event');
+				delete from collecting_event where collecting_event_id=dups.collecting_event_id;
+				
+				dbms_output.put_line(' deleted collecting_event');
+			--exception when others then
+			--	null;
+				-- these happen (at least) when the initial query contains the duplicate
+				-- ignore, they'll get caught next time around/eventually
+			--	dbms_output.put_line('FAIL ID: ' || dups.collecting_event_id);
+			--	dbms_output.put_line(sqlerrm);
+			--end;
+		end loop;
+		-- now that we're merged, DELETE if unused and unnamed
+		-- DO NOT delete named localities
+		if r.COLLECTING_EVENT_NAME is null then
+			select sum(x) into c from (
+				select count(*) x from specimen_event where collecting_event_id=r.collecting_event_id
+				union
+				select count(*) x from tag where collecting_event_id=r.collecting_event_id
+				union
+				select count(*) x from media_relations where media_relationship like '% collecting_event' and related_primary_key =r.collecting_event_id
+				union
+				select count(*) x from bulkloader where collecting_event_id=r.collecting_event_id
+			);
+			if c=0 then
+				dbms_output.put_line('not used deleting');
+				delete from collecting_event where collecting_event_id=r.collecting_event_id;
+			end if;
+		end if;
+
+		-- log the last check
+				dbms_output.put_line('gonna log....');
+		update collecting_event set last_dup_check_date=sysdate where collecting_event_id=r.collecting_event_id;
+
+		-- if there are a lot of not-so-duplicates found, this can process many per run
+		-- if there are a log of duplicates, it'll get all choked up on trying to update FLAT
+		-- so throttle - if we haven't merged much then keep going, if we have exit and start over next run
+		if i > 100 then
+			dbms_output.put_line('i maxout: ' || i);
+			return;
+		--else
+			dbms_output.put_line('i stillsmall: ' || i);
+		end if;
+	end loop;
+end;
+/
+sho err;
+
+exec auto_merge_collecting_event;
+
