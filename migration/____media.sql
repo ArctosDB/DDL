@@ -12,3 +12,5 @@ update cf_global_settings set
 	s3_secretkey='xxx'
 ;
 
+
+
