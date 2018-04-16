@@ -1,3 +1,4 @@
+TODO::
 
 
 -------------
@@ -148,7 +149,7 @@ BEGIN
 	-- collecting_event_name is unique so those will never be duplicates
 	-- but grab them anyway so we can flag them as being checked
 	for r in (
-		select * from collecting_event where rownum<2 and (last_dup_check_date is null or sysdate-last_dup_check_date > 30)
+		select * from collecting_event where rownum<200 and (last_dup_check_date is null or sysdate-last_dup_check_date > 30)
 	) loop
 			dbms_output.put_line(r.collecting_event_id);
 			dbms_output.put_line(r.VERBATIM_LOCALITY);
@@ -165,12 +166,16 @@ BEGIN
 				nvl(VERBATIM_COORDINATES,'NULL')=nvl(r.VERBATIM_COORDINATES,'NULL') and
 				nvl(COLLECTING_EVENT_NAME,'NULL')=nvl(r.COLLECTING_EVENT_NAME,'NULL') 
 			) loop
-		--	BEGIN
+			BEGIN
 				i:=i+1;
-				dbms_output.put_line('dup evt ID: ' || dups.collecting_event_id);
+				dbms_output.put_line('!!!!!!!!!!!!!!!!!!!!!!!!! FOUND DUPLICATE GONNA MERGE!!!!!!!!!! dup evt ID: ' || dups.collecting_event_id);
 				-- log; probably won't go to prod
 				update bak_collecting_event20180405 set merged_into_cid = r.collecting_event_id where collecting_event_id=dups.collecting_event_id;
 				dbms_output.put_line('gonna update specimen_event');
+				
+				dbms_output.put_line('update specimen_event	set	collecting_event_id=' || r.collecting_event_id || '	where collecting_event_id=' || dups.collecting_event_id);
+				
+				
 				update 
 					specimen_event 
 				set 
@@ -206,13 +211,13 @@ BEGIN
 				delete from collecting_event where collecting_event_id=dups.collecting_event_id;
 				
 				dbms_output.put_line(' deleted collecting_event');
-			--exception when others then
+			exception when others then
 			--	null;
 				-- these happen (at least) when the initial query contains the duplicate
 				-- ignore, they'll get caught next time around/eventually
-			--	dbms_output.put_line('FAIL ID: ' || dups.collecting_event_id);
-			--	dbms_output.put_line(sqlerrm);
-			--end;
+				dbms_output.put_line('FAIL ID: ' || dups.collecting_event_id);
+				dbms_output.put_line(sqlerrm);
+			end;
 		end loop;
 		-- now that we're merged, DELETE if unused and unnamed
 		-- DO NOT delete named localities
@@ -233,8 +238,9 @@ BEGIN
 		end if;
 
 		-- log the last check
+		-- pass in the admin_flag = 'proc auto_merge_locality' - we're not changing anything here
 				dbms_output.put_line('gonna log....');
-		update collecting_event set last_dup_check_date=sysdate where collecting_event_id=r.collecting_event_id;
+		update collecting_event set admin_flag = 'proc auto_merge_locality',last_dup_check_date=sysdate where collecting_event_id=r.collecting_event_id;
 
 		-- if there are a lot of not-so-duplicates found, this can process many per run
 		-- if there are a log of duplicates, it'll get all choked up on trying to update FLAT
@@ -252,3 +258,29 @@ sho err;
 
 exec auto_merge_collecting_event;
 
+
+
+
+BEGIN
+DBMS_SCHEDULER.CREATE_JOB (
+    job_name           =>  'j_auto_merge_collecting_event',
+    job_type           =>  'STORED_PROCEDURE',
+	job_action         =>  'auto_merge_collecting_event',
+	start_date         =>  SYSTIMESTAMP,
+	repeat_interval    =>  'freq=minutely; interval=1',
+	enabled            =>  TRUE,
+	end_date           =>  NULL,
+	comments           =>  '');
+END;
+/
+
+exec DBMS_SCHEDULER.DROP_JOB (JOB_NAME => 'j_auto_merge_collecting_event', FORCE => TRUE);
+
+ select START_DATE,REPEAT_INTERVAL,END_DATE,ENABLED,STATE,RUN_COUNT,FAILURE_COUNT,LAST_START_DATE,LAST_RUN_DURATION,NEXT_RUN_DATE from all_scheduler_jobs where lower(job_name)='j_auto_merge_collecting_event';
+
+
+
+
+select to_char(last_dup_check_date,'yyyy-mm-dd'), count(*) from collecting_event group by to_char(last_dup_check_date,'yyyy-mm-dd');
+
+select (select count(*) from bak_collecting_event20180405) - (select count(*) from collecting_event) from dual;

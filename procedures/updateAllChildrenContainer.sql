@@ -14,11 +14,14 @@ CREATE OR REPLACE procedure updateAllChildrenContainer (
 		parent_position_count number;
 		parent_notposition_count number;
    		msg varchar2(4000);
+   		n number;
     begin
         
 	    -- pass off to containercheck EVERY old/new isntance, but change them all at once here if that works
         -- the only changes to the child is parent_container_id
         -- the parent doesn't change
+        
+	  
         select * into parent from container where container_id=v_new_parent_container_id;
         -- count of positions and not-positions already in the new parent
  		select count(*) into parent_position_count from container where container_type='position' and parent_container_id=v_new_parent_container_id;
@@ -35,6 +38,13 @@ CREATE OR REPLACE procedure updateAllChildrenContainer (
         end loop;
         -- made it here, it'll all fit
        update container set parent_container_id=v_new_parent_container_id where parent_container_id=v_current_parent_container_id;
+       
+       -- position count doesn't always work properly due to transactions, so re-check here
+       select count(*)  into n from container where parent_container_id=v_new_parent_container_id;
+      -- dbms_output.put_line('n: ' || n);
+       if n > parent.number_positions then
+       	raise_application_error(-20000, 'FAIL: Too many positions.');
+       end if;
     end;
    /
    sho err;

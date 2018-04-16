@@ -90,7 +90,7 @@ BEGIN
 	-- locality_name is unique so those will never be duplicates
 	-- but grab them anyway so we can flag them as being checked
 	for r in (
-		select * from locality where rownum<20 and (last_dup_check_date is null or sysdate-last_dup_check_date > 30)
+		select * from locality where rownum<20 and (last_dup_check_date is null or sysdate-last_dup_check_date > 30) order by last_dup_check_date desc
 	) loop
 			--dbms_output.put_line(r.locality_id);
 			--dbms_output.put_line(r.SPEC_LOCALITY);

@@ -71,8 +71,18 @@ CREATE OR REPLACE procedure containerContentCheck (
 				sep := '; ';
 			end if;
 			-- Containers which contain positions cannot contain anything else
+			--dbms_output.put_line('parent_position_count: ' || parent_position_count);
 			if new_child.container_type != 'position' and parent_position_count > 0 then
 				msg := msg || sep || 'Parent ' || parent.barcode || ' contains positions and cannot contain not-position containers';
+				sep := '; ';
+			end if;
+			
+			--dbms_output.put_line('parent.NUMBER_POSITIONS: ' || parent.NUMBER_POSITIONS);
+			
+			
+			-- disallow positions when number_positions is null
+			if new_child.container_type = 'position' and parent.NUMBER_POSITIONS is null then
+				msg := msg || sep || 'Parent does not have a value in NUMBER_POSITIONS and cannot contain positions.';
 				sep := '; ';
 			end if;
 			/*

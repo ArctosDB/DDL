@@ -138,6 +138,7 @@ END;
 	            'This locality is shared and may not be changed or deleted.');
 	    END IF;
  */
+--SELECT dbms_metadata.get_ddl('TRIGGER','TRG_LOCALITY_BIU') FROM dual;
 
 CREATE OR REPLACE TRIGGER trg_locality_biu
   -- enforces conditional data requirements
@@ -152,6 +153,10 @@ CREATE OR REPLACE TRIGGER trg_locality_biu
 	    	:NEW.wkt_polygon:=NULL;
 	    end if;
 	    
+	    -- set last check date to now so the auto merge procedure won't run for ~30D
+	    if :NEW.last_dup_check_date is null then
+	    	:NEW.last_dup_check_date:=sysdate;
+	    end if;
 	    
 	    
         IF :NEW.DEC_LAT IS NOT NULL OR :NEW.DEC_LONG IS NOT NULL THEN
