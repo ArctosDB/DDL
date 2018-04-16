@@ -72,6 +72,10 @@ CREATE OR REPLACE TRIGGER TRG_COLLECTING_EVENT_BIU
     FOR EACH ROW declare
         status varchar2(255);
     BEGIN
+	    if :NEW.LAST_DUP_CHECK_DATE is null then
+	    	:new.LAST_DUP_CHECK_DATE:=sysdate;
+	    end if;
+	    
         status:=is_iso8601(:NEW.began_date);
         IF status != 'valid' THEN
             raise_application_error(-20001,'Began Date: ' || status);
