@@ -1,6 +1,14 @@
 TODO::
 
 
+
+-- add info/collectingEventArchive.cfm to form control
+-- add /ScheduledTasks/collectingEventChangeAlert.cfm to form control
+-- create scheduled task for /ScheduledTasks/collectingEventChangeAlert.cfm
+
+
+
+
 -------------
 
 -- address https://github.com/ArctosDB/arctos/issues/1017
@@ -121,16 +129,13 @@ select count(*)  from collecting_event_archive;
 
 CREATE OR REPLACE TRIGGER TR_COLLECTINGEVENT_BUD
 
+alter table collecting_event add last_dup_check_date date;
 
 
--- add info/collectingEventArchive.cfm to form control
--- add /ScheduledTasks/collectingEventChangeAlert.cfm to form control
--- create scheduled task for /ScheduledTasks/collectingEventChangeAlert.cfm
-
+CREATE OR REPLACE TRIGGER TRG_COLLECTING_EVENT_BIU
 
 -- and https://github.com/ArctosDB/arctos/issues/1491 while we're here
 
-alter table collecting_event add last_dup_check_date date;
 
 create table bak_collecting_event20180405 as select * from collecting_event;
 
@@ -168,12 +173,12 @@ BEGIN
 			) loop
 			BEGIN
 				i:=i+1;
-				dbms_output.put_line('!!!!!!!!!!!!!!!!!!!!!!!!! FOUND DUPLICATE GONNA MERGE!!!!!!!!!! dup evt ID: ' || dups.collecting_event_id);
+				--dbms_output.put_line('!!!!!!!!!!!!!!!!!!!!!!!!! FOUND DUPLICATE GONNA MERGE!!!!!!!!!! dup evt ID: ' || dups.collecting_event_id);
 				-- log; probably won't go to prod
-				update bak_collecting_event20180405 set merged_into_cid = r.collecting_event_id where collecting_event_id=dups.collecting_event_id;
-				dbms_output.put_line('gonna update specimen_event');
+				--update bak_collecting_event20180405 set merged_into_cid = r.collecting_event_id where collecting_event_id=dups.collecting_event_id;
+				--dbms_output.put_line('gonna update specimen_event');
 				
-				dbms_output.put_line('update specimen_event	set	collecting_event_id=' || r.collecting_event_id || '	where collecting_event_id=' || dups.collecting_event_id);
+				--dbms_output.put_line('update specimen_event	set	collecting_event_id=' || r.collecting_event_id || '	where collecting_event_id=' || dups.collecting_event_id);
 				
 				
 				update 
@@ -207,10 +212,10 @@ BEGIN
 
 
 				-- and delete the duplicate locality
-				dbms_output.put_line('gonna delete collecting_event');
+				--dbms_output.put_line('gonna delete collecting_event');
 				delete from collecting_event where collecting_event_id=dups.collecting_event_id;
 				
-				dbms_output.put_line(' deleted collecting_event');
+				--dbms_output.put_line(' deleted collecting_event');
 			exception when others then
 			--	null;
 				-- these happen (at least) when the initial query contains the duplicate
@@ -232,24 +237,24 @@ BEGIN
 				select count(*) x from bulkloader where collecting_event_id=r.collecting_event_id
 			);
 			if c=0 then
-				dbms_output.put_line('not used deleting');
+				--dbms_output.put_line('not used deleting');
 				delete from collecting_event where collecting_event_id=r.collecting_event_id;
 			end if;
 		end if;
 
 		-- log the last check
 		-- pass in the admin_flag = 'proc auto_merge_locality' - we're not changing anything here
-				dbms_output.put_line('gonna log....');
+				--dbms_output.put_line('gonna log....');
 		update collecting_event set admin_flag = 'proc auto_merge_locality',last_dup_check_date=sysdate where collecting_event_id=r.collecting_event_id;
 
 		-- if there are a lot of not-so-duplicates found, this can process many per run
 		-- if there are a log of duplicates, it'll get all choked up on trying to update FLAT
 		-- so throttle - if we haven't merged much then keep going, if we have exit and start over next run
 		if i > 100 then
-			dbms_output.put_line('i maxout: ' || i);
+			--dbms_output.put_line('i maxout: ' || i);
 			return;
 		--else
-			dbms_output.put_line('i stillsmall: ' || i);
+			--dbms_output.put_line('i stillsmall: ' || i);
 		end if;
 	end loop;
 end;
