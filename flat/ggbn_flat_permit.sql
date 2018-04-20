@@ -11,6 +11,7 @@ table temp_ggbn_permit as select distinct
 	--
 	-- foreign key to tissues
 	specimen_part.collection_object_id UnitID,
+	filtered_flat.collection_id,
 	-- key to Occurrences; probably don't need this here but why not...
 	'http://arctos.database.museum/guid/' || filtered_flat.guid || '?seid=' || specimen_event.specimen_event_id OccurrenceID,
 	-- each permit can have multiple types
