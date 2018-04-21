@@ -1,5 +1,8 @@
 drop table temp_ggbn_permit;
 
+alter table temp_ggbn_permit rename column OccurrenceID to OccurrenceID2;
+
+
 create 
 --or replace 
 --view digir_query.ggbn_flat_permit 
@@ -13,7 +16,8 @@ table temp_ggbn_permit as select distinct
 	specimen_part.collection_object_id UnitID,
 	filtered_flat.collection_id,
 	-- key to Occurrences; probably don't need this here but why not...
-	'http://arctos.database.museum/guid/' || filtered_flat.guid || '?seid=' || specimen_event.specimen_event_id OccurrenceID,
+	-- name OCCURRENCEID2 because reasons
+	'http://arctos.database.museum/guid/' || filtered_flat.guid || '?seid=' || specimen_event.specimen_event_id OccurrenceID2,
 	-- each permit can have multiple types
 	-- doesn't seem right to normalize this further so concat them in
 	-- this does NOT include permit_regulation
