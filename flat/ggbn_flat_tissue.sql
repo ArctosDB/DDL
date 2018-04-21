@@ -6,7 +6,7 @@ create or replace view digir_query.ggbn_flat_tissue as select
 	-- because DWC wants it
 	filtered_flat.collection_id,
 	-- key to Occurrences; this is a foreign key here
-	'http://arctos.database.museum/guid/' || filtered_flat.guid || '?seid=' || specimen_event.specimen_event_id OccurrenceID,
+	'http://arctos.database.museum/guid/' || filtered_flat.guid || '?seid=' || specimen_event.specimen_event_id OccurrenceID2,
 	-- the only type of materialSample we have at the moment
 	'tissue' materialSampleType,
 	specimen_part.part_name preparationType,

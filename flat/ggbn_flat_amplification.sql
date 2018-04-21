@@ -18,6 +18,7 @@ create or replace view digir_query.ggbn_flat_amplification as select
 	specimen_part.collection_object_id UnitID,
 	filtered_flat.collection_id,
 	-- key to Occurrences; this is a foreign key here
+	--OCCURRENCEID2 because reasons
 	'http://arctos.database.museum/guid/' || filtered_flat.guid || '?seid=' || specimen_event.specimen_event_id OccurrenceID,
 	BASE_URL || DISPLAY_VALUE geneticAccessionURI,
 	DISPLAY_VALUE geneticAccessionNumber
