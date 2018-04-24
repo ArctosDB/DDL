@@ -156,6 +156,13 @@ BEGIN
 			hg := hg || ', ' || :NEW.feature;
 		END IF;
 	END IF;
+	IF :NEW.drainage IS NOT NULL THEN
+		IF hg IS NULL THEN
+			hg := :NEW.drainage;
+		ELSE
+			hg := hg || ', ' || :NEW.drainage;
+		END IF;
+	END IF;
 	IF :NEW.island_group IS NOT NULL THEN
 		IF hg IS NULL THEN
 			hg := :NEW.island_group;
@@ -253,6 +260,7 @@ BEGIN
 
 END;
 /
+sho err;
 
 
 
@@ -289,6 +297,7 @@ BEGIN
 				n_COUNTY,
 				n_QUAD,
 				n_FEATURE,
+				n_drainage,
 				n_ISLAND,
 				n_ISLAND_GROUP,
 				n_SEA,
@@ -298,6 +307,7 @@ BEGIN
 				o_COUNTY,
 				o_QUAD,
 				o_FEATURE,
+				o_drainage,
 				o_ISLAND,
 				o_ISLAND_GROUP,
 				o_SEA
@@ -312,6 +322,7 @@ BEGIN
 				:NEW.COUNTY,
 				:NEW.QUAD,
 				:NEW.FEATURE,
+				:NEW.drainage,
 				:NEW.ISLAND,
 				:NEW.ISLAND_GROUP,
 				:NEW.SEA,
@@ -321,6 +332,7 @@ BEGIN
 				:OLD.COUNTY,
 				:OLD.QUAD,
 				:OLD.FEATURE,
+				:OLD.drainage,
 				:OLD.ISLAND,
 				:OLD.ISLAND_GROUP,
 				:OLD.SEA
@@ -339,6 +351,7 @@ BEGIN
 			n_COUNTY,
 			n_QUAD,
 			n_FEATURE,
+			n_drainage,
 			n_ISLAND,
 			n_ISLAND_GROUP,
 			n_SEA
@@ -353,6 +366,7 @@ BEGIN
 			:NEW.COUNTY,
 			:NEW.QUAD,
 			:NEW.FEATURE,
+			:NEW.drainage,
 			:NEW.ISLAND,
 			:NEW.ISLAND_GROUP,
 			:NEW.SEA
@@ -369,6 +383,7 @@ BEGIN
 			o_COUNTY,
 			o_QUAD,
 			o_FEATURE,
+			o_drainage,
 			o_ISLAND,
 			o_ISLAND_GROUP,
 			o_SEA
@@ -383,6 +398,7 @@ BEGIN
 			:OLD.COUNTY,
 			:OLD.QUAD,
 			:OLD.FEATURE,
+			:OLD.drainage,
 			:OLD.ISLAND,
 			:OLD.ISLAND_GROUP,
 			:OLD.SEA
