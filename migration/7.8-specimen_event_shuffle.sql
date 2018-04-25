@@ -613,7 +613,9 @@ sho err;
     create index ix_cache_anygeog_geostr on cache_anygeog (geostring) tablespace uam_idx_1; 
 	create index ix_cache_anygeog_ceid on cache_anygeog (collecting_event_id) tablespace uam_idx_1; 
 
+    desc all_indexes
     
+    select * from all_indexes where lower(index_name)='ix_cache_anygeog_geostr';
 	-- and a new job to maintain
 	-- in flat_jobs
 	
