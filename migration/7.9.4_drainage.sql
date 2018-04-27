@@ -229,6 +229,93 @@ insert into ssrch_field_doc (
   /
   
   
-  
-
+  create table temp_msb_f_f_u as 
+ select
+ 	geog_auth_rec.geog_auth_rec_id,
+ 	locality.locality_id,
+ 	geog_auth_rec.higher_geog,
+ 	locality.locality_remarks,
+ 	--instr(locality_remarks,'Drainage'),
+ 	substr(locality_remarks,0,instr(locality_remarks,'Drainage')+7) drainage,
+ 	cataloged_item.collection_object_id,
+ 	cataloged_item.cat_num
+ from
+ 	geog_auth_rec,
+ 	locality,
+ 	collecting_event,
+ 	specimen_event,
+ 	cataloged_item,
+ 	collection
+ where
+ 	geog_auth_rec.geog_auth_rec_id=locality.geog_auth_rec_id and
+ 	locality.locality_id=collecting_event.locality_id and
+ 	collecting_event.collecting_event_id=specimen_event.collecting_event_id and
+ 	specimen_event.collection_object_id=cataloged_item.collection_object_id and
+ 	cataloged_item.collection_id=collection.collection_id and
+ 	collection.guid_prefix='MSB:Fish' and
+ 	locality_remarks like '%Drainage%'
+ ;
  
+ delete from temp_msb_f_f_u where drainage='Fish Hatchery Drainage';
+ 
+ 
+ alter table temp_msb_f_f_u add new_geog_auth_rec_id number;
+ alter table temp_msb_f_f_u add new_higher_geog varchar2(255);
+ 
+ declare
+ 	g varchar2(255);
+ 	i number;
+ begin
+	 for r in (select geog_auth_rec_id,drainage from temp_msb_f_f_u group by  geog_auth_rec_id,drainage) loop
+	 	dbms_output.put_line(r.drainage);
+		for s in (select * from geog_auth_rec where geog_auth_rec_id=r.geog_auth_rec_id ) loop
+		
+	 	dbms_output.put_line(s.higher_geog);
+			select higher_geog,geog_auth_rec_id into g,i from geog_auth_rec where
+	  			nvl(CONTINENT_OCEAN,'NULL')=nvl(s.CONTINENT_OCEAN,'NULL') and
+	  			nvl(COUNTRY,'NULL')=nvl(s.COUNTRY,'NULL') and
+	  			nvl(STATE_PROV,'NULL')=nvl(s.STATE_PROV,'NULL') and
+	  			nvl(COUNTY,'NULL')=nvl(s.COUNTY,'NULL') and
+	  			nvl(QUAD,'NULL')=nvl(s.QUAD,'NULL') and
+	  			nvl(FEATURE,'NULL')=nvl(s.FEATURE,'NULL') and
+	  			nvl(ISLAND,'NULL')=nvl(s.ISLAND,'NULL') and
+	  			nvl(ISLAND_GROUP,'NULL')=nvl(s.ISLAND_GROUP,'NULL') and
+	  			nvl(SEA,'NULL')=nvl(s.SEA,'NULL') and
+	  			DRAINAGE=trim(replace(r.drainage,'Drainage'));
+	  		update temp_msb_f_f_u set new_geog_auth_rec_id=i,new_higher_geog=g where geog_auth_rec_id=r.geog_auth_rec_id and drainage=r.drainage;
+	  	end loop;
+	  end loop;
+ end ;
+ /
+ 
+ 
+-- fix some problems
+ 1. Pecos River: delete Bernalillo County designation. 
+ 2. San Juan River: delete Bernalillo County designation. 
+ 3. San Juan River: Colorado State=Montezuma County (not San Juan County) 
+ 4. San Juan River: delete San Miguel County designation. 
+ 5. Tularosa Basin: delete Catron County designation. 
+ 
+ 
+ update temp_msb_f_f_u set new_higher_geog='North America, United States, New Mexico, Pecos River' where 
+ 	new_higher_geog='North America, United States, New Mexico, Bernalillo County, Pecos River';
+ 	
+ 
+ update temp_msb_f_f_u set new_higher_geog='North America, United States, New Mexico, San Juan River' where 
+ 	new_higher_geog='North America, United States, New Mexico, Bernalillo County, San Juan River';
+ 	
+ 	
+ 
+ update temp_msb_f_f_u set new_higher_geog='North America, United States, Colorado, Montezuma County, San Juan River' where 
+ 	new_higher_geog='North America, United States, Colorado, San Juan County, San Juan River';
+ 	
+ 	
+ update temp_msb_f_f_u set new_higher_geog='North America, United States, New Mexico, San Juan River' where 
+ 	new_higher_geog='North America, United States, New Mexico, San Miguel County, San Juan River';
+ 	
+ 	
+ update temp_msb_f_f_u set new_higher_geog='North America, United States, New Mexico, Tularosa Basin' where 
+ 	new_higher_geog='North America, United States, New Mexico, Catron County, Tularosa Basin';
+ 	
+
+alter table temp_msb_f_f_u drop column new_geog_auth_rec_id;
