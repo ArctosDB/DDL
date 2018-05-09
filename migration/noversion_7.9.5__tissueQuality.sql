@@ -1,3 +1,6 @@
+-- https://github.com/ArctosDB/arctos/issues/1384
+-- this is not tied to any version and uses long-established functionality
+
 create table cttissue_quality (
   tissue_quality varchar2(255) not null,
   description varchar2(4000) not null
@@ -7,13 +10,7 @@ create public synonym cttissue_quality for cttissue_quality;
 
 grant all on cttissue_quality to manage_codetables;
 
-grant select on cttissue_quality to public;
-
-
-insert into cttissue_quality (tissue_quality,description) values ('rotten','test');
-insert into cttissue_quality (tissue_quality,description) values ('spiffy','test');
-
-																								
+grant select on cttissue_quality to public;																		
 
 create table log_cttissue_quality (
 username varchar2(60),
@@ -50,3 +47,9 @@ sysdate,
 );
 END;
 / 
+
+insert into cttissue_quality (tissue_quality,description) values ('5 - excellent','no obvious degradation, no freeze/thaw events');
+insert into cttissue_quality (tissue_quality,description) values ('4 - very good','no obvious degradation, one freeze/thaw event');
+insert into cttissue_quality (tissue_quality,description) values ('3 - good','no obvious degradation, multiple freeze thaw events');
+insert into cttissue_quality (tissue_quality,description) values ('2 - fair','degraded from decomposition');
+insert into cttissue_quality (tissue_quality,description) values ('1 - poor','decomposed or very rotten');
