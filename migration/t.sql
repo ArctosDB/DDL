@@ -1,4 +1,3 @@
-
 CREATE OR REPLACE TRIGGER TR_SP_ATTRIBUTES_CT_BUI
 BEFORE UPDATE OR INSERT ON specimen_part_attribute
 FOR EACH ROW
@@ -35,7 +34,7 @@ BEGIN
   		-- one or the other is controlled
     	SELECT 
     		upper(VALUE_CODE_TABLE), 
-    		upper(UNITS_CODE_TABLE) 
+    		upper(UNIT_CODE_TABLE) 
     	INTO 
     		vct, 
     		uct
@@ -61,8 +60,7 @@ BEGIN
 
             sqlString := 'SELECT count(*) FROM ' || vct || 
                 ' WHERE ' || ctctColname || ' = ''' || 
-                v || ''' and collection_cde= ''' || 
-                collectionCode || '''';
+                v || '''';
                 
             EXECUTE IMMEDIATE sqlstring INTO numrows;
             
