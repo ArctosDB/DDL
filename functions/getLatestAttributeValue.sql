@@ -32,7 +32,6 @@
  */: 
 
 
--- return the sex determination with the most recent attribute date
 CREATE  or replace FUNCTION getLatestAttributeValue ( collobjid in integer, atyp in varchar2 )
 	return varchar2
 as
