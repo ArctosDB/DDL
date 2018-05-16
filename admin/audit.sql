@@ -12,24 +12,7 @@ CREATE OR REPLACE PROCEDURE PRUNE_AUDIT_LOGS IS
 
 sho err;
 
-	
 
-BEGIN
-DBMS_SCHEDULER.DROP_JOB('J_PRUNE_AUDIT_LOGS');
-END;
-/
-
-
-
-BEGIN
-  DBMS_SCHEDULER.CREATE_JOB (
-    job_name    => 'J_PRUNE_AUDIT_LOGS',
-    job_type    => 'STORED_PROCEDURE',
-    job_action    => 'PRUNE_AUDIT_LOGS',
-    enabled     => TRUE
-  );
-END;
-/ 
 
 BEGIN
   DBMS_SCHEDULER.CREATE_JOB (
@@ -43,6 +26,32 @@ BEGIN
   );
 END;
 / 
+
+
+
+
+BEGIN
+DBMS_SCHEDULER.DROP_JOB('J_PRUNE_AUDIT_LOGS');
+END;
+/
+
+
+
+
+
+
+
+
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+    job_name    => 'J_PRUNE_AUDIT_LOGS',
+    job_type    => 'STORED_PROCEDURE',
+    job_action    => 'PRUNE_AUDIT_LOGS',
+    enabled     => TRUE
+  );
+END;
+/ 
+
 
 select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_PRUNE_AUDIT_LOGS';
 

@@ -1,6 +1,4 @@
 
-revoke insert on container from manage_container;
-
 CREATE OR REPLACE procedure createContainer (
     v_container_type in varchar2,
     v_label in varchar2,
@@ -13,7 +11,11 @@ CREATE OR REPLACE procedure createContainer (
     v_number_positions in number,
     v_institution_acronym in varchar2,
     v_parent_container_id in NUMBER default 0
-   ) is 
+   ) is
+
+		parent_position_count  number;
+		parent_notposition_count  number;
+		parent_number_positions number;
     begin
         -- only insert things that need no verification; do not put containers in parents EXCEPT positions
         if v_container_type != 'position' and v_parent_container_id != 0 then
@@ -22,8 +24,23 @@ CREATE OR REPLACE procedure createContainer (
         if v_barcode is not null and IS_CLAIMED_BARCODE(v_barcode) != 'PASS' then
         	 raise_application_error(-20000, 'Invalid barcode.');
        	end if;
+        -- for positions, confirm placement
+        if v_container_type = 'position' and v_parent_container_id != 0 then
+        	select number_positions into parent_number_positions from container where container_id=v_parent_container_id;
+        	select count(*) into parent_notposition_count from container where container_type != 'position' and parent_container_id=v_parent_container_id;
+        	select count(*) into parent_position_count from container where container_type = 'position' and parent_container_id=v_parent_container_id;
+        	if parent_number_positions is null then
+        		raise_application_error(-20000, 'Parent does not have a value in NUMBER_POSITIONS and cannot contain positions.');
+        	end if;
+        	if parent_notposition_count > 0 then
+        		raise_application_error(-20000, 'Parent contains not-positions and cannot contain positions');
+        	end if;
+        	if parent_position_count >= parent_number_positions then
+        		raise_application_error(-20000, 'Too many positions');
+        	end if;
+        end if;
         
-        
+       	
         insert into container (
             CONTAINER_ID,
             PARENT_CONTAINER_ID,
@@ -59,4 +76,6 @@ GRANT EXECUTE ON createContainer TO manage_container;
 
    
    
+--revoke insert on container from manage_container;
+
    
