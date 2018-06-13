@@ -188,7 +188,7 @@ r_collection_cde varchar2(255);
             		---------------------------------------------------- geol att ----------------------------------------------------  		
             		  
         		    IF rec.GEOLOGY_ATTRIBUTE_1 is not null and rec.GEO_ATT_VALUE_1 is not null THEN
-    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM ctgeology_attribute WHERE geology_attribute = rec.GEOLOGY_ATTRIBUTE_1;
+    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM geology_attribute_hierarchy WHERE ATTRIBUTE = rec.GEOLOGY_ATTRIBUTE_1 and ATTRIBUTE_VALUE=rec.GEO_ATT_VALUE_1 and USABLE_VALUE_FG=1;
                 		IF (numRecs = 0) THEN
                 			thisError :=  thisError || '; GEOLOGY_ATTRIBUTE_1 is invalid';
                 		END IF;
@@ -203,7 +203,7 @@ r_collection_cde varchar2(255);
                 		END IF;
     				END IF;
     				IF rec.GEOLOGY_ATTRIBUTE_2 is not null and rec.GEO_ATT_VALUE_2 is not null THEN
-    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM ctgeology_attribute WHERE geology_attribute = rec.GEOLOGY_ATTRIBUTE_2;
+    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM geology_attribute_hierarchy WHERE ATTRIBUTE = rec.GEOLOGY_ATTRIBUTE_2 and ATTRIBUTE_VALUE=rec.GEO_ATT_VALUE_2 and USABLE_VALUE_FG=1;
                 		IF (numRecs = 0) THEN
                 			thisError :=  thisError || '; GEOLOGY_ATTRIBUTE_2 is invalid';
                 		END IF;
@@ -218,7 +218,7 @@ r_collection_cde varchar2(255);
                 		END IF;
     				END IF;
     				IF rec.GEOLOGY_ATTRIBUTE_3 is not null and rec.GEO_ATT_VALUE_3 is not null THEN
-    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM ctgeology_attribute WHERE geology_attribute = rec.GEOLOGY_ATTRIBUTE_3;
+    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM geology_attribute_hierarchy WHERE ATTRIBUTE = rec.GEOLOGY_ATTRIBUTE_3 and ATTRIBUTE_VALUE=rec.GEO_ATT_VALUE_3 and USABLE_VALUE_FG=1;
                 		IF (numRecs = 0) THEN
                 			thisError :=  thisError || '; GEOLOGY_ATTRIBUTE_3 is invalid';
                 		END IF;
@@ -233,7 +233,7 @@ r_collection_cde varchar2(255);
                 		END IF;
     				END IF;
     				IF rec.GEOLOGY_ATTRIBUTE_4 is not null and rec.GEO_ATT_VALUE_4 is not null THEN
-    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM ctgeology_attribute WHERE geology_attribute = rec.GEOLOGY_ATTRIBUTE_4;
+    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM geology_attribute_hierarchy WHERE ATTRIBUTE = rec.GEOLOGY_ATTRIBUTE_4 and ATTRIBUTE_VALUE=rec.GEO_ATT_VALUE_4 and USABLE_VALUE_FG=1;
                 		IF (numRecs = 0) THEN
                 			thisError :=  thisError || '; GEOLOGY_ATTRIBUTE_4 is invalid';
                 		END IF;
@@ -248,7 +248,7 @@ r_collection_cde varchar2(255);
                 		END IF;
     				END IF;
     				IF rec.GEOLOGY_ATTRIBUTE_5 is not null and rec.GEO_ATT_VALUE_5 is not null THEN
-    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM ctgeology_attribute WHERE geology_attribute = rec.GEOLOGY_ATTRIBUTE_5;
+    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM geology_attribute_hierarchy WHERE ATTRIBUTE = rec.GEOLOGY_ATTRIBUTE_5 and ATTRIBUTE_VALUE=rec.GEO_ATT_VALUE_5 and USABLE_VALUE_FG=1;
                 		IF (numRecs = 0) THEN
                 			thisError :=  thisError || '; GEOLOGY_ATTRIBUTE_5 is invalid';
                 		END IF;
@@ -263,7 +263,7 @@ r_collection_cde varchar2(255);
                 		END IF;
     				END IF;
     				IF rec.GEOLOGY_ATTRIBUTE_6 is not null and rec.GEO_ATT_VALUE_6 is not null THEN
-    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM ctgeology_attribute WHERE geology_attribute = rec.GEOLOGY_ATTRIBUTE_6;
+    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM geology_attribute_hierarchy WHERE ATTRIBUTE = rec.GEOLOGY_ATTRIBUTE_6 and ATTRIBUTE_VALUE=rec.GEO_ATT_VALUE_6 and USABLE_VALUE_FG=1;
                 		IF (numRecs = 0) THEN
                 			thisError :=  thisError || '; GEOLOGY_ATTRIBUTE_6 is invalid';
                 		END IF;

@@ -62,7 +62,7 @@ a_instn varchar2(255);
 --- collection_cde as determined from guid_prefix
 r_collection_cde varchar2(255);
   BEGIN
-	FOR rec IN (SELECT * FROM bulkloader_stage where collection_object_id=colobjid ) LOOP
+	FOR rec IN (SELECT * FROM bulkloader_stage where collection_object_id=colobjid) LOOP
 		BEGIN
     		thisError := '';
     		--dbms_output.put_line('bulk_check_one');
@@ -217,9 +217,13 @@ r_collection_cde varchar2(255);
             		END IF;  -- end lat/long check
             		---------------------------------------------------- geol att ----------------------------------------------------  		
             		  
+            		
+            	
         		    IF rec.GEOLOGY_ATTRIBUTE_1 is not null and rec.GEO_ATT_VALUE_1 is not null THEN
-    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM ctgeology_attribute WHERE geology_attribute = rec.GEOLOGY_ATTRIBUTE_1;
-                		IF (numRecs = 0) THEN
+    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM geology_attribute_hierarchy WHERE ATTRIBUTE = rec.GEOLOGY_ATTRIBUTE_1 and ATTRIBUTE_VALUE=rec.GEO_ATT_VALUE_1 and USABLE_VALUE_FG=1;
+                	
+                		
+    				    IF (numRecs = 0) THEN
                 			thisError :=  thisError || '; GEOLOGY_ATTRIBUTE_1 is invalid';
                 		END IF;
                 		if rec.GEO_ATT_DETERMINED_DATE_1 is NOT null AND isdate(rec.GEO_ATT_DETERMINED_DATE_1)=0 then
@@ -233,7 +237,7 @@ r_collection_cde varchar2(255);
                 		END IF;
     				END IF;
     				IF rec.GEOLOGY_ATTRIBUTE_2 is not null and rec.GEO_ATT_VALUE_2 is not null THEN
-    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM ctgeology_attribute WHERE geology_attribute = rec.GEOLOGY_ATTRIBUTE_2;
+    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM geology_attribute_hierarchy WHERE ATTRIBUTE = rec.GEOLOGY_ATTRIBUTE_2 and ATTRIBUTE_VALUE=rec.GEO_ATT_VALUE_2 and USABLE_VALUE_FG=1;
                 		IF (numRecs = 0) THEN
                 			thisError :=  thisError || '; GEOLOGY_ATTRIBUTE_2 is invalid';
                 		END IF;
@@ -248,7 +252,7 @@ r_collection_cde varchar2(255);
                 		END IF;
     				END IF;
     				IF rec.GEOLOGY_ATTRIBUTE_3 is not null and rec.GEO_ATT_VALUE_3 is not null THEN
-    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM ctgeology_attribute WHERE geology_attribute = rec.GEOLOGY_ATTRIBUTE_3;
+    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM geology_attribute_hierarchy WHERE ATTRIBUTE = rec.GEOLOGY_ATTRIBUTE_3 and ATTRIBUTE_VALUE=rec.GEO_ATT_VALUE_3 and USABLE_VALUE_FG=1;
                 		IF (numRecs = 0) THEN
                 			thisError :=  thisError || '; GEOLOGY_ATTRIBUTE_3 is invalid';
                 		END IF;
@@ -262,8 +266,8 @@ r_collection_cde varchar2(255);
                     		end if;
                 		END IF;
     				END IF;
-    				IF rec.GEOLOGY_ATTRIBUTE_4 is not null and rec.GEO_ATT_VALUE_4 is not null THEN
-    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM ctgeology_attribute WHERE geology_attribute = rec.GEOLOGY_ATTRIBUTE_4;
+    				IF rec.GEOLOGY_ATTRIBUTE_4 is not null and rec.GEO_ATT_VALUE_4 is not null THEN                		
+    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM geology_attribute_hierarchy WHERE ATTRIBUTE = rec.GEOLOGY_ATTRIBUTE_4 and ATTRIBUTE_VALUE=rec.GEO_ATT_VALUE_4 and USABLE_VALUE_FG=1;                		
                 		IF (numRecs = 0) THEN
                 			thisError :=  thisError || '; GEOLOGY_ATTRIBUTE_4 is invalid';
                 		END IF;
@@ -278,7 +282,7 @@ r_collection_cde varchar2(255);
                 		END IF;
     				END IF;
     				IF rec.GEOLOGY_ATTRIBUTE_5 is not null and rec.GEO_ATT_VALUE_5 is not null THEN
-    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM ctgeology_attribute WHERE geology_attribute = rec.GEOLOGY_ATTRIBUTE_5;
+    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM geology_attribute_hierarchy WHERE ATTRIBUTE = rec.GEOLOGY_ATTRIBUTE_5 and ATTRIBUTE_VALUE=rec.GEO_ATT_VALUE_5 and USABLE_VALUE_FG=1;
                 		IF (numRecs = 0) THEN
                 			thisError :=  thisError || '; GEOLOGY_ATTRIBUTE_5 is invalid';
                 		END IF;
@@ -293,7 +297,7 @@ r_collection_cde varchar2(255);
                 		END IF;
     				END IF;
     				IF rec.GEOLOGY_ATTRIBUTE_6 is not null and rec.GEO_ATT_VALUE_6 is not null THEN
-    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM ctgeology_attribute WHERE geology_attribute = rec.GEOLOGY_ATTRIBUTE_6;
+    				    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM geology_attribute_hierarchy WHERE ATTRIBUTE = rec.GEOLOGY_ATTRIBUTE_6 and ATTRIBUTE_VALUE=rec.GEO_ATT_VALUE_6 and USABLE_VALUE_FG=1;
                 		IF (numRecs = 0) THEN
                 			thisError :=  thisError || '; GEOLOGY_ATTRIBUTE_6 is invalid';
                 		END IF;
@@ -1110,6 +1114,7 @@ r_collection_cde varchar2(255);
 END;
 /
 sho err;
+
 CREATE OR REPLACE PUBLIC SYNONYM bulk_stage_check_one FOR bulk_stage_check_one;
 GRANT EXECUTE ON bulk_stage_check_one TO PUBLIC;
 
