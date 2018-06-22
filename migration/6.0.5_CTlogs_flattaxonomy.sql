@@ -1,3 +1,6 @@
+geology_attribute_hierarchy
+
+
 drop table log_geog_auth_rec;
 
 
