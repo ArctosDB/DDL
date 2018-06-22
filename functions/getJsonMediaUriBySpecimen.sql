@@ -58,7 +58,7 @@ begin
 	exception when others then
 		jsond:='[';
 		jsond:=jsond || '{"STATUS":"Error Creating JSON"},';
-		jsond:=jsond || '{"MEDIA_ACCESS_URL":https://arctos.database.museum/MediaSearch.cfm?collection_object_id=' || colObjId || '"}';
+		jsond:=jsond || '{"MEDIA_ACCESS_URL" : https://arctos.database.museum/MediaSearch.cfm?collection_object_id=' || colObjId || '"}';
 		jsond:=jsond || ']';
 		return jsond;
 end;
