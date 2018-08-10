@@ -25,7 +25,7 @@ CREATE OR REPLACE function getTaxonRank(collobjid IN number)
 		collection,
 		cataloged_item
 	where
-		taxon_term.term=identification.scientific_name and
+		taxon_term.term=replace(replace(replace(replace(replace(identification.scientific_name,' sp.'),' ssp.'),' ?'),' aff.'),' cf.') and
 		taxon_term.source=collection.PREFERRED_TAXONOMY_SOURCE and
 		identification.identification_id=identification_taxonomy.identification_id and
 		identification_taxonomy.taxon_name_id=taxon_term.taxon_name_id and
@@ -34,6 +34,7 @@ CREATE OR REPLACE function getTaxonRank(collobjid IN number)
 		identification.accepted_id_fg=1 and
 		taxon_term.term_type != 'scientific_name' and
 		taxon_term.term_type != 'display_name' and
+		taxon_term.POSITION_IN_CLASSIFICATION is not null and
 		cataloged_item.collection_object_id = collobjid
 	;
     return tterm;
