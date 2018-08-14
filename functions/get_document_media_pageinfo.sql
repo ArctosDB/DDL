@@ -111,6 +111,4 @@ BEGIN
    grant execute on get_document_media_pageinfo to public;
    
    
-    --  select get_document_media_pageinfo('robert-l-rausch-necropsy-ledger',10) result from dual;
-
-   
+--  select get_document_media_pageinfo('robert-l-rausch-necropsy-ledger',10) result from dual;
