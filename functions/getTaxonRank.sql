@@ -40,7 +40,13 @@ CREATE OR REPLACE function getTaxonRank(collobjid IN number)
     return tterm;
     EXCEPTION
     	when others then
-        	tterm := 'error!: ' || sqlerrm;
-        	return trim(tterm);
+        	--tterm := 'error!: ' || sqlerrm;
+        	--return trim(tterm);
+        	return NULL;
   end;
  /
+
+ 
+ 
+CREATE or replace PUBLIC SYNONYM getTaxonRank FOR getTaxonRank;
+GRANT EXECUTE ON getTaxonRank TO PUBLIC;

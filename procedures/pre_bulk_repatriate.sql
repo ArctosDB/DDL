@@ -22,6 +22,34 @@ begin
 		return;
 	end if;
 	
+	-- get rid of NULL shouldbe before we do anything
+	
+	delete from pre_bulk_agent where shouldbe is null;
+	update pre_bulkloader set COLLECTOR_agent_1=(select trim(shouldbe) from pre_bulk_agent where trim(pre_bulkloader.COLLECTOR_agent_1)=trim(pre_bulk_agent.AGENT_NAME));
+	update pre_bulkloader set COLLECTOR_agent_2=(select trim(shouldbe) from pre_bulk_agent where trim(pre_bulkloader.COLLECTOR_agent_2)=trim(pre_bulk_agent.AGENT_NAME));
+	update pre_bulkloader set COLLECTOR_agent_3=(select trim(shouldbe) from pre_bulk_agent where trim(pre_bulkloader.COLLECTOR_agent_3)=trim(pre_bulk_agent.AGENT_NAME));
+	update pre_bulkloader set COLLECTOR_agent_4=(select trim(shouldbe) from pre_bulk_agent where trim(pre_bulkloader.COLLECTOR_agent_4)=trim(pre_bulk_agent.AGENT_NAME));
+	update pre_bulkloader set COLLECTOR_agent_5=(select trim(shouldbe) from pre_bulk_agent where trim(pre_bulkloader.COLLECTOR_agent_5)=trim(pre_bulk_agent.AGENT_NAME));
+	update pre_bulkloader set COLLECTOR_agent_6=(select trim(shouldbe) from pre_bulk_agent where trim(pre_bulkloader.COLLECTOR_agent_6)=trim(pre_bulk_agent.AGENT_NAME));
+	update pre_bulkloader set COLLECTOR_agent_7=(select trim(shouldbe) from pre_bulk_agent where trim(pre_bulkloader.COLLECTOR_agent_7)=trim(pre_bulk_agent.AGENT_NAME));
+	update pre_bulkloader set COLLECTOR_agent_8=(select trim(shouldbe) from pre_bulk_agent where trim(pre_bulkloader.COLLECTOR_agent_8)=trim(pre_bulk_agent.AGENT_NAME));
+
+	update pre_bulkloader set ATTRIBUTE_DETERMINER_1=(select trim(shouldbe) from pre_bulk_agent where trim(pre_bulkloader.ATTRIBUTE_DETERMINER_1)=trim(pre_bulk_agent.AGENT_NAME));
+	update pre_bulkloader set ATTRIBUTE_DETERMINER_2=(select trim(shouldbe) from pre_bulk_agent where trim(pre_bulkloader.ATTRIBUTE_DETERMINER_2)=trim(pre_bulk_agent.AGENT_NAME));
+	update pre_bulkloader set ATTRIBUTE_DETERMINER_3=(select trim(shouldbe) from pre_bulk_agent where trim(pre_bulkloader.ATTRIBUTE_DETERMINER_3)=trim(pre_bulk_agent.AGENT_NAME));
+	update pre_bulkloader set ATTRIBUTE_DETERMINER_4=(select trim(shouldbe) from pre_bulk_agent where trim(pre_bulkloader.ATTRIBUTE_DETERMINER_4)=trim(pre_bulk_agent.AGENT_NAME));
+	update pre_bulkloader set ATTRIBUTE_DETERMINER_5=(select trim(shouldbe) from pre_bulk_agent where trim(pre_bulkloader.ATTRIBUTE_DETERMINER_5)=trim(pre_bulk_agent.AGENT_NAME));
+	update pre_bulkloader set ATTRIBUTE_DETERMINER_6=(select trim(shouldbe) from pre_bulk_agent where trim(pre_bulkloader.ATTRIBUTE_DETERMINER_6)=trim(pre_bulk_agent.AGENT_NAME));
+	update pre_bulkloader set ATTRIBUTE_DETERMINER_7=(select trim(shouldbe) from pre_bulk_agent where trim(pre_bulkloader.ATTRIBUTE_DETERMINER_7)=trim(pre_bulk_agent.AGENT_NAME));
+	update pre_bulkloader set ATTRIBUTE_DETERMINER_8=(select trim(shouldbe) from pre_bulk_agent where trim(pre_bulkloader.ATTRIBUTE_DETERMINER_8)=trim(pre_bulk_agent.AGENT_NAME));
+	update pre_bulkloader set ATTRIBUTE_DETERMINER_9=(select trim(shouldbe) from pre_bulk_agent where trim(pre_bulkloader.ATTRIBUTE_DETERMINER_9)=trim(pre_bulk_agent.AGENT_NAME));
+	update pre_bulkloader set ATTRIBUTE_DETERMINER_10=(select trim(shouldbe) from pre_bulk_agent where trim(pre_bulkloader.ATTRIBUTE_DETERMINER_10)=trim(pre_bulk_agent.AGENT_NAME));
+
+	update pre_bulkloader set ID_MADE_BY_AGENT=(select trim(shouldbe) from pre_bulk_agent where trim(pre_bulkloader.ID_MADE_BY_AGENT)=trim(pre_bulk_agent.AGENT_NAME));
+	update pre_bulkloader set EVENT_ASSIGNED_BY_AGENT=(select trim(shouldbe) from pre_bulk_agent where trim(pre_bulkloader.EVENT_ASSIGNED_BY_AGENT)=trim(pre_bulk_agent.AGENT_NAME));
+
+	
+	/*
 	
 	for r in (select * from pre_bulk_agent where shouldbe is not null) loop
 		update pre_bulkloader set COLLECTOR_agent_1=trim(r.shouldbe) where trim(COLLECTOR_agent_1)=trim(r.AGENT_NAME);
@@ -46,7 +74,7 @@ begin
 		update pre_bulkloader set EVENT_ASSIGNED_BY_AGENT=trim(r.shouldbe) where trim(EVENT_ASSIGNED_BY_AGENT)=trim(r.AGENT_NAME);
 	end loop;
 
-	
+	*/
 		
 	for r in (select * from pre_bulk_taxa where shouldbe is not null) loop
 		update pre_bulkloader set taxon_name=trim(r.shouldbe) where trim(taxon_name)=trim(r.taxon_name);
@@ -77,7 +105,27 @@ begin
 		update pre_bulkloader set OTHER_ID_NUM_TYPE_5=r.shouldbe where OTHER_ID_NUM_TYPE_5=r.OTHER_ID_TYPE;
 	end loop;
 
+	
+		update pre_bulkloader set MADE_DATE=(select trim(shouldbe) from pre_bulk_date where trim(pre_bulkloader.MADE_DATE)=trim(pre_bulk_date.adate));
+		update pre_bulkloader set BEGAN_DATE=(select trim(shouldbe) from pre_bulk_date where trim(pre_bulkloader.BEGAN_DATE)=trim(pre_bulk_date.adate));
+		update pre_bulkloader set ENDED_DATE=(select trim(shouldbe) from pre_bulk_date where trim(pre_bulkloader.ENDED_DATE)=trim(pre_bulk_date.adate));
+		update pre_bulkloader set EVENT_ASSIGNED_DATE=(select trim(shouldbe) from pre_bulk_date where trim(pre_bulkloader.EVENT_ASSIGNED_DATE)=trim(pre_bulk_date.adate));
+		update pre_bulkloader set ATTRIBUTE_DATE_1=(select trim(shouldbe) from pre_bulk_date where trim(pre_bulkloader.ATTRIBUTE_DATE_1)=trim(pre_bulk_date.adate));
+		update pre_bulkloader set ATTRIBUTE_DATE_2=(select trim(shouldbe) from pre_bulk_date where trim(pre_bulkloader.ATTRIBUTE_DATE_2)=trim(pre_bulk_date.adate));
+		update pre_bulkloader set ATTRIBUTE_DATE_3=(select trim(shouldbe) from pre_bulk_date where trim(pre_bulkloader.ATTRIBUTE_DATE_3)=trim(pre_bulk_date.adate));
+		update pre_bulkloader set ATTRIBUTE_DATE_4=(select trim(shouldbe) from pre_bulk_date where trim(pre_bulkloader.ATTRIBUTE_DATE_4)=trim(pre_bulk_date.adate));
+		update pre_bulkloader set ATTRIBUTE_DATE_5=(select trim(shouldbe) from pre_bulk_date where trim(pre_bulkloader.ATTRIBUTE_DATE_5)=trim(pre_bulk_date.adate));
+		update pre_bulkloader set ATTRIBUTE_DATE_6=(select trim(shouldbe) from pre_bulk_date where trim(pre_bulkloader.ATTRIBUTE_DATE_6)=trim(pre_bulk_date.adate));
+		update pre_bulkloader set ATTRIBUTE_DATE_7=(select trim(shouldbe) from pre_bulk_date where trim(pre_bulkloader.ATTRIBUTE_DATE_7)=trim(pre_bulk_date.adate));
+		update pre_bulkloader set ATTRIBUTE_DATE_8=(select trim(shouldbe) from pre_bulk_date where trim(pre_bulkloader.ATTRIBUTE_DATE_8)=trim(pre_bulk_date.adate));
+		update pre_bulkloader set ATTRIBUTE_DATE_9=(select trim(shouldbe) from pre_bulk_date where trim(pre_bulkloader.ATTRIBUTE_DATE_9)=trim(pre_bulk_date.adate));
+		update pre_bulkloader set ATTRIBUTE_DATE_10=(select trim(shouldbe) from pre_bulk_date where trim(pre_bulkloader.ATTRIBUTE_DATE_10)=trim(pre_bulk_date.adate));
 		
+		
+		
+	
+		
+		/*
 	for r in (select * from pre_bulk_date where shouldbe is not null) loop
 		update pre_bulkloader set MADE_DATE=r.shouldbe where MADE_DATE=r.adate;
 		update pre_bulkloader set BEGAN_DATE=r.shouldbe where BEGAN_DATE=r.adate;
@@ -94,7 +142,7 @@ begin
 		update pre_bulkloader set ATTRIBUTE_DATE_10=r.shouldbe where ATTRIBUTE_DATE_10=r.adate;
 		update pre_bulkloader set EVENT_ASSIGNED_DATE=r.shouldbe where EVENT_ASSIGNED_DATE=r.adate;
 	end loop;
-
+*/
 
 	for r in (select * from pre_bulk_parts where shouldbe is not null) loop
 		update pre_bulkloader set part_name_1=r.shouldbe where part_name_1=r.part_name;
@@ -201,6 +249,6 @@ DBMS_SCHEDULER.CREATE_JOB (
 END;
 /
 
-exec DBMS_SCHEDULER.DROP_JOB('J_PRE_BULK_REPATRIATE');
+exec DBMS_SCHEDULER.DROP_JOB('J_PRE_BULK_REPATRIATE', FORCE => TRUE);
 
 	select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_PRE_BULK_REPATRIATE';

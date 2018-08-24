@@ -203,7 +203,8 @@ BEGIN
 		ENCUMBRANCES,
 		PARTS,
 		INDIVIDUALCOUNT,
-		has_tissues
+		has_tissues,
+		taxon_rank
 	) = (SELECT
 			cataloged_item.CAT_NUM,
 			cataloged_item.ACCN_ID,
@@ -243,7 +244,8 @@ BEGIN
 			concatEncumbrances(cataloged_item.collection_object_id),
 			concatParts(cataloged_item.collection_object_id),
 			getIndividualCount(cataloged_item.collection_object_id),
-			getIfTissues(cataloged_item.collection_object_id)
+			getIfTissues(cataloged_item.collection_object_id),
+			getTaxonRank(cataloged_item.collection_object_id)
 		from
 			cataloged_item,
 			collection,

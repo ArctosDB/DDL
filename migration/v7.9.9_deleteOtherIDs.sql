@@ -1,3 +1,6 @@
+-- TODO
+
+-- rebuild ajax, switch includes
 
 
 drop table cf_temp_delete_oids;

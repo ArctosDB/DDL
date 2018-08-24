@@ -10,6 +10,11 @@
  * 		-- a procedure to suck differences out of pre_filtered_flat (view) into filtered_flat (table)
  * 		-- indexes, so performance does not suck
  * 
+ * 
+ * 
+ *         alter table filtered_flat add ISPUBLISHED VARCHAR2(10);
+
+ * 
  */
 
 
@@ -41,7 +46,6 @@ CREATE or replace view pre_filtered_flat AS
         orig_elev_units,
         identification_id,
         individualcount,
-        has_tissues,
         coll_obj_disposition,
         -- mask collector
         CASE
@@ -206,7 +210,15 @@ CREATE or replace view pre_filtered_flat AS
 		IDENTIFICATION_REMARKS,
 		LOCALITY_REMARKS,
 		formatted_scientific_name,
-		ISPUBLISHED
+		ISPUBLISHED,
+        has_tissues,
+        taxon_rank
+		--DATE_ENDED_DATE,
+		--LAST_EDIT_DATE,
+		--STALE_FLAG,
+		--VERBATIMLATITUDE,
+		--DATE_MADE_DATE,
+		--DATE_BEGAN_DATE
     FROM
         flat
     WHERE
@@ -215,7 +227,6 @@ CREATE or replace view pre_filtered_flat AS
         
    
         
-        alter table filtered_flat add ISPUBLISHED VARCHAR2(10);
         
         
 
@@ -242,12 +253,62 @@ ANALYZE TABLE FILTERED_FLAT COMPUTE STATISTICS;
 select index_name,column_name from all_ind_columns where table_name='FLAT' and column_name not in (
 	select column_name from all_ind_columns where table_name='FILTERED_FLAT'
 );
+
+
+------------------------------------------------------------------------------------------------------------------------
+IX_FLAT_U_CLASS
+SYS_NC00145$
+
+IX_FLAT_U_FAMILY
+SYS_NC00146$
+
+IX_FLAT_U_GENUS
+SYS_NC00147$
+
+IX_FLAT_U_CATNUM
+SYS_NC00148$
+
+IX_UPR_FLAT_ACCN
+SYS_NC00149$
+
+IX_FLAT_BEGANDATE
+DATE_BEGAN_DATE
+
+IX_FLAT_ENDEDDATE
+DATE_ENDED_DATE
+
+IX_FLAT_STALEFLAG
+STALE_FLAG
+
+IX_FLAT_YEAR
+YEAR
+
+IX_FLAT_MONTH
+MONTH
+
+IX_FLAT_DAY
+DAY
+
+IX_FLAT_GEOGAUTHRECID
+GEOG_AUTH_REC_ID
+
+
  
+select column_name from user_tab_cols where table_name='FILTERED_FLAT' and column_name not in (
+	select column_name from user_tab_cols where table_name='PRE_FILTERED_FLAT'
+);
+ 
+
 
 /*
  	-- to get rid of old comparison
 	exec DBMS_COMPARISON.DROP_COMPARISON('SYS.COMPARE_FILTERED_FLAT');
 		exec DBMS_COMPARISON.DROP_COMPARISON('UAM.COMPARE_FILTERED_FLAT');
+		exec DBMS_COMPARISON.DROP_COMPARISON('COMPARE_FILTERED_FLAT2');
+		
+		
+	exec DBMS_COMPARISON.DROP_COMPARISON('SYS.COMPARE_FILTERED_FLAT2');
+		exec DBMS_COMPARISON.DROP_COMPARISON('UAM.COMPARE_FILTERED_FLAT2');
 		exec DBMS_COMPARISON.DROP_COMPARISON('COMPARE_FILTERED_FLAT2');
 
 	-- to create comparison, on which this is based

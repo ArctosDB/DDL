@@ -1,3 +1,7 @@
+-- this doesn't work in test for some reason as of 2018-08-14
+-- works fine in prod
+-- to_number somehow corrupted in test??
+
 /*
  * this function works ONLY with MediaSearch to inject MPD contents
  * do not modify one without changing the other
