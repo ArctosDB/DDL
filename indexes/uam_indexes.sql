@@ -1101,3 +1101,7 @@ CREATE UNIQUE INDEX IU_TRANSAGENT_TID_AID_ROLE
 CREATE UNIQUE INDEX PK_TRANS_AGENT
 	ON TRANS_AGENT (TRANS_AGENT_ID)
 	TABLESPACE UAM_IDX_1;
+	
+	
+	create index ix_term_type on taxon_term (term_type) tablespace uam_idx_1;
+	

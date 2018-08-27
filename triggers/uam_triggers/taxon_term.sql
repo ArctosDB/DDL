@@ -18,7 +18,7 @@ create or replace trigger trg_taxon_term_cts before insert or update on taxon_te
 	begin
 		-- only care if local
 		-- EXCEPT Arctos Relationships; no enforcement there because we want to shove relationship data in
-		select /*+ RESULT_CACHE */ count(*) into c from CTTAXONOMY_SOURCE where source=:NEW.source and source != 'Arctos Relationships';
+		select /*+ RESULT_CACHE */ count(*) into c from CTTAXONOMY_SOURCE where source=:NEW.source ;
 		if c=1 then
 			-- it's local, check stuff
 			-- known term type?
@@ -112,7 +112,7 @@ create or replace trigger trg_pushtaxontermtoflat after insert or update or dele
 		-- capture insert and changes
 		-- push them to flat as necessary
 		-- only care about local terms
-		select /*+ RESULT_CACHE */ count(*) into c from CTTAXONOMY_SOURCE where source=:NEW.source and source != 'Arctos Relationships';
+		select /*+ RESULT_CACHE */ count(*) into c from CTTAXONOMY_SOURCE where source=:NEW.source;
 		if c=1 then
 
 			if inserting then

@@ -244,7 +244,9 @@ AFTER UPDATE ON collecting_event
 FOR EACH ROW
 BEGIN
 	
-	update cache_anygeog set stale_fg=1 where collecting_event_id = :NEW.collecting_event_id;
+	if  :NEW.locality_id != :OLD.locality_id then
+		update cache_anygeog set stale_fg=1 where collecting_event_id = :NEW.collecting_event_id;
+	end if;
 
     UPDATE flat
 	SET stale_flag = 1,
@@ -401,7 +403,9 @@ CREATE OR REPLACE TRIGGER TR_geog_search_term_AU_FLAT
 AFTER UPDATE ON geog_search_term
 FOR EACH ROW
 BEGIN
-	update cache_anygeog set stale_fg=1 where geog_auth_rec_id = :NEW.geog_auth_rec_id;
+	if :NEW.SEARCH_TERM != :OLD.SEARCH_TERM then
+		update cache_anygeog set stale_fg=1 where geog_auth_rec_id = :NEW.geog_auth_rec_id;
+	end if;
 END;
 /
 
@@ -471,10 +475,7 @@ AFTER UPDATE ON locality
 FOR EACH ROW
 BEGIN
 	
-	-- DO update the geo cache
-	
-	update cache_anygeog set stale_fg=1 where locality_id = :NEW.locality_id;
-	
+		
     -- DO NOT log updates to the service data as "specimen changes."
     if :NEW.GEOG_AUTH_REC_ID != :OLD.GEOG_AUTH_REC_ID or
     	nvl(:NEW.SPEC_LOCALITY,'OK') != nvl(:OLD.SPEC_LOCALITY,'OK') or
@@ -495,7 +496,10 @@ BEGIN
     	nvl(:NEW.LOCALITY_NAME,'OK') != nvl(:OLD.LOCALITY_NAME,'OK')
     then
 
+		-- update the geo cache
 	
+		update cache_anygeog set stale_fg=1 where locality_id = :NEW.locality_id;
+
 		UPDATE flat
 	    SET stale_flag = 1,
 		lastuser=sys_context('USERENV', 'SESSION_USER'),
