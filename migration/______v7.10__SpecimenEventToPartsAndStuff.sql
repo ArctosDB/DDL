@@ -233,21 +233,3 @@ end;
   
   select guid from flat where collection_object_id in (select collection_object_id from specimen_event_links) group by guid order by guid;
         
-create table specimen_event_links (
-	specimen_event_link_id number not null,
-	specimen_event_id number not null,
-	part_id number
-);
-        
-        thedate
-        alter table temp_mevt_pt add thedate date;
-        
-        
-        select raw
-        
-      or 
-      COLL_OBJECT_REMARKS like '%Prep:%' order by COLL_OBJECT_REMARKS ;
-    
-Coll: 16 Aug 2011
-Accession 2011.043.Mamm, NK 108348, Coll: 16 Aug 2011
-
