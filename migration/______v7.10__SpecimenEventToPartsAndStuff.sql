@@ -233,3 +233,24 @@ end;
   
   select guid from flat where collection_object_id in (select collection_object_id from specimen_event_links) group by guid order by guid;
         
+  
+
+  
+  
+  
+ -- specimens with multiple not-unaccepted events
+create table temp_multi_evt as select collection_object_id from specimen_event where verificationstatus!='unaccepted' having count(*) > 1 group by collection_object_id;
+alter table temp_multi_evt add num_parts number;
+update temp_multi_evt set num_parts=(select count(*) from specimen_part where specimen_part.derived_from_cat_item=temp_multi_evt.collection_object_id);
+alter table temp_multi_evt add num_linked_parts number;
+update temp_multi_evt set num_linked_parts=(select count(*) from specimen_event_links where specimen_event_links.collection_object_id=temp_multi_evt.collection_object_id);
+alter table temp_multi_evt add guid varchar2(255);
+update temp_multi_evt set guid=(select guid from flat where flat.collection_object_id=temp_multi_evt.collection_object_id);
+-- get rid of some stuff we know 
+delete from temp_multi_evt where guid like 'UAM:EH%';
+delete from temp_multi_evt where guid like 'UAMb:Herb:%';
+select substr(guid,1,instr(guid,':',1,2)) || ' @ ' || count(*) from temp_multi_evt group by  substr(guid,1,instr(guid,':',1,2));
+
+
+
+

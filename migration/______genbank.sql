@@ -88,7 +88,6 @@ alter table genbank_sequence add tissue varchar2(255);
 alter table genbank_sequence add constraint PK_genbank_sequence_id PRIMARY KEY (sequence_id) using index TABLESPACE UAM_IDX_1;
 ALTER TABLE genbank_sequence ADD CONSTRAINT fk_gb_sq_batch FOREIGN KEY (genbank_batch_id) REFERENCES genbank_batch(genbank_batch_id);
 ALTER TABLE genbank_sequence ADD CONSTRAINT fk_gb_sq_specimen FOREIGN KEY (collection_object_id) REFERENCES cataloged_item(collection_object_id);
- not sure if this is necessary??
  create unique index ix_u_gb_sq_id on genbank_sequence(genbank_batch_id,sequence_identifier) tablespace uam_idx_1;
 
 create or replace public synonym genbank_sequence for genbank_sequence;
@@ -99,10 +98,6 @@ grant all on genbank_sequence to coldfusion_user;
 -- new address type for this
 -- try to not make people type this stuff too much!
 insert into CTADDRESS_TYPE (ADDRESS_TYPE,DESCRIPTION) values ('formatted JSON','Address components as JSON data objects. Init: used to populate GenBank submission form.')
-
------------------------------------------------------------------ -------- --------------------------------------------
- 							   NOT NULL VARCHAR2(25)
- DESCRIPTION	
 
 
 insert into cf_form_permissions (FORM_PATH,ROLE_NAME) values ('/tools/genbank_submit.cfm','coldfusion_user');
@@ -126,7 +121,7 @@ insert into cf_form_permissions (FORM_PATH,ROLE_NAME) values ('/tools/genbank_su
         
         
         
-curl ftp://ftp.ncbi.nih.gov/toolbox/ncbi_tools/converters/by_program/tbl2asn/linux.tbl2asn.gz
+curl ftp://ftp.ncbi.nih.gov/toolbox/ncbi_tools/converters/by_program/tbl2asn/linux.tbl2asn.gz --output linux.tbl2asn.gz
 sudo mv linux.tbl2asn /usr/local/bin/
 chmod +x linux.tbl2asn 
 

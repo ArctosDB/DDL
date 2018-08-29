@@ -9,42 +9,35 @@ BEGIN
     END IF;
 END;
 
+
+
 CREATE OR REPLACE TRIGGER CTGEOLOGY_ATTRIBUTES_CHECK
-BEFORE UPDATE OR DELETE ON GEOLOGY_ATTRIBUTE_HIERARCHY
-FOR EACH ROW
-DECLARE
-    pragma autonomous_transaction;
-    numrows number := 0;
-BEGIN
-	SELECT COUNT(*) INTO numrows 
-	FROM geology_attribute_hierarchy 
-	WHERE attribute = :OLD.attribute
-	AND GEOLOGY_ATTRIBUTE_HIERARCHY_ID != :OLD.GEOLOGY_ATTRIBUTE_HIERARCHY_ID;
-	
-	dbms_output.put_line(numrows);
-	
-	-- we only care about deleting the LAST value from the code table
-	IF numrows = 0 THEN
-        IF updating THEN
-            IF :OLD.attribute != :NEW.attribute
-                OR (:OLD.usable_value_fg = 1 AND :NEW.usable_value_fg = 0
-            ) THEN
-                SELECT COUNT(*) INTO numrows 
+	BEFORE UPDATE OR DELETE ON GEOLOGY_ATTRIBUTE_HIERARCHY
+	FOR EACH ROW
+	DECLARE
+    	numrows number := 0;
+	BEGIN
+		-- is this used?
+		SELECT COUNT(*) INTO numrows 
                 FROM geology_attributes 
-                WHERE geology_attribute = :OLD.attribute;
-            END IF;
-        ELSE
-            SELECT COUNT(*) INTO numrows 
-            FROM geology_attributes 
-            WHERE geology_attribute = :OLD.attribute;
-        END IF;
-            
-        IF numrows > 0 THEN
-            raise_application_error(
-                -20001,
-                'Cannot update or delete used geology_attribute.');
-        END IF;
-    END IF;
-        
-	COMMIT;
-END;
+                WHERE geology_attribute = :OLD.attribute and
+                GEO_ATT_VALUE = :OLD.ATTRIBUTE_VALUE;
+	
+		-- do not allow changing used values
+		
+		dbms_output.put_line(numrows);
+		IF numrows > 0 THEN
+			-- the attribute is used
+			-- but allow changes to parentage and documentation
+			if :OLD.ATTRIBUTE=:NEW.ATTRIBUTE and :OLD.ATTRIBUTE_VALUE=:NEW.ATTRIBUTE_VALUE and :NEW.USABLE_VALUE_FG=1 then
+				dbms_output.put_line('rock on....');
+			else
+	            raise_application_error(
+	                -20001,
+	                'Cannot update or delete used geology_attribute.');
+	        END IF;
+	   end if;
+	END;
+/
+
+

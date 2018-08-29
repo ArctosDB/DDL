@@ -1,6 +1,248 @@
 -- PlanB: Occurrences are part-at-specimen, 
 -- specimens use preferred (https://github.com/ArctosDB/DDL/blob/master/functions/getPrioritySpecimenEvent.sql) event
 
+create view v_part_event_path as select
+	specimen_part.collection_object_id part_id,
+	nvl(specimen_event_links.specimen_event_id,getPrioritySpecimenEvent(specimen_part.derived_from_cat_item)) specimen_event_id
+from
+	specimen_part,
+	specimen_event_links
+where
+	specimen_part.collection_object_id=specimen_event_links.part_id (+)
+;
+
+create public synonym v_part_event_path for v_part_event_path;
+
+grant select on v_part_event_path to public;
+
+
+
+create or replace table digir_query.msb_mamm_ggbn_tissue as select distinct
+
+
+
+
+
+
+
+
+
+
+
+
+create or replace view digir_query.msb_mamm_ggbn_tissue as select distinct
+	'http://arctos.database.museum/guid/'  || filtered_flat.guid || '?pid=' || specimen_part.collection_object_id occurrenceID,
+ 	-- not sure this is needed?? May be necessary to link permits?
+ 	'http://arctos.database.museum/guid/'  || filtered_flat.guid || '?pid=' || specimen_part.collection_object_id UnitID,
+	'tissue' materialSampleType,
+	specimen_part.part_name preparationType,
+	part_coll_object.COLL_OBJECT_ENTERED_DATE preparationDate,
+	-- preparationMaterials is 
+	--    "Materials and chemicals used in the preparation of the specimen, tissue, DNA or RNA sample"
+	-- it should become available as we do more with part attributes
+	' ' preparationMaterials,
+	-- this isn't quite correct, but I have no better data at the moment
+	-- will update with more Attributes as collections begin using them
+	getPreferredAgentName(part_coll_object.ENTERED_PERSON_ID) preparationStaff,
+	filtered_flat.collection_id collection_id,
+	'en' language,
+	use_license_url rights, -- not sure this is the right dwc concept
+	CATALOGED_ITEM_TYPE type, -- what is this again?
+	CATALOGED_ITEM_TYPE basisOfRecord, 
+	filtered_flat.COLLECTION_CDE collectionCode,
+	decode(collectors,
+		null,'',
+		'Collector(s): ' || collectors ||
+		decode(preparators,
+			null,'',
+			'; Preparator(s): ' || preparators
+		)
+	) recordedBy,
+	ENCUMBRANCES informationWithheld,
+	INDIVIDUALCOUNT individualCount,
+	INSTITUTION_ACRONYM institutionCode,
+	LASTDATE modified,
+	RELATEDCATALOGEDITEMS associatedOccurrences,
+	'http://arctos.database.museum/guid/' || GUID references,
+	REMARKS occurrenceRemarks,
+	TYPESTATUS typeStatus,
+	ASSOCIATED_SPECIES associatedTaxa,
+	--------------------------- identifiers ---------------------------
+	OTHERCATALOGNUMBERS otherCatalogNumbers,
+	'http://arctos.database.museum/guid/' || GUID individualID,
+	CATALOGNUMBERTEXT catalogNumber,
+	GENBANKNUM associatedSequences,
+	COLLECTORNUMBER recordNumber, -- I think this is a very incomplete mapping
+	FIELD_NUM fieldNumber, -- also incomplete/incorrect
+	--------------------------- attribute-like gunk ---------------------------
+	SEX	 sex,
+	AGE_CLASS lifeStage,
+	ATTRIBUTES dynamicProperties,
+	--------------------------- taxonomy and identification ---------------------------
+	IDENTIFICATION_REMARKS identificationRemarks,
+	FAMILY family,
+	trim(replace(full_taxon_name,scientific_name)) higherClassification,
+	GENUS genus,
+	ID_SENSU identificationReferences,
+	TAXA_FORMULA identificationQualifier,
+	IDENTIFIEDBY identifiedBy,
+	INFRASPECIFIC_RANK taxonRank,
+	KINGDOM kingdom,
+	MADE_DATE dateIdentified,
+	NATURE_OF_ID IDVerificationStatus,
+	NOMENCLATURAL_CODE nomenclaturalCode,
+	PARTS preparations,
+	PHYLCLASS pclass,
+	PHYLORDER porder,
+	PHYLUM phylum,
+	SCIENTIFIC_NAME scientificName,
+	trim(replace(species,genus)) specificEpithet,
+	trim(replace(subspecies,species))  infraspecificEpithet,
+	previousidentifications previousidentifications,
+	--------------------------- media ---------------------------
+	IMAGEURL associatedMedia,
+	-- event stuff
+	-- we have to apply encumbrances here because this is NOT from filtered_flat
+	-- we are getting ALL specimen_event-->geog_auth_rec here
+	-- we are NOT getting geology here. We should be.
+	--------------------------- specimen_event -------------------------------
+	specimen_event.SPECIMEN_EVENT_TYPE SpecimenEventType, -- I'm asking
+	specimen_event.COLLECTING_METHOD samplingProtocol,
+	specimen_event.COLLECTING_SOURCE establishmentMeans,
+	getPreferredAgentName(specimen_event.ASSIGNED_BY_AGENT_id) locationAccordingTo,
+	getPreferredAgentName(specimen_event.ASSIGNED_BY_AGENT_id) georeferencedBy,
+	specimen_event.ASSIGNED_DATE georeferencedDate,
+	specimen_event.HABITAT habitat,
+	specimen_event.VERIFICATIONSTATUS georeferenceVerificationStatus,
+	specimen_event.SPECIMEN_EVENT_REMARK eventRemarks,
+	--------------------------- collecting_event -------------------------------
+	locality.DATUM geodeticDatum,
+	collecting_event.VERBATIM_DATE  verbatimEventDate,
+	collecting_event.VERBATIM_LOCALITY verbatimLocality,
+	collecting_event.ORIG_LAT_LONG_UNITS verbatimCoordinateSystem,
+	-- check for encumbrances
+	case when
+		collecting_event.BEGAN_DATE=collecting_event.ENDED_DATE 
+		then collecting_event.BEGAN_DATE
+	else
+		collecting_event.BEGAN_DATE || '/' || collecting_event.ENDED_DATE
+	END eventDate,
+	-- no encumbrance check necessary at time
+	case when collecting_event.BEGAN_DATE=collecting_event.ENDED_DATE
+		then substr(collecting_event.began_date,12)
+	else
+		collecting_event.BEGAN_DATE || '/' || collecting_event.ENDED_DATE
+	end eventTime,
+	case when collecting_event.BEGAN_DATE=collecting_event.ENDED_DATE 
+		then substr( collecting_event.BEGAN_DATE, 9, 2 )
+	end day,
+	case when collecting_event.BEGAN_DATE=collecting_event.ENDED_DATE 
+		then substr( collecting_event.BEGAN_DATE, 6, 2 )
+	end month,
+	CASE WHEN encumbrances LIKE '%mask year collected%'
+		THEN '8888' -- deal with it....
+	ELSE 
+		case when collecting_event.BEGAN_DATE=collecting_event.ENDED_DATE 
+			then substr( filtered_flat.BEGAN_DATE, 1, 4 )
+		end 
+	END year,
+	case when collecting_event.BEGAN_DATE=collecting_event.ENDED_DATE 
+		then case when isdate(collecting_event.BEGAN_DATE)=1
+			then to_number(to_char(to_date(collecting_event.began_date,'YYYY-MM-DD'),'DDD'))
+		end
+	end endDayOfYear,
+	CASE WHEN encumbrances LIKE '%mask coordinates%'
+		THEN NULL
+	ELSE 
+		collecting_event.VERBATIM_COORDINATES
+	END verbatimCoordinates,
+	--------------------------- locality -------------------------------
+	to_meters(locality.max_error_distance,locality.max_error_units) coordinateUncertaintyInMeters,
+	CASE WHEN encumbrances LIKE '%mask coordinates%'
+		THEN NULL
+	ELSE locality.DEC_LAT
+	END decimalLatitude,
+	CASE WHEN encumbrances LIKE '%mask coordinates%'
+		THEN NULL
+	ELSE locality.DEC_LONG
+	END decimalLongitude,
+	locality.SPEC_LOCALITY locality,
+	locality.GEOREFERENCE_PROTOCOL georeferenceProtocol,
+	locality.GEOREFERENCE_SOURCE georeferenceSources,
+	to_meters(locality.MIN_DEPTH,locality.DEPTH_UNITS) minimumDepthInMeters,
+	to_meters(locality.MAX_DEPTH,locality.DEPTH_UNITS) maximumDepthInMeters,
+	to_meters(locality.MINIMUM_ELEVATION,locality.ORIG_ELEV_UNITS) minimumElevationInMeters,
+	to_meters(locality.MAXIMUM_ELEVATION,locality.ORIG_ELEV_UNITS) maximumElevationInMeters,
+	locality.locality_remarks locationRemarks,
+	--------------------------- geog_auth_rec -------------------------------
+	geog_auth_rec.CONTINENT_OCEAN continent,
+	geog_auth_rec.COUNTRY country,
+	geog_auth_rec.COUNTY county,
+	geog_auth_rec.ISLAND island,
+	geog_auth_rec.ISLAND_GROUP islandGroup,
+	geog_auth_rec.QUAD Quad,
+	geog_auth_rec.SEA waterBody,
+	geog_auth_rec.FEATURE Feature,	
+	geog_auth_rec.STATE_PROV stateProvince,
+	geog_auth_rec.HIGHER_GEOG higherGeography,	
+	replace(replace(INSTITUTION_ACRONYM,'Obs'),'UAMb','UAM') institution,
+	collection,
+	EARLIESTEONORLOWESTEONOTHEM,
+	EARLIESTPERIODORLOWESTSYSTEM,
+	EARLIESTEPOCHORLOWESTSERIES,
+	EARLIESTAGEORLOWESTSTAGE,
+	EARLIESTERAORLOWESTERATHEM,
+	FORMATION
+from
+	filtered_flat,
+	coll_object part_coll_object,
+	specimen_part,
+	v_part_event_path,
+	specimen_event,
+	collecting_event,
+	locality,
+	geog_auth_rec,
+	ctspecimen_part_name,
+	ipt_geology
+where
+	--hard join here
+	filtered_flat.collection_object_id=specimen_part.derived_from_cat_item and
+	specimen_part.collection_object_id=v_part_event_path.part_id and
+	v_part_event_path.specimen_event_id=specimen_event.specimen_event_id and
+	specimen_event.collecting_event_id=collecting_event.collecting_event_id and
+	collecting_event.locality_id=locality.locality_id and
+	locality.geog_auth_rec_id=geog_auth_rec.geog_auth_rec_id and	
+	specimen_part.collection_object_id=part_coll_object.collection_object_id and
+	specimen_part.part_name=ctspecimen_part_name.part_name and
+	ctspecimen_part_name.is_tissue=1 and
+	locality.locality_id=ipt_geology.locality_id (+) and
+	filtered_flat.guid like 'MSB:Mamm%'
+;
+
+
+
+select count(*) from digir_query.msb_mamm_ggbn_tissue;
+
+-- so slow
+
+ create table  digir_query.msb_mamm_ggbn_tissue_tbl as select * from digir_query.msb_mamm_ggbn_tissue ;
+
+select count(*) from digir_query.msb_mamm_ggbn_tissue_tbl;
+
+select occurrenceID from digir_query.msb_mamm_ggbn_tissue_tbl having count(*) > 1 group by occurrenceID;
+
+select occurrenceID from digir_query.msb_mamm_ggbn_tissue_tbl where rownum<5;
+
+
+v_part_event_path as select
+	specimen_part.collection_object_id part_id,
+	nvl(specimen_event_links.specimen_event_id,getPrioritySpecimenEvent(specimen_part.derived_from_cat_item)) specimen_event_id
+from
+
+
+
+
+
 
 create or replace view digir_query.ggbn_tissue_view as select distinct
 	'http://arctos.database.museum/guid/'  || filtered_flat.guid || '?pid=' || specimen_part.collection_object_id occurrenceID,
