@@ -1,5 +1,7 @@
--- PlanB: Occurrences are part-at-specimen, 
--- specimens use preferred (https://github.com/ArctosDB/DDL/blob/master/functions/getPrioritySpecimenEvent.sql) event
+-- PlanC-or-so: Occurrences are part-at-specimen,
+-- some parts are mapped to specimen_event via table specimen_event_links
+-- some parts are not mapped to events, use https://github.com/ArctosDB/DDL/blob/master/functions/getPrioritySpecimenEvent.sql for them
+-- use  v_part_event_path (DDL inline) to select
 
 create view v_part_event_path as select
 	specimen_part.collection_object_id part_id,
@@ -14,20 +16,6 @@ where
 create public synonym v_part_event_path for v_part_event_path;
 
 grant select on v_part_event_path to public;
-
-
-
-create or replace table digir_query.msb_mamm_ggbn_tissue as select distinct
-
-
-
-
-
-
-
-
-
-
 
 
 create or replace view digir_query.msb_mamm_ggbn_tissue as select distinct
@@ -226,6 +214,9 @@ select count(*) from digir_query.msb_mamm_ggbn_tissue;
 -- so slow
 
  create table  digir_query.msb_mamm_ggbn_tissue_tbl as select * from digir_query.msb_mamm_ggbn_tissue ;
+ 
+ -- END PlanC-or-so
+
 
 select count(*) from digir_query.msb_mamm_ggbn_tissue_tbl;
 
@@ -234,10 +225,17 @@ select occurrenceID from digir_query.msb_mamm_ggbn_tissue_tbl having count(*) > 
 select occurrenceID from digir_query.msb_mamm_ggbn_tissue_tbl where rownum<5;
 
 
-v_part_event_path as select
-	specimen_part.collection_object_id part_id,
-	nvl(specimen_event_links.specimen_event_id,getPrioritySpecimenEvent(specimen_part.derived_from_cat_item)) specimen_event_id
-from
+
+
+
+
+
+
+
+
+
+
+
 
 
 
