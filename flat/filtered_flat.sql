@@ -212,10 +212,10 @@ CREATE or replace view pre_filtered_flat AS
 		formatted_scientific_name,
 		ISPUBLISHED,
         has_tissues,
-        taxon_rank
+        taxon_rank,
 		--DATE_ENDED_DATE,
 		--LAST_EDIT_DATE,
-		--STALE_FLAG,
+		STALE_FLAG
 		--VERBATIMLATITUDE,
 		--DATE_MADE_DATE,
 		--DATE_BEGAN_DATE
@@ -255,50 +255,15 @@ select index_name,column_name from all_ind_columns where table_name='FLAT' and c
 );
 
 
-------------------------------------------------------------------------------------------------------------------------
-IX_FLAT_U_CLASS
-SYS_NC00145$
-
-IX_FLAT_U_FAMILY
-SYS_NC00146$
-
-IX_FLAT_U_GENUS
-SYS_NC00147$
-
-IX_FLAT_U_CATNUM
-SYS_NC00148$
-
-IX_UPR_FLAT_ACCN
-SYS_NC00149$
-
-IX_FLAT_BEGANDATE
-DATE_BEGAN_DATE
-
-IX_FLAT_ENDEDDATE
-DATE_ENDED_DATE
-
-IX_FLAT_STALEFLAG
-STALE_FLAG
-
-IX_FLAT_YEAR
-YEAR
-
-IX_FLAT_MONTH
-MONTH
-
-IX_FLAT_DAY
-DAY
-
-IX_FLAT_GEOGAUTHRECID
-GEOG_AUTH_REC_ID
-
-
  
 select column_name from user_tab_cols where table_name='FILTERED_FLAT' and column_name not in (
 	select column_name from user_tab_cols where table_name='PRE_FILTERED_FLAT'
 );
  
 
+
+
+alter table FILTERED_FLAT add stale_flag number;
 
 /*
  	-- to get rid of old comparison
@@ -317,15 +282,15 @@ select column_name from user_tab_cols where table_name='FILTERED_FLAT' and colum
 		DBMS_COMPARISON.CREATE_COMPARISON ( 
 			comparison_name => 'COMPARE_FILTERED_FLAT2'
   			, schema_name     => 'UAM'
-  			, object_name     => 'pre_filtered_flat'
+  			, object_name     => 'PRE_FILTERED_FLAT'
   			, dblink_name     => null
   			, remote_schema_name=>'UAM'
-  			, remote_object_name=>'filtered_flat'
+  			, remote_object_name=>'FILTERED_FLAT'
   		);
 	END;
  	/
 */
-
+le shapes of UAM.PRE_FILTERED_FLAT and UAM.FILTERED_FLAT@ did not match
 
 -- dammit wtf
 connect sys as sysdba;
