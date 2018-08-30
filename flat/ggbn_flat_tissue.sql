@@ -225,9 +225,7 @@ select occurrenceID from digir_query.msb_mamm_ggbn_tissue_tbl having count(*) > 
 select occurrenceID from digir_query.msb_mamm_ggbn_tissue_tbl where rownum<5;
 
 
-
-
-
+select occurrenceID,preparationType,eventDate from digir_query.msb_mamm_ggbn_tissue_tbl where references='http://arctos.database.museum/guid/MSB:Mamm:292063' order by eventDate
 
 
 
