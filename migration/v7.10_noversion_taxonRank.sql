@@ -1,4 +1,5 @@
 -- taxon rank: https://github.com/ArctosDB/arctos/issues/1338#
+-- this isn't really tied to a version
 
 select taxon_rank,count(*) from flat group by taxon_rank;
 
