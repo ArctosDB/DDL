@@ -49,7 +49,7 @@ create or replace view digir_query.ipt_view as select
 	ID_SENSU identificationReferences,
 	TAXA_FORMULA identificationQualifier,
 	IDENTIFIEDBY identifiedBy,
-	INFRASPECIFIC_RANK taxonRank,
+	--INFRASPECIFIC_RANK taxonRank,
 	KINGDOM kingdom,
 	MADE_DATE dateIdentified,
 	NATURE_OF_ID IDVerificationStatus,
@@ -62,6 +62,7 @@ create or replace view digir_query.ipt_view as select
 	trim(replace(species,genus)) specificEpithet,
 	trim(replace(subspecies,species))  infraspecificEpithet,
 	previousidentifications previousidentifications,
+	taxon_rank taxonRank,
 	--------------------------- media ---------------------------
 	IMAGEURL associatedMedia,
 	-- event stuff
