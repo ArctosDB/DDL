@@ -275,8 +275,19 @@ BEGIN
     WHERE geog_auth_rec_id = :NEW.geog_auth_rec_id;
 END;
 
+*/as
 
-
+/*
+ 
+   alter table log_geog_auth_rec add n_SOURCE_AUTHORITY VARCHAR2(255);
+   alter table log_geog_auth_rec add o_SOURCE_AUTHORITY VARCHAR2(255); 
+   alter table log_geog_auth_rec add o_GEOG_REMARK VARCHAR2(4000); 
+   alter table log_geog_auth_rec add n_GEOG_REMARK VARCHAR2(4000); 
+   
+   
+ * 
+ */
+ 
 
 CREATE OR REPLACE TRIGGER TR_LOG_GEOG_UPDATE
 AFTER INSERT or update or delete ON geog_auth_rec
@@ -301,6 +312,8 @@ BEGIN
 				n_ISLAND,
 				n_ISLAND_GROUP,
 				n_SEA,
+				n_SOURCE_AUTHORITY,
+				n_GEOG_REMARK,
 				o_CONTINENT_OCEAN,
 				o_COUNTRY,
 				o_STATE_PROV,
@@ -310,7 +323,9 @@ BEGIN
 				o_drainage,
 				o_ISLAND,
 				o_ISLAND_GROUP,
-				o_SEA
+				o_SEA,
+				o_SOURCE_AUTHORITY,
+				o_GEOG_REMARK
 			) values (
 				:OLD.GEOG_AUTH_REC_ID,
 				SYS_CONTEXT('USERENV','SESSION_USER'),
@@ -326,6 +341,8 @@ BEGIN
 				:NEW.ISLAND,
 				:NEW.ISLAND_GROUP,
 				:NEW.SEA,
+				:NEW.SOURCE_AUTHORITY,
+				:NEW.GEOG_REMARK,
 				:OLD.CONTINENT_OCEAN,
 				:OLD.COUNTRY,
 				:OLD.STATE_PROV,
@@ -335,7 +352,9 @@ BEGIN
 				:OLD.drainage,
 				:OLD.ISLAND,
 				:OLD.ISLAND_GROUP,
-				:OLD.SEA
+				:OLD.SEA,
+				:OLD.SOURCE_AUTHORITY,
+				:OLD.GEOG_REMARK
 			);
 		end if;
 		
@@ -354,7 +373,9 @@ BEGIN
 			n_drainage,
 			n_ISLAND,
 			n_ISLAND_GROUP,
-			n_SEA
+			n_SEA,
+			n_SOURCE_AUTHORITY,
+			n_GEOG_REMARK
 		) values (
 			:NEW.GEOG_AUTH_REC_ID,
 			SYS_CONTEXT('USERENV','SESSION_USER'),
@@ -369,7 +390,9 @@ BEGIN
 			:NEW.drainage,
 			:NEW.ISLAND,
 			:NEW.ISLAND_GROUP,
-			:NEW.SEA
+			:NEW.SEA,
+			:NEW.SOURCE_AUTHORITY,
+			:NEW.GEOG_REMARK
 		);
     elsif deleting then
     	insert into log_geog_auth_rec (
@@ -386,7 +409,9 @@ BEGIN
 			o_drainage,
 			o_ISLAND,
 			o_ISLAND_GROUP,
-			o_SEA
+			o_SEA,
+			o_SOURCE_AUTHORITY,
+			o_GEOG_REMARK
 		) values (
 			:OLD.GEOG_AUTH_REC_ID,
 			SYS_CONTEXT('USERENV','SESSION_USER'),
@@ -401,7 +426,9 @@ BEGIN
 			:OLD.drainage,
 			:OLD.ISLAND,
 			:OLD.ISLAND_GROUP,
-			:OLD.SEA
+			:OLD.SEA,
+			:OLD.SOURCE_AUTHORITY,
+			:OLD.GEOG_REMARK
 		);
 		
     end if;

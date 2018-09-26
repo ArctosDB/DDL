@@ -1,4 +1,5 @@
 
+
 drop table tag;
 drop sequence sq_tag_id;
 

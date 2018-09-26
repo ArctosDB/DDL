@@ -541,7 +541,8 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 				(htax_seed.taxon_name_id,htax_seed.dataset_id) not in (select taxon_name_id,dataset_id from htax_temp_hierarcicized) and
 				rownum<10000
 		) loop
-			dbms_output.put_line('got in ' || t.scientific_name);
+		--dbms_output.put_line('---------------------------------------------------------------' );
+			--dbms_output.put_line('got in ' || t.scientific_name);
 -			-- see if there's any classification data
 			-- if not, see what we can do....
 			select count(*) into v_c from taxon_term where 
@@ -549,12 +550,12 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 				source=t.source and
 				position_in_classification is not null and
 				term_type != 'scientific_name';
-			dbms_output.put_line('terms:  ' || v_c);
+			--dbms_output.put_line('terms:  ' || v_c);
 			if v_c = 0 then
 				-- if all this fails, just insert as top-level term
 				v_pid:=NULL;
-				dbms_output.put_line('no classification data panic and fail!!!;');
-				dbms_output.put_line('didnt find rank try to guess by structure');
+				--dbms_output.put_line('no classification data panic and fail!!!;');
+				--dbms_output.put_line('didnt find rank try to guess by structure');
 				if t.scientific_name like '% % %' then
 					v_term_type:='subspecies';
 					--dbms_output.put_line('subspecies');
@@ -576,25 +577,28 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 					dbms_output.put_line('species');
 				elsif t.scientific_name like '% % % %' then
 					v_term_type:='too_many_spaces';
-					dbms_output.put_line('too_many_spaces');
+					--dbms_output.put_line('too_many_spaces');
 				else
 					v_term_type:='genus or something maybe IDK';
-					dbms_output.put_line('genus or something maybe IDK');
+				--	dbms_output.put_line('genus or something maybe IDK');
 				end if;
 				insert into hierarchical_taxonomy (
 					tid,
 					parent_tid,
 					term,
 					rank,
-					dataset_id
+					dataset_id,
+					status
 				) values (
 					somerandomsequence.nextval,
 					v_pid,
 					t.scientific_name,
 					v_term_type,
-					t.dataset_id
+					t.dataset_id,
+					'new_insert'
 				);
 				insert into htax_temp_hierarcicized (taxon_name_id,dataset_id,status) values (t.taxon_name_id,t.dataset_id,'guessed_at_rank_noclass');
+
 			else
 				dbms_output.put_line('nrml:  ' || v_c);
 				begin
@@ -617,13 +621,14 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 					v_term_type:=r.term_type;
 					dbms_output.put_line(v_term_type || '=' || v_term);
 					-- see if we already have one
-					select /*+ result_cache */ count(*) 
+					select count(*) 
 						into v_c 
 						from hierarchical_taxonomy 
 						where term=v_term 
-							--and rank=r.term_type 
-							and dataset_id=t.dataset_id;
-					dbms_output.put_line('v_c=' || v_c);
+						and dataset_id=t.dataset_id;
+					--dbms_output.put_line('select count(*) from hierarchical_taxonomy where term=' || v_term || ' and dataset_id=' || t.dataset_id);
+					
+					--dbms_output.put_line('v_c=' || v_c);
 					if v_c=1 then
 						-- grab the ID for use on the next record, move on
 						select /*+ result_cache */ tid 
@@ -633,7 +638,7 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 						--and rank=r.term_type 
 						and dataset_id=t.dataset_id;
 						
-						dbms_output.put_line( 'already got one thx; for next record v_pid=' || v_pid);
+					--	dbms_output.put_line( 'already got one thx; for next record v_pid=' || v_pid);
 					else
 						-- create the term
 						-- first grab the current ID
@@ -643,16 +648,21 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 							parent_tid,
 							term,
 							rank,
-							dataset_id
+							dataset_id,
+							status
 						) values (
 							v_tid,
 							v_pid,
 							v_term,
 							v_term_type,
-							t.dataset_id
+							t.dataset_id,
+							'new_insert'
 						);
+						insert into htax_temp_hierarcicized (taxon_name_id,dataset_id,status) values (t.taxon_name_id,t.dataset_id,'inserted_term');
 
-						dbms_output.put_line( 'created term' );
+
+
+					--	dbms_output.put_line( 'created term' );
 						-- now assign the term we just made's ID to parent so we can use it in the next loop
 						v_pid:=v_tid;
 					end if;
@@ -663,18 +673,19 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 				select count(*) into v_c from hierarchical_taxonomy where dataset_id=t.dataset_id and term=t.scientific_name;
 				if v_c = 1 then
 					-- yay
+					
 				-- log
 					insert into htax_temp_hierarcicized (taxon_name_id,dataset_id,status) values (t.taxon_name_id,t.dataset_id,'inserted_term');
-					dbms_output.put_line('inserted_term: ');
+					--dbms_output.put_line('inserted_term: ');
 				else
 					insert into htax_temp_hierarcicized (taxon_name_id,dataset_id,status) values (t.taxon_name_id,t.dataset_id,'missed_taxonname');
-					 dbms_output.put_line('missed_taxonname: ');
+					-- dbms_output.put_line('missed_taxonname: ');
 				end if;
 				
 				exception when others then
 				  err_num := SQLCODE;
 			      err_msg := SQLERRM;
-			      dbms_output.put_line('fail with ' || t.scientific_name || ': ' || err_msg || ' at ' || v_term || '=' || v_term);
+			      --dbms_output.put_line('fail with ' || t.scientific_name || ': ' || err_msg || ' at ' || v_term || '=' || v_term);
 
 				insert into 
 					htax_temp_hierarcicized (
@@ -850,41 +861,55 @@ grant execute on proc_htax_srch to manage_taxonomy;
 drop procedure proc_hierac_tax_noclass;
 
 CREATE OR REPLACE PROCEDURE proc_hierac_tax_noclass IS
+	tnid number;
+	c number;
 begin
 	 -- first get tid and DATASET_ID of inserted_term records
 	for r in (
 		select distinct
+ 			hierarchical_taxonomy.TERM,
 			hierarchical_taxonomy.tid,
 			hierarchical_taxonomy.DATASET_ID,
-			htax_dataset.source,
-			htax_temp_hierarcicized.TAXON_NAME_ID
+			htax_dataset.source
+			--htax_temp_hierarcicized.TAXON_NAME_ID
 		from
-			htax_temp_hierarcicized,
-			htax_seed,
+			--htax_temp_hierarcicized,
+			--htax_seed,
 			htax_dataset,
 			hierarchical_taxonomy
 		where
-			htax_temp_hierarcicized.status='inserted_term' and
-			htax_temp_hierarcicized.TAXON_NAME_ID=htax_seed.TAXON_NAME_ID and
-			htax_temp_hierarcicized.DATASET_ID=htax_seed.DATASET_ID and
-			htax_seed.SCIENTIFIC_NAME=hierarchical_taxonomy.TERM and
-			htax_seed.DATASET_ID = hierarchical_taxonomy.DATASET_ID and
-			htax_seed.DATASET_ID = htax_dataset.DATASET_ID and
-			rownum < 10000
+			hierarchical_taxonomy.status='new_insert' and
+			hierarchical_taxonomy.DATASET_ID=htax_dataset.DATASET_ID
+			--and
+			--htax_temp_hierarcicized.TAXON_NAME_ID=htax_seed.TAXON_NAME_ID and
+			--htax_temp_hierarcicized.DATASET_ID=htax_seed.DATASET_ID and
+			--htax_seed.SCIENTIFIC_NAME=hierarchical_taxonomy.TERM and
+			--htax_seed.DATASET_ID = hierarchical_taxonomy.DATASET_ID and
+			--htax_seed.DATASET_ID = htax_dataset.DATASET_ID and
+			and rownum < 10000
 	) loop
-		--dbms_output.put_line(r.tid || '=>' || r.TAXON_NAME_ID);
+		--dbms_output.put_line(r.tid || '=>' || r.TERM);
 		-- now get terms from Arctos
-		for t in (
-			select
-				term,
-				TERM_TYPE
-			from
-				taxon_term
-			where
-				TAXON_NAME_ID=r.TAXON_NAME_ID and
-				source=r.source and
-				POSITION_IN_CLASSIFICATION is null
-		) loop
+		begin
+		select count(*) into c from taxon_name where scientific_name=r.term;
+		if c =1 then
+			select taxon_name_id into tnid from taxon_name where scientific_name=r.term;
+			for t in (
+				select
+					term,
+					TERM_TYPE
+				from
+					taxon_term
+				where
+					TAXON_NAME_ID=tnid and
+					source=r.source and
+					POSITION_IN_CLASSIFICATION is null and
+					-- ignore autogenerated stuff
+					TERM_TYPE not in ('display_name','scientific_name')
+				group by
+					term,
+					TERM_TYPE
+			) loop
 			--dbms_output.put_line('-----' || t.term || '=' || t.TERM_TYPE);
 			insert into  htax_noclassterm (
 				nc_tid,
@@ -898,18 +923,38 @@ begin
 				t.term
 			);
 		end loop;
-		update htax_temp_hierarcicized set status='inserted_noclassterm' where TAXON_NAME_ID=r.TAXON_NAME_ID and DATASET_ID=r.DATASET_ID;
+		update hierarchical_taxonomy set status='inserted_noclassterm' where tid=r.tid and DATASET_ID=r.DATASET_ID;
+		else
+					update hierarchical_taxonomy set status='import_created_term' where tid=r.tid  and DATASET_ID=r.DATASET_ID;
+end if;
+		exception when others then
+			dbms_output.put_line('execption');
+			dbms_output.put_line(sqlerrm);
+		end;
 	end loop;
 end;
 /
 sho err;
 
+drop index IX_U_TI_TT_TV;
+
+  create unique index IX_U_TI_TT_TV  on htax_noclassterm (TID,TERM_TYPE,TERM_VALUE) tablespace uam_idx_1;
 
 
+
+
+select * from htax_noclassterm where 
+ 
 BEGIN
 DBMS_SCHEDULER.DROP_JOB('J_PROC_HIERAC_TAX_NC');
 END;
 /
+
+BEGIN
+DBMS_SCHEDULER.DROP_JOB('J_PROC_HIERAC_TAX');
+END;
+/
+
 
 BEGIN
 DBMS_SCHEDULER.CREATE_JOB (
@@ -933,6 +978,12 @@ select ':' || status || ':',count(*) from htax_temp_hierarcicized group by ':' |
 
 
 
+BEGIN
+  DBMS_SCHEDULER.drop_job (
+   job_name => 'J_PROC_HIERAC_TAX_NC',
+   force    => TRUE);
+END;
+/
 
 
 
