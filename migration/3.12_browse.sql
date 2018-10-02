@@ -7,6 +7,10 @@ create or replace public synonym browse for browse;
 
 grant select on browse to public;
 
+-- 2018-09-27 update
+-- ignore publications without DOI
+-- ignore taxonomy without a "display_name" in a classification
+
 CREATE OR REPLACE PROCEDURE set_browse
 is
 BEGIN
@@ -38,6 +42,7 @@ BEGIN
 		        sample(50)
 		      where 
 		        full_citation not like '%Field Notes%' and
+		        publication.doi is not null and
 		        publication.publication_id=citation.publication_id and
 		        citation.collection_object_id=filtered_flat.collection_object_id
 		      group by 
@@ -69,33 +74,32 @@ BEGIN
 			    WHERE rownum <= 500
 			  UNION
 			    select link,display from (
-			      select 
-			        '/name/' || taxon_name.scientific_name link,
-			        decode(taxon_term.term,
-			          null,taxon_name.scientific_name,
-			          taxon_term.term) display
-			      from
-			        taxon_name,
-			        (select taxon_name_id,term from taxon_term where TERM_TYPE='display_name') taxon_term,
-			        identification_taxonomy,
-			        identification,
-			        filtered_flat
-			        sample(0.1)
-			      where
-			        taxon_name.taxon_name_id > 0 and
-			        taxon_name.taxon_name_id=taxon_term.taxon_name_id (+) and
-			        taxon_name.taxon_name_id=identification_taxonomy.taxon_name_id and
-			        identification_taxonomy.identification_id=identification.identification_id and
-			        identification.collection_object_id=filtered_flat.collection_object_id
-			      group by
-			        taxon_name.scientific_name,
-			        taxon_term.term
-			    ) WHERE rownum <= 500
+		            select 
+		              '/name/' || taxon_name.scientific_name link,
+		              taxon_term.term display
+		            from
+		              taxon_name,
+		              taxon_term,
+		              identification_taxonomy,
+		              identification,
+		              filtered_flat
+		              sample(0.1)
+		            where
+		              taxon_name.taxon_name_id > 0 and
+		              taxon_name.taxon_name_id=taxon_term.taxon_name_id and
+		              taxon_term.TERM_TYPE='display_name' and
+		              taxon_name.taxon_name_id=identification_taxonomy.taxon_name_id and
+		              identification_taxonomy.identification_id=identification.identification_id and
+		              identification.collection_object_id=filtered_flat.collection_object_id
+		            group by
+		              taxon_name.scientific_name,
+		              taxon_term.term
+		          ) WHERE rownum <= 500
 			  UNION
 			    select link,display from (
 			      select link,display from (
 			            select 
-			              '/project/' || niceURL(project_name) link,
+			              '/project/' || project.project_id link,
 			              project_name display
 			            from
 			              project,
@@ -108,10 +112,10 @@ BEGIN
 			              project.project_id=project_trans.project_id and
 			              project_trans.transaction_id=filtered_flat.accn_id
 			            group by
-			              project_name
+			              project.project_name,project.project_id
 			            union
 			            select 
-			              '/project/' || niceURL(project_name) link,
+			              '/project/' || project.project_id link,
 			              project_name display
 			            from
 			              project,
@@ -128,7 +132,7 @@ BEGIN
 			              loan_item.collection_object_id=specimen_part.collection_object_id and
 			              specimen_part.derived_from_cat_item=filtered_flat.collection_object_id
 			            group by
-			              project_name
+			              project.project_name,project.project_id
 			      )
 			    group by link,display
 			    order by dbms_random.value)
