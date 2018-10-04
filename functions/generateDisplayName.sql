@@ -44,6 +44,8 @@ AS
 	v_irank varchar2(4000);
 	v_ssterm varchar2(4000);
 	v_ssrank varchar2(4000);
+	v_ist varchar2(4000);
+	v_st varchar2(4000);
 BEGIN
 	rtn:='';
 	-- for most names, we'll get what we need from these
@@ -54,6 +56,7 @@ BEGIN
 		getTaxonTerm(v_cid,'nomenclatural_code'),
 		getTaxonTerm(v_cid,'kingdom'),
 		getTaxonTerm(v_cid,'scientific_name'),
+		getTaxonTerm(v_cid,'subgenus'),
 		getTaxonTerm(v_cid,'genus'),
 		getTaxonTerm(v_cid,'species'),
 		getTaxonTerm(v_cid,'subspecies'),
@@ -65,6 +68,7 @@ BEGIN
 		v_nomenclatural_code,
 		v_kingdom,
 		v_scientific_name,
+		v_subgenus,
 		v_genus,
 		v_species,
 		v_subspecies,
@@ -92,41 +96,70 @@ BEGIN
 	end if;
 
 	if v_fmttype='iczn' then
-		if v_subspecies is not null then
- 			rtn:= '<i>' || v_subspecies || '</i> ' || v_author_text;
- 		elsif v_species is not null then
- 			rtn:= '<i>' || v_species || '</i> ' || v_author_text;
- 		elsif v_genus is not null then
- 			rtn:= '<i>' || v_genus || '</i> ' || v_author_text;
- 		elsif v_scientific_name is not null then
- 			rtn:= v_scientific_name || ' ' || v_author_text;
- 		else
- 			-- try taxon_name.scientific_name
- 			select 
- 				count(distinct(taxon_name.taxon_name_id)) 
- 			into 
- 				c 
- 			from 
- 				taxon_name,
- 				taxon_term 
- 			where 
- 				taxon_name.taxon_name_id=taxon_term.taxon_name_id and
- 				taxon_term.classification_id=v_cid;
- 			if c=1 then
- 				select distinct
- 					taxon_name.scientific_name
- 				into 
- 					rtn 
- 				from 
- 					taxon_name,
- 					taxon_term 
- 				where 
- 					taxon_name.taxon_name_id=taxon_term.taxon_name_id and
- 					taxon_term.classification_id=v_cid;
- 			else
- 				rtn:='not_enough_info';
- 			end if;
- 		end if;
+		dbms_output.put_line('iczn');
+		if v_subgenus is not null then
+			dbms_output.put_line('got subgenus');
+			-- inject this in the appropriate place
+			if v_subspecies is not null then
+				v_ist:=replace(v_subspecies,v_species);
+				dbms_output.put_line('v_ist:' || v_ist);
+			end if;
+			if v_species is not null then
+				v_st:=replace(v_species,v_genus);
+				dbms_output.put_line('v_st:' || v_st);
+			end if;
+ 			rtn:= '<i>' || v_genus || ' (' || v_subgenus || ') ' || v_st || ' ' || v_ist || '</i> ' || v_author_text;
+		else			
+		
+			if v_subspecies is not null then
+	 			rtn:= '<i>' || v_subspecies || '</i> ' || v_author_text;
+	 		elsif v_species is not null then
+	 			rtn:= '<i>' || v_species || '</i> ' || v_author_text;
+	 		elsif v_genus is not null then
+	 			--dbms_output.put_line('got genus');
+	 			-- see if we have subgenus
+	 			--select getTaxonTerm(v_cid,'subgenus') into v_subgenus from dual;
+	 			--if v_subgenus is not null then
+	 			--	dbms_output.put_line('got subgenus');
+	 			--	dbms_output.put_line(v_subgenus);
+	 				
+	 			--	rtn:= '<i>' || v_genus || ' (' || v_subgenus || ')</i> ' || v_author_text;
+	 			--else
+	 				dbms_output.put_line('NO genus');
+	 				rtn:= '<i>' || v_genus || '</i> ' || v_author_text;
+	 			--end if;
+	 		elsif v_scientific_name is not null then
+	 			rtn:= v_scientific_name || ' ' || v_author_text;
+	 		else
+	 		 			dbms_output.put_line('here we are');
+	
+	 			-- try taxon_name.scientific_name
+	 			select 
+	 				count(distinct(taxon_name.taxon_name_id)) 
+	 			into 
+	 				c 
+	 			from 
+	 				taxon_name,
+	 				taxon_term 
+	 			where 
+	 				taxon_name.taxon_name_id=taxon_term.taxon_name_id and
+	 				taxon_term.classification_id=v_cid;
+	 			if c=1 then
+	 				select distinct
+	 					taxon_name.scientific_name
+	 				into 
+	 					rtn 
+	 				from 
+	 					taxon_name,
+	 					taxon_term 
+	 				where 
+	 					taxon_name.taxon_name_id=taxon_term.taxon_name_id and
+	 					taxon_term.classification_id=v_cid;
+	 			else
+	 				rtn:='not_enough_info';
+	 			end if;
+	 		end if;
+	 	end if;
  	elsif v_fmttype = 'icbn' then
  		-- see if we have any infraspecific stuff
 		if v_subspecies is not null then
@@ -178,6 +211,7 @@ BEGIN
 	rtn:=trim(rtn);
 	rtn:=replace(rtn,' ,',',');
 	rtn:=replace(rtn,'<i></i>','');
+	rtn:=replace(rtn,' </i>','</i>');
 	rtn:=regexp_replace(rtn,'\s+',' ');
 	
 
@@ -190,4 +224,8 @@ BEGIN
 
 --exec generateDisplayName ('1075055');
 
-select generateDisplayName('8E59308D-D265-ADDC-46F4860E3027F9C1') from dual;
+--select generateDisplayName('8E59308D-D265-ADDC-46F4860E3027F9C1') from dual;
+
+ --select generateDisplayName('1ADFAF35-B80C-E3B7-29DF47F8A5FA241C') from dual;
+ select generateDisplayName('1076623') from dual;
+ 

@@ -192,6 +192,14 @@ CREATE OR REPLACE TRIGGER trg_locality_biu
                 raise_application_error(-20001,'Depth must include all or none of units, minimum, and maximum.'); 
             END IF;
         END IF;
+        -- if we made it through the above we should have all or none
+        IF :NEW.DEPTH_UNITS IS NOT NULL and :NEW.MAX_DEPTH IS NOT NULL and :NEW.MIN_DEPTH IS NOT NULL THEN
+        	if to_meters(:NEW.MIN_DEPTH,:NEW.DEPTH_UNITS)>to_meters(:NEW.MAX_DEPTH,:NEW.DEPTH_UNITS) then
+                raise_application_error(-20001,'Minimum Depth cannot be greater than Maximum Depth');
+             end if;
+         end if;
+
+
         IF :NEW.MAX_ERROR_DISTANCE IS NOT NULL OR :NEW.MAX_ERROR_UNITS IS NOT NULL THEN
             IF :NEW.MAX_ERROR_DISTANCE IS NULL OR :NEW.MAX_ERROR_UNITS IS NULL THEN
                 raise_application_error(-20001,'Error must include both or neither of units and distance.'); 
@@ -202,7 +210,13 @@ CREATE OR REPLACE TRIGGER trg_locality_biu
             IF :NEW.MINIMUM_ELEVATION IS NULL OR :NEW.MAXIMUM_ELEVATION IS NULL OR :NEW.ORIG_ELEV_UNITS IS NULL THEN
                 raise_application_error(-20001,'Elevation must include all or none of units, minimum, and maximum.'); 
             END IF;
-        END IF;    
+        END IF;  
+        -- if we made it through the above we should have all or none
+         IF :NEW.MINIMUM_ELEVATION IS NOT NULL and :NEW.MAXIMUM_ELEVATION IS NOT NULL and :NEW.ORIG_ELEV_UNITS IS NOT NULL THEN
+        	if to_meters(:NEW.MINIMUM_ELEVATION,:NEW.ORIG_ELEV_UNITS)>to_meters(:NEW.MAXIMUM_ELEVATION,:NEW.ORIG_ELEV_UNITS) then
+                raise_application_error(-20001,'Minimum Elevation cannot be greater than Maximum Elevation');
+             end if;
+         end if;
     end;
 /
 sho err;

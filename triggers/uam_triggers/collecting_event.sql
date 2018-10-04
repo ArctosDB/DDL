@@ -87,7 +87,10 @@ CREATE OR REPLACE TRIGGER TRG_COLLECTING_EVENT_BIU
         IF :NEW.began_date>:NEW.ended_date THEN
             raise_application_error(-20001,'Began Date can not occur after Ended Date.');
         END IF;
-
+ 		IF :NEW.ended_date>to_char(sysdate,'yyyy-mm-dd') THEN
+            raise_application_error(-20001,'Ended Date cannot be in the future.');
+        END IF;
+        	
         :new.caclulated_dlat := '';
         :new.calculated_dlong := '';
 
