@@ -96,17 +96,17 @@ BEGIN
 	end if;
 
 	if v_fmttype='iczn' then
-		dbms_output.put_line('iczn');
+		--dbms_output.put_line('iczn');
 		if v_subgenus is not null then
-			dbms_output.put_line('got subgenus');
+			--dbms_output.put_line('got subgenus');
 			-- inject this in the appropriate place
 			if v_subspecies is not null then
 				v_ist:=replace(v_subspecies,v_species);
-				dbms_output.put_line('v_ist:' || v_ist);
+				--dbms_output.put_line('v_ist:' || v_ist);
 			end if;
 			if v_species is not null then
 				v_st:=replace(v_species,v_genus);
-				dbms_output.put_line('v_st:' || v_st);
+				--dbms_output.put_line('v_st:' || v_st);
 			end if;
  			rtn:= '<i>' || v_genus || ' (' || v_subgenus || ') ' || v_st || ' ' || v_ist || '</i> ' || v_author_text;
 		else			
@@ -125,13 +125,13 @@ BEGIN
 	 				
 	 			--	rtn:= '<i>' || v_genus || ' (' || v_subgenus || ')</i> ' || v_author_text;
 	 			--else
-	 				dbms_output.put_line('NO genus');
+	 				--dbms_output.put_line('NO genus');
 	 				rtn:= '<i>' || v_genus || '</i> ' || v_author_text;
 	 			--end if;
 	 		elsif v_scientific_name is not null then
 	 			rtn:= v_scientific_name || ' ' || v_author_text;
 	 		else
-	 		 			dbms_output.put_line('here we are');
+	 		 			--dbms_output.put_line('here we are');
 	
 	 			-- try taxon_name.scientific_name
 	 			select 
@@ -227,5 +227,5 @@ BEGIN
 --select generateDisplayName('8E59308D-D265-ADDC-46F4860E3027F9C1') from dual;
 
  --select generateDisplayName('1ADFAF35-B80C-E3B7-29DF47F8A5FA241C') from dual;
- select generateDisplayName('1076623') from dual;
+ select generateDisplayName('5D32220D-B570-F79F-724E21918950855C') from dual;
  

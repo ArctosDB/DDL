@@ -37,8 +37,13 @@ CREATE OR REPLACE FUNCTION isValidTaxonName (name  in varchar)
 		-- dot - more below
 		-- dash, because botany
 		-- (), because ICZN subgenera - more below
-		if regexp_like(name,'[^A-Za-z -.üë×ö\(\)]') then
+		-- EDIT
+		--    https://github.com/ArctosDB/arctos/issues/1704
+		--    DO NOT allow ()
+		--if regexp_like(name,'[^A-Za-z -\.üë×ö\(\)]') th
+		if regexp_like(name,'[^A-Za-z -\.üë×ö]') then
 			return 'Invalid characters.';
+		
 		end if;
 		-- no taxa is a single character
 		if length(trim(name)) = 1 then
@@ -95,19 +100,12 @@ CREATE OR REPLACE FUNCTION isValidTaxonName (name  in varchar)
 			return 'identification terminology';
 		end if;
 		
-		if name like '%(%' then
-			-- ICZN subgenus. Allow
-			---- Genus (Subgenus) 
-			-- or
-			---- Genus (Subgenus) epithet
-			if not regexp_like (name,'^[A-Z][a-z]+ \([A-Z][a-z]+\)( [a-z]{2,})?$') then
-				return 'Invalid subgenus notation.';
-			end if;
-		else
-			-- the only way to have two uppercase is as a subgenus
-			if REGEXP_COUNT(name,'[A-Z]') >1 then
-				return 'Too many uppercase characters';
-			end if;
+		if name like '%(%' or name like '%)%' then
+			return 'Parentheses are not allowed.';
+		end if;
+		
+		if REGEXP_COUNT(name,'[A-Z]') >1 then
+			return 'Too many uppercase characters';
 		end if;
 		-- if we made it here we can't find any problems
 		return 'valid';
@@ -122,4 +120,6 @@ GRANT execute ON isValidTaxonName TO PUBLIC;
 -- select isValidTaxonName(scientific_name),scientific_name from taxon_name where isValidTaxonName(scientific_name) != 'valid' order by scientific_name;
 -- select scientific_name from taxon_name where isValidTaxonName(scientific_name) != 'valid' order by scientific_name;
 --select isValidTaxonName('Some name var. bla lus. boo') from dual;
+
+select isValidTaxonName ('Arctos (Euarctos)') from dual;
 

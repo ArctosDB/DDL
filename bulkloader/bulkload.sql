@@ -551,6 +551,10 @@ PROCEDURE b_bulkload_coll_event (collobjid IN number) is
 	ATTRIBUTE_DET_METH geology_attributes.GEO_ATT_DETERMINED_METHOD%type;
 	ATTRIBUTE_REMARKS geology_attributes.GEO_ATT_REMARK%type;
 	ATTRIBUTE_DETERMINER_ID geology_attributes.GEO_ATT_DETERMINER_ID%type;
+	v_DATUM locality.datum%type;
+	v_georeference_source locality.georeference_source%type;
+	v_georeference_protocol locality.georeference_protocol%type;
+         
 BEGIN
     -- Do whatever we have to in order to return a collecting_event_id
 	select * into rec from bulkloader where collection_object_id=collobjid;
@@ -701,6 +705,15 @@ BEGIN
                 meu:=null;
                 med:=null;
             end if;
+            if REC.orig_lat_long_units='UTM' then
+            	v_DATUM:=null;
+            	v_georeference_source:=null;
+            	v_georeference_protocol:=null;
+            else
+            	v_DATUM:=REC.DATUM;
+            	v_georeference_source:=REC.georeference_source;
+            	v_georeference_protocol:=REC.georeference_protocol;
+			end if;
             INSERT INTO locality (
                  LOCALITY_ID,
                  GEOG_AUTH_REC_ID,
@@ -735,9 +748,9 @@ BEGIN
                 rec.C$LONG,
                 med,
                 meu,
-                rec.DATUM,
-                rec.georeference_source,
-                rec.georeference_protocol,
+                v_DATUM,
+                v_georeference_source,
+                v_georeference_protocol,
                 rec.wkt_polygon
             );
             --dbms_output.put_line('made a locality');
