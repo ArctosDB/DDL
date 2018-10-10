@@ -306,7 +306,7 @@ r_collection_cde varchar2(255);
     			IF (numRecs != 1) THEN
 		            thisError :=  thisError || '; EVENT_ASSIGNED_BY_AGENT [ ' || rec.event_assigned_by_agent || ' ] matches ' || numRecs || ' agents';
 	            END IF;
-            	IF ISDATE(rec.event_assigned_date) != 1 OR rec.event_assigned_date is null THEN
+            	IF ISDATE(rec.event_assigned_date,1) != 1 OR rec.event_assigned_date is null THEN
     				thisError :=  thisError || '; EVENT_ASSIGNED_DATE is invalid';
     			END IF;
     			 SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM ctspecimen_event_type WHERE specimen_event_type = rec.specimen_event_type;
@@ -322,10 +322,10 @@ r_collection_cde varchar2(255);
             			thisError :=  thisError || '; COLLECTING_SOURCE is invalid';
             		END IF;
 		         END IF;
-        		IF (is_iso8601(rec.began_date)!='valid' OR rec.began_date is null) THEN
+        		IF (is_iso8601(rec.began_date,1)!='valid' OR rec.began_date is null) THEN
         			thisError :=  thisError || '; BEGAN_DATE is invalid';
         		END IF;
-        		IF (is_iso8601(rec.ended_date)!='valid' OR rec.ended_date is null) THEN
+        		IF (is_iso8601(rec.ended_date,1)!='valid' OR rec.ended_date is null) THEN
         			thisError :=  thisError || '; ENDED_DATE is invalid';
         		END IF;
         		IF (rec.verbatim_date is null) THEN
@@ -347,7 +347,7 @@ r_collection_cde varchar2(255);
             		END IF;
             END IF; -- end collecting_event_id/locality_id check
     		
-    		IF (rec.made_date is NOT null AND is_iso8601(rec.made_date) != 'valid') THEN
+    		IF (rec.made_date is NOT null AND is_iso8601(rec.made_date,1) != 'valid') THEN
     			thisError :=  thisError || '; MADE_DATE is invalid';
     		END IF;
     	    SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs from ctnature_of_id WHERE nature_of_id = rec.nature_of_id;
@@ -413,7 +413,7 @@ r_collection_cde varchar2(255);
     			if numRecs = 0 then
     				thisError :=  thisError || '; ATTRIBUTE_1 is not valid';
     			end if;
-    			if rec.ATTRIBUTE_DATE_1 is null or is_iso8601(rec.ATTRIBUTE_DATE_1) != 'valid' then
+    			if rec.ATTRIBUTE_DATE_1 is null or is_iso8601(rec.ATTRIBUTE_DATE_1,1) != 'valid' then
     				thisError :=  thisError || '; ATTRIBUTE_DATE_1 is invalid';
     			end if;
     			numRecs := isValidAgent(rec.ATTRIBUTE_DETERMINER_1);
@@ -426,7 +426,7 @@ r_collection_cde varchar2(255);
     			if numRecs = 0 then
     				thisError :=  thisError || '; ATTRIBUTE_2 is not valid';
     			end if;
-    			if rec.ATTRIBUTE_DATE_2 is null or is_iso8601(rec.ATTRIBUTE_DATE_2) != 'valid' then
+    			if rec.ATTRIBUTE_DATE_2 is null or is_iso8601(rec.ATTRIBUTE_DATE_2,1) != 'valid' then
     				thisError :=  thisError || '; ATTRIBUTE_DATE_2 is invalid';
     			end if;
     			numRecs := isValidAgent(rec.ATTRIBUTE_DETERMINER_2);
@@ -440,7 +440,7 @@ r_collection_cde varchar2(255);
     			if numRecs = 0 then
     				thisError :=  thisError || '; ATTRIBUTE_3 is not valid';
     			end if;
-    			if rec.ATTRIBUTE_DATE_3 is null or is_iso8601(rec.ATTRIBUTE_DATE_3) != 'valid' then
+    			if rec.ATTRIBUTE_DATE_3 is null or is_iso8601(rec.ATTRIBUTE_DATE_3,1) != 'valid' then
     				thisError :=  thisError || '; ATTRIBUTE_DATE_3 is invalid';
     			end if;
     			numRecs := isValidAgent(rec.ATTRIBUTE_DETERMINER_3);
@@ -455,7 +455,7 @@ r_collection_cde varchar2(255);
     			if numRecs = 0 then
     				thisError :=  thisError || '; ATTRIBUTE_4 is not valid';
     			end if;
-    			if rec.ATTRIBUTE_DATE_4 is null or is_iso8601(rec.ATTRIBUTE_DATE_4) != 'valid' then
+    			if rec.ATTRIBUTE_DATE_4 is null or is_iso8601(rec.ATTRIBUTE_DATE_4,1) != 'valid' then
     				thisError :=  thisError || '; ATTRIBUTE_DATE_4 is invalid';
     			end if;
     			numRecs := isValidAgent(rec.ATTRIBUTE_DETERMINER_4);
@@ -470,7 +470,7 @@ r_collection_cde varchar2(255);
     			if numRecs = 0 then
     				thisError :=  thisError || '; ATTRIBUTE_5 is not valid';
     			end if;
-    			if rec.ATTRIBUTE_DATE_5 is null or is_iso8601(rec.ATTRIBUTE_DATE_5) != 'valid' then
+    			if rec.ATTRIBUTE_DATE_5 is null or is_iso8601(rec.ATTRIBUTE_DATE_5,1) != 'valid' then
     				thisError :=  thisError || '; ATTRIBUTE_DATE_5 is invalid';
     			end if;
     			numRecs := isValidAgent(rec.ATTRIBUTE_DETERMINER_5);
@@ -484,7 +484,7 @@ r_collection_cde varchar2(255);
     			if numRecs = 0 then
     				thisError :=  thisError || '; ATTRIBUTE_6 is not valid';
     			end if;
-    			if rec.ATTRIBUTE_DATE_6 is null or is_iso8601(rec.ATTRIBUTE_DATE_6) != 'valid' then
+    			if rec.ATTRIBUTE_DATE_6 is null or is_iso8601(rec.ATTRIBUTE_DATE_6,1) != 'valid' then
     				thisError :=  thisError || '; ATTRIBUTE_DATE_6 is invalid';
     			end if;
     			numRecs := isValidAgent(rec.ATTRIBUTE_DETERMINER_6);
@@ -498,7 +498,7 @@ r_collection_cde varchar2(255);
     			if numRecs = 0 then
     				thisError :=  thisError || '; ATTRIBUTE_7 is not valid';
     			end if;
-    			if rec.ATTRIBUTE_DATE_7 is null or is_iso8601(rec.ATTRIBUTE_DATE_7) != 'valid' then
+    			if rec.ATTRIBUTE_DATE_7 is null or is_iso8601(rec.ATTRIBUTE_DATE_7,1) != 'valid' then
     				thisError :=  thisError || '; ATTRIBUTE_DATE_7 is invalid';
     			end if;
     			numRecs := isValidAgent(rec.ATTRIBUTE_DETERMINER_7);
@@ -512,7 +512,7 @@ r_collection_cde varchar2(255);
     			if numRecs = 0 then
     				thisError :=  thisError || '; ATTRIBUTE_8 is not valid';
     			end if;
-    			if rec.ATTRIBUTE_DATE_8 is null or is_iso8601(rec.ATTRIBUTE_DATE_8) != 'valid' then
+    			if rec.ATTRIBUTE_DATE_8 is null or is_iso8601(rec.ATTRIBUTE_DATE_8,1) != 'valid' then
     				thisError :=  thisError || '; ATTRIBUTE_DATE_8 is invalid';
     			end if;
     			numRecs := isValidAgent(rec.ATTRIBUTE_DETERMINER_8);
@@ -525,7 +525,7 @@ r_collection_cde varchar2(255);
     			if numRecs = 0 then
     				thisError :=  thisError || '; ATTRIBUTE_9 is not valid';
     			end if;
-    			if rec.ATTRIBUTE_DATE_9 is null or is_iso8601(rec.ATTRIBUTE_DATE_9) != 'valid' then
+    			if rec.ATTRIBUTE_DATE_9 is null or is_iso8601(rec.ATTRIBUTE_DATE_9,1) != 'valid' then
     				thisError :=  thisError || '; ATTRIBUTE_DATE_9 is invalid';
     			end if;
     			numRecs := isValidAgent(rec.ATTRIBUTE_DETERMINER_9);
@@ -539,7 +539,7 @@ r_collection_cde varchar2(255);
     			if numRecs = 0 then
     				thisError :=  thisError || '; ATTRIBUTE_10 is not valid';
     			end if;
-    			if rec.ATTRIBUTE_DATE_10 is null or is_iso8601(rec.ATTRIBUTE_DATE_10) != 'valid' then
+    			if rec.ATTRIBUTE_DATE_10 is null or is_iso8601(rec.ATTRIBUTE_DATE_10,1) != 'valid' then
     				thisError :=  thisError || '; ATTRIBUTE_DATE_10 is invalid';
     			end if;
     			numRecs := isValidAgent(rec.ATTRIBUTE_DETERMINER_10);

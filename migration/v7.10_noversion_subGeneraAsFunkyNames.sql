@@ -1,5 +1,5 @@
 --- https://github.com/ArctosDB/arctos/issues/1704
-
+-- no version, no front-end code necessary
 -- done at test and prod
 CREATE OR REPLACE FUNCTION isValidTaxonName (name  in varchar)...
 -- done at test and prod

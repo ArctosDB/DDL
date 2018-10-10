@@ -15,7 +15,14 @@ BEGIN
 		WHERE agent_name_type = 'login'
 		AND upper(agent_name.agent_name) = SYS_CONTEXT('USERENV','SESSION_USER');
     END IF;
+    if :NEW.created_on_date is null then
+    	:NEW.created_on_date:=sysdate;
+    end if;
 END;
+/
+sho err;
+
+
 
 CREATE OR REPLACE TRIGGER MEDIA_RELATIONS_CHK
 BEFORE INSERT OR UPDATE ON MEDIA_RELATIONS

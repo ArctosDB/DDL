@@ -15,7 +15,13 @@ BEGIN
 		WHERE agent_name_type = 'login'
 		AND upper(agent_name.agent_name) = SYS_CONTEXT('USERENV','SESSION_USER');
     end if;
+    if :NEW.assigned_on_date is null then
+    	:NEW.assigned_on_date:=sysdate;
+    end if;
 end;
+/
+sho err;
+
 
 CREATE OR REPLACE TRIGGER TR_MEDIA_LABELS_SQ
 BEFORE INSERT ON MEDIA_LABELS

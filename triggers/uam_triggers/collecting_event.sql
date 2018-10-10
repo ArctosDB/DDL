@@ -76,20 +76,18 @@ CREATE OR REPLACE TRIGGER TRG_COLLECTING_EVENT_BIU
 	    	:new.LAST_DUP_CHECK_DATE:=sysdate;
 	    end if;
 	    
-        status:=is_iso8601(:NEW.began_date);
+        status:=is_iso8601(:NEW.began_date,1);
         IF status != 'valid' THEN
             raise_application_error(-20001,'Began Date: ' || status);
         END IF;
-        status:=is_iso8601(:NEW.ended_date);
+        status:=is_iso8601(:NEW.ended_date,1);
         IF status != 'valid' THEN
             raise_application_error(-20001,'Ended Date: ' || status);
         END IF;
         IF :NEW.began_date>:NEW.ended_date THEN
             raise_application_error(-20001,'Began Date can not occur after Ended Date.');
         END IF;
- 		IF :NEW.ended_date>to_char(sysdate,'yyyy-mm-dd') THEN
-            raise_application_error(-20001,'Ended Date cannot be in the future.');
-        END IF;
+ 		
         	
         :new.caclulated_dlat := '';
         :new.calculated_dlong := '';

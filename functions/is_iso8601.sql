@@ -1,4 +1,5 @@
-CREATE OR REPLACE FUNCTION is_iso8601 (inp  in varchar)
+-- EDIT: optional flag to return future dates as invalid
+CREATE OR REPLACE FUNCTION is_iso8601 (inp  in varchar,block_future in number default 0)
 return varchar
 as
 	y char(4);
@@ -122,11 +123,17 @@ end if;
 	if t is not null and t!='Z' and (t<-24 or t>24) then
 		r:='timezone component "' || t || '" is invalid';
 	end if;
+	
+	if block_future=1 and inp>to_char(sysdate,'yyyy-mm-dd') THEN
+		r:='Future dates are disallowed.';
+	end if;
+	
 	-- dbms_output.put_line('end checks');
 	IF length(r)>200 THEN
 	   -- dbms_output.put_line('r is long');
 	    r:=substr(r,1,250) || '...';
 	END IF;
+	
 	return r;
 	--exception	when others then return 0;
 end;
