@@ -31,7 +31,6 @@
 
 */
 
-
 	CREATE OR REPLACE FUNCTION bulk_stage_check_one (colobjid  in NUMBER)
 return varchar2
 as
@@ -101,7 +100,19 @@ r_collection_cde varchar2(255);
     		IF (rec.cat_num = '0') THEN
     			thisError :=  thisError || '; CAT_NUM may not be 0';
     		END IF;
-  
+  			-- move event up here for https://github.com/ArctosDB/arctos/issues/1566
+  			numRecs := isValidAgent(rec.event_assigned_by_agent);
+			IF (numRecs != 1) THEN
+			    thisError :=  thisError || '; EVENT_ASSIGNED_BY_AGENT [ ' || rec.event_assigned_by_agent || ' ] matches ' || numRecs || ' agents';
+			END IF;
+			IF ISDATE(rec.event_assigned_date,1) != 1 OR rec.event_assigned_date is null THEN
+				thisError :=  thisError || '; EVENT_ASSIGNED_DATE is invalid';
+			END IF;
+    		SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM ctspecimen_event_type WHERE specimen_event_type = rec.specimen_event_type;
+        	if numRecs = 0 then
+        		thisError :=  thisError || '; SPECIMEN_EVENT_TYPE is invalid';
+        	END IF;  
+            		
     		-- only care about collecting event, locality, and geog if we've not prepicked a collecting_event_id
     		IF rec.collecting_event_id IS NULL AND rec.collecting_event_name IS NULL THEN
     		   IF rec.locality_id IS NULL AND rec.locality_name IS NULL THEN -- only care about locality if no event picked        		
@@ -336,17 +347,7 @@ r_collection_cde varchar2(255);
 		        IF (rec.verbatim_locality is null) THEN
 			        thisError :=  thisError || '; VERBATIM_LOCALITY is required';
 		        END IF;
-		        numRecs := isValidAgent(rec.event_assigned_by_agent);
-    			IF (numRecs != 1) THEN
-		            thisError :=  thisError || '; EVENT_ASSIGNED_BY_AGENT [ ' || rec.event_assigned_by_agent || ' ] matches ' || numRecs || ' agents';
-	            END IF;
-            	IF ISDATE(rec.event_assigned_date,1) != 1 OR rec.event_assigned_date is null THEN
-    				thisError :=  thisError || '; EVENT_ASSIGNED_DATE is invalid';
-    			END IF;
-    			 SELECT /*+ RESULT_CACHE */ count(*) INTO numRecs FROM ctspecimen_event_type WHERE specimen_event_type = rec.specimen_event_type;
-            		if numRecs = 0 then
-            			thisError :=  thisError || '; SPECIMEN_EVENT_TYPE is invalid';
-            		END IF;   
+		        
     			    
     			    
     			    

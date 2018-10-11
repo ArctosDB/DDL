@@ -697,6 +697,7 @@ BEGIN
         END IF; 
         if gLocalityId is null then
             -- did not find a locality, so make one
+            dbms_output.put_line('make locality');
             select sq_locality_id.nextval into gLocalityId from dual;
             if rec.MAX_ERROR_DISTANCE is not null and rec.MAX_ERROR_UNITS is not null then
                 meu:=rec.MAX_ERROR_UNITS;
@@ -706,9 +707,17 @@ BEGIN
                 med:=null;
             end if;
             if REC.orig_lat_long_units='UTM' then
+            	if rec.MAX_ERROR_DISTANCE is not null or rec.MAX_ERROR_UNITS is not null then
+            		 error_msg := 'UTM may not be accompanied by MAX_ERROR_DISTANCE or MAX_ERROR_UNITS';
+                     raise failed_validation;
+            	end if;
             	v_DATUM:=null;
             	v_georeference_source:=null;
             	v_georeference_protocol:=null;
+            	if rec.MAX_ERROR_DISTANCE is not null or rec.MAX_ERROR_UNITS is not null then
+            		 error_msg := 'UTM may not be accompanied by MAX_ERROR_DISTANCE or MAX_ERROR_UNITS';
+                     raise failed_validation;
+            	end if;
             else
             	v_DATUM:=REC.DATUM;
             	v_georeference_source:=REC.georeference_source;
