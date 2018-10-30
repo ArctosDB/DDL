@@ -431,6 +431,9 @@ CREATE OR REPLACE TRIGGER trg_SPECIMEN_EVENT_aiu
 
 -- does it work?
 
+
+
+
 -- update specimen_event set specimen_event_id=specimen_event_id where collecting_event_id=10207700;
 -- select * from cache_anygeog;
 --- sweet!
@@ -442,7 +445,7 @@ CREATE OR REPLACE PROCEDURE UPDATE_cache_anygeog IS
 begin
 	for r in (
 		select collecting_event_id from (
-			select collecting_event_id,lastdate from cache_anygeog group by collecting_event_id,lastdate order by lastdate
+			select collecting_event_id,lastdate from cache_anygeog where stale_fg=1 group by collecting_event_id,lastdate order by lastdate
 		) where rownum<5000 group by collecting_event_id
 	) loop
 		--dbms_output.put_line('collecting_event_id: ' || r.collecting_event_id);
@@ -545,6 +548,9 @@ begin
 end;
 /
 sho err;
+
+
+select STALE_FG,count(*) from cache_anygeog group by STALE_FG;
 
 
 

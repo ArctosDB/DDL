@@ -240,19 +240,21 @@ END;
 --COLLECTING_EVENT
 --SELECT dbms_metadata.get_ddl('TRIGGER','TR_COLLEVENT_AU_FLAT') FROM dual;
 CREATE OR REPLACE TRIGGER TR_COLLEVENT_AU_FLAT
-AFTER UPDATE ON collecting_event
-FOR EACH ROW
-BEGIN
+	AFTER UPDATE ON collecting_event
+	FOR EACH ROW
+	BEGIN
+	UPDATE 
+		flat
+	SET 
+		stale_flag = 1,
+		lastuser=sys_context('USERENV', 'SESSION_USER'),
+		lastdate=SYSDATE
+	WHERE 
+		collecting_event_id = :NEW.collecting_event_id;
 	
 	if  :NEW.locality_id != :OLD.locality_id then
 		update cache_anygeog set stale_fg=1 where collecting_event_id = :NEW.collecting_event_id;
 	end if;
-
-    UPDATE flat
-	SET stale_flag = 1,
-	lastuser=sys_context('USERENV', 'SESSION_USER'),
-	lastdate=SYSDATE
-	WHERE collecting_event_id = :NEW.collecting_event_id;
 END;
 /
 
@@ -474,8 +476,6 @@ CREATE OR REPLACE TRIGGER TR_LOCALITY_AU_FLAT
 AFTER UPDATE ON locality
 FOR EACH ROW
 BEGIN
-	
-		
     -- DO NOT log updates to the service data as "specimen changes."
     if :NEW.GEOG_AUTH_REC_ID != :OLD.GEOG_AUTH_REC_ID or
     	nvl(:NEW.SPEC_LOCALITY,'OK') != nvl(:OLD.SPEC_LOCALITY,'OK') or
@@ -495,16 +495,19 @@ BEGIN
     	nvl(:NEW.GEOREFERENCE_PROTOCOL,'OK') != nvl(:OLD.GEOREFERENCE_PROTOCOL,'OK') or
     	nvl(:NEW.LOCALITY_NAME,'OK') != nvl(:OLD.LOCALITY_NAME,'OK')
     then
-
 		-- update the geo cache
 	
-		update cache_anygeog set stale_fg=1 where locality_id = :NEW.locality_id;
 
 		UPDATE flat
 	    SET stale_flag = 1,
 		lastuser=sys_context('USERENV', 'SESSION_USER'),
 		lastdate=SYSDATE
 	    WHERE locality_id = :NEW.locality_id;
+	    
+	    
+		update cache_anygeog set stale_fg=1 where locality_id = :NEW.locality_id;
+		
+		
 	end if;
 END;
 /

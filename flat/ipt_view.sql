@@ -49,6 +49,7 @@ create or replace view digir_query.ipt_view as select
 	ID_SENSU identificationReferences,
 	TAXA_FORMULA identificationQualifier,
 	IDENTIFIEDBY identifiedBy,
+	taxon_rank taxonRank,
 	--INFRASPECIFIC_RANK taxonRank,
 	KINGDOM kingdom,
 	MADE_DATE dateIdentified,
@@ -62,7 +63,6 @@ create or replace view digir_query.ipt_view as select
 	trim(replace(species,genus)) specificEpithet,
 	trim(replace(subspecies,species))  infraspecificEpithet,
 	previousidentifications previousidentifications,
-	taxon_rank taxonRank,
 	--------------------------- media ---------------------------
 	IMAGEURL associatedMedia,
 	-- event stuff
@@ -174,6 +174,8 @@ create or replace view digir_query.ipt_view as select
 	EARLIESTERAORLOWESTERATHEM,
 	FORMATION,
 	 'http://arctos.database.museum/guid/'  || filtered_flat.guid || '?seid=' || specimen_event.specimen_event_id occurrenceID2
+	 --,
+	--taxon_rank taxonRank
 from
 	filtered_flat,
 	specimen_event,
