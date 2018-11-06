@@ -9,30 +9,39 @@ select trigger_name from all_triggers where table_name='COLL_OBJ_REMARK';
 
 coll_object_remark
 
-CREATE OR REPLACE TRIGGER trg_cont_defdate BEFORE UPDATE OR INSERT ON CONTAINER 
+drop trigger trg_cont_bdelt;
+
+CREATE OR REPLACE TRIGGER trg_cont_bdelt BEFORE delete ON CONTAINER 
 FOR EACH ROW
+declare
+	c number;
 begin
-	:NEW.PARENT_INSTALL_DATE:=sysdate;
+	select count(*) into c from container where parent_container_id=:OLD.container_id;
+	if c>0 then
+			raise_application_error(-20000, 'Parent containers may not be deleted.');
+	end if;
 end;
 /
 
 
 
 
--- this trigger checks that container movements are valid. The following rules are enforced:
--- 1) a container may not be moved to itself
--- 2) positions must be locked
---    note: needs rewitten in forms so positions are simply dfined as locked;
---    then, we can get rid of the locked_position column in the table
--- 3) collection objects cannot be parent containers
--- 4) labels ( = upper(container_type) like '%LABEL%') cannot be parent or child containers
--- 5) child width,height,length must all be less than or equal to parent width,height,length, respectively
--- 6) locked containers (positions - see above comment) may not be moved to a new parent
-
---- copy any changes here to procedure moveContainerByBarcode
---- this is critical
--- search 42 to know why
--- I'm so sorry
+CREATE OR REPLACE TRIGGER trg_cont_defdate BEFORE UPDATE OR INSERT ON CONTAINER 
+FOR EACH ROW
+begin
+	:NEW.PARENT_INSTALL_DATE:=sysdate;
+	
+	if :NEW.number_rows is not null or :NEW.number_columns is not null or :NEW.orientation is not null then
+		-- if any, require all
+		if :NEW.number_rows is null or :NEW.number_columns is null or :NEW.orientation is null then
+			raise_application_error(-20000, 'FAIL: (number_rows,number_columns,orientation) must be given together');
+		end if;
+		if :NEW.orientation not in ('vertical','horizontal') then
+			raise_application_error(-20000, 'FAIL: invalid orientation');
+		end if;
+	end if;
+end;
+/
 
 
 
@@ -57,6 +66,31 @@ end;
 CREATE OR REPLACE TRIGGER 
 
 deprecated use procedures
+
+
+
+
+
+
+
+-- this trigger checks that container movements are valid. The following rules are enforced:
+-- 1) a container may not be moved to itself
+-- 2) positions must be locked
+--    note: needs rewitten in forms so positions are simply dfined as locked;
+--    then, we can get rid of the locked_position column in the table
+-- 3) collection objects cannot be parent containers
+-- 4) labels ( = upper(container_type) like '%LABEL%') cannot be parent or child containers
+-- 5) child width,height,length must all be less than or equal to parent width,height,length, respectively
+-- 6) locked containers (positions - see above comment) may not be moved to a new parent
+
+--- copy any changes here to procedure moveContainerByBarcode
+--- this is critical
+-- search 42 to know why
+-- I'm so sorry
+
+
+
+
 
 
 MOVE_CONTAINER

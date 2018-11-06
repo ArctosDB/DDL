@@ -1,0 +1,180 @@
+-- from https://github.com/ArctosDB/arctos/issues/1743
+
+-- files using position
+/Users/dlm/git/DDL/functions/containerCheck.sql:
+
+/Users/dlm/git/DDL/procedures/bulkUpdateContainer.sql:
+
+/Users/dlm/git/DDL/procedures/containerContentCheck.sql:
+
+/Users/dlm/git/DDL/procedures/createContainer.sql:
+
+/Users/dlm/git/DDL/procedures/moveContainerByBarcode.sql:
+
+/Users/dlm/git/DDL/procedures/moveManyPartToContainer.sql:
+/Users/dlm/git/DDL/procedures/movePartToContainer.sql:
+/Users/dlm/git/DDL/procedures/updateContainer.sql:
+
+/Users/dlm/git/DDL/triggers/uam_triggers/container.sql:
+
+
+/Users/dlm/git/arctos/containerPositions.cfm:
+/Users/dlm/git/arctos/EditContainer.cfm:
+
+
+
+/Users/dlm/git/arctos/EditContainer.cfm:
+
+
+
+
+
+/Users/dlm/git/arctos/loanFreezerLocn.cfm:
+
+
+
+/Users/dlm/git/DDL/functions/containerCheck.sql:
+
+
+
+/Users/dlm/git/DDL/procedures/bulkUpdateContainer.sql:
+
+/Users/dlm/git/DDL/procedures/containerContentCheck.sql:
+
+/Users/dlm/git/DDL/procedures/createContainer.sql:
+/Users/dlm/git/DDL/procedures/moveContainerByBarcode.sql:
+/Users/dlm/git/DDL/procedures/moveManyPartToContainer.sql:
+/Users/dlm/git/DDL/procedures/movePartToContainer.sql:
+
+
+
+/Users/dlm/git/DDL/procedures/updateAllChildrenContainer.sql:
+/Users/dlm/git/DDL/procedures/updateContainer.sql
+
+/Users/dlm/git/DDL/triggers/uam_triggers/container.sql:
+
+
+
+
+/Users/dlm/git/DDL/procedures/bulkUpdateContainer.sql:
+/Users/dlm/git/DDL/procedures/containerContentCheck.sql:
+/Users/dlm/git/DDL/procedures/createContainer.sql:
+/Users/dlm/git/DDL/procedures/moveContainerByBarcode.sql:
+/Users/dlm/git/DDL/procedures/moveManyPartToContainer.sql:
+/Users/dlm/git/DDL/procedures/movePartToContainer.sql:
+
+/Users/dlm/git/DDL/procedures/updateAllChildrenContainer.sql:
+
+/Users/dlm/git/DDL/procedures/updateContainer.sql:
+/Users/dlm/git/DDL/triggers/uam_triggers/container.sql:
+
+
+
+
+update CTCONTAINER_TYPE set DESCRIPTION='Grid-mapped area. Cannot have barcode. Created only by position-handling forms from parent position data.' where container_type='position';
+
+insert into CTCONTAINER_TYPE (container_type,DESCRIPTION) values ('')
+
+
+-- clean up
+select 
+  c.container_type,
+  decode(p.barcode,NULL,'no','yes') posnhasbarcode,
+  count(*) c
+from
+  container c,
+  container p
+where
+  p.parent_container_id=c.container_id and
+  p.container_type='position'
+group by
+   c.container_type,
+  decode(p.barcode,NULL,'no','yes')
+order by
+  c.container_type ;
+  
+  CONTAINER_TYPE						     POSNHASBA		C
+------------------------------------------------------------ --------- ----------
+cabinet 						     yes	       26
+freezer 						     no 	      114
+freezer 						     yes	      854
+freezer box						     no 	   904360
+freezer box						     yes	       14
+freezer rack						     no 	       81
+freezer rack						     yes	    10280
+microplate						     yes	       96
+range case						     yes	     1744
+shelf							     yes	       64
+slide box						     no 	    44999
+
+insert into CTCONTAINER_TYPE (container_type,DESCRIPTION) values ('cabinet position','Area in/on a cabinet.');
+update container set container_type='cabinet position' where container_type='position' and parent_container_id in (select container_id from container where container_type='cabinet');
+
+insert into CTCONTAINER_TYPE (container_type,DESCRIPTION) values ('freezer position','Area in a freezer.');
+update container set container_type='freezer position' where barcode is not null and container_type='position' and parent_container_id in (select container_id from container where container_type='freezer');
+
+alter table CTCONTAINER_TYPE modify container_type varchar2(30);
+alter table LOG_CTCONTAINER_TYPE modify n_container_type varchar2(30);
+alter table LOG_CTCONTAINER_TYPE modify o_container_type varchar2(30);
+alter table CONTAINER modify container_type varchar2(30);
+
+
+insert into CTCONTAINER_TYPE (container_type,DESCRIPTION) values ('freezer rack position','Area (slot) in a freezer rack.');
+
+update container set container_type='freezer rack position' where barcode is not null and container_type='position' and parent_container_id in (select container_id from container where container_type='freezer rack');
+
+insert into CTCONTAINER_TYPE (container_type,DESCRIPTION) values ('microplate position','Area in a microplate.');
+update container set container_type='microplate position' where barcode is not null and container_type='position' and parent_container_id in (select container_id from container where container_type='microplate');
+
+insert into CTCONTAINER_TYPE (container_type,DESCRIPTION) values ('range case position','Area in/on a range case.');
+update container set container_type='range case position' where barcode is not null and container_type='position' and parent_container_id in (select container_id from container where container_type='range case');
+
+insert into CTCONTAINER_TYPE (container_type,DESCRIPTION) values ('shelf position','Area in/on a shelf.');
+update container set container_type='shelf position' where barcode is not null and container_type='position' and parent_container_id in (select container_id from container where container_type='shelf');
+
+update container set container_type='unknown' where barcode is not null and container_type='position' and parent_container_id in (select container_id from container where container_type='freezer box');
+
+---
+update container set container_type='unknown' where  container_type='position' and parent_container_id in (select container_id from container where container_type='bag');
+
+alter table container add number_rows NUMBER;
+alter table container add number_columns NUMBER;
+alter table container add orientation varchar2(25);
+
+CREATE OR REPLACE TRIGGER trg_cont_defdate BEFORE UPDATE OR INSERT ON CONTAINER ....
+
+
+select distinct p.container_type from container p, container c where 
+p.container_id=c.parent_container_id and
+c.container_type='position';
+
+
+
+
+create table temp_all_positions as 
+select 
+  c.container_type parent_container_type,
+  c.barcode parent_barcode,
+  p.barcode position_barcode
+from
+  container c,
+  container p
+where
+  p.parent_container_id=c.container_id and
+  p.container_type='position' 
+ ;
+ 
+ 
+select 
+  c.container_type,
+  c.barcode parent_barcode,
+  p.barcode position_barcode
+from
+  container c,
+  container p
+where
+  p.parent_container_id=c.container_id and
+  p.container_type='position' and
+  p.barcode is not null and
+  c.container_type='freezer box'
+ ;
