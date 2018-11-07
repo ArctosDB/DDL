@@ -148,33 +148,183 @@ select distinct p.container_type from container p, container c where
 p.container_id=c.parent_container_id and
 c.container_type='position';
 
-
-
-
-create table temp_all_positions as 
-select 
-  c.container_type parent_container_type,
-  c.barcode parent_barcode,
-  p.barcode position_barcode
+create table temp_frzr_to_convert as
+select * from (
+select distinct 	
+	p.container_id,
+	p.barcode,
+	p.institution_acronym,
+	p.NUMBER_POSITIONS,
+	count(c.container_id) numberActualPositions
 from
-  container c,
-  container p
-where
-  p.parent_container_id=c.container_id and
-  p.container_type='position' 
- ;
+	container p, 
+	container c 
+where 
+	p.container_id=c.parent_container_id and
+	c.container_type='position' and
+	p.container_type='freezer'
+group by
+	p.container_id,
+	p.NUMBER_POSITIONS,
+	p.barcode,
+	p.institution_acronym
+)
+where NUMBER_POSITIONS = numberActualPositions
+;
+	
+update container set number_rows=11,number_columns=3,orientation='vertical' where container_id in (
+	select container_id from temp_frzr_to_convert where NUMBER_POSITIONS=33
+);
+	
+
+update container set number_rows=12,number_columns=4,orientation='vertical' where container_id in (
+	select container_id from temp_frzr_to_convert where NUMBER_POSITIONS=48
+);
  
- 
-select 
-  c.container_type,
-  c.barcode parent_barcode,
-  p.barcode position_barcode
+
+select * from (
+  select distinct 	
+	p.container_id,
+	p.barcode,
+	p.institution_acronym,
+	p.NUMBER_POSITIONS,
+	count(c.container_id) numberActualPositions
 from
-  container c,
-  container p
-where
-  p.parent_container_id=c.container_id and
-  p.container_type='position' and
-  p.barcode is not null and
-  c.container_type='freezer box'
- ;
+	container p, 
+	container c 
+where 
+	p.container_id=c.parent_container_id and
+	c.container_type='position' and
+	p.container_type='slide box'
+group by
+	p.container_id,
+	p.NUMBER_POSITIONS,
+	p.barcode,
+	p.institution_acronym  
+)
+where NUMBER_POSITIONS != numberActualPositions
+;
+    
+-- fix the one...
+select label from container where parent_container_id=14301169 order by to_number(label);
+
+insert into container (
+	CONTAINER_ID,
+	PARENT_CONTAINER_ID,
+	CONTAINER_TYPE,
+	LABEL,
+	WIDTH,
+	HEIGHT,
+	LENGTH,
+	INSTITUTION_ACRONYM
+) values (
+	sq_container_id.nextval,
+	14301169,
+	'position',
+	'1',
+	3,
+	27,
+	78,
+	'MSB'
+);
+
+create table temp_sb_to_convert as
+select * from (
+select distinct 	
+	p.container_id,
+	p.barcode,
+	p.institution_acronym,
+	p.NUMBER_POSITIONS,
+	count(c.container_id) numberActualPositions
+from
+	container p, 
+	container c 
+where 
+	p.container_id=c.parent_container_id and
+	c.container_type='position' and
+	p.container_type='slide box'
+group by
+	p.container_id,
+	p.NUMBER_POSITIONS,
+	p.barcode,
+	p.institution_acronym
+)
+where NUMBER_POSITIONS = numberActualPositions
+;
+
+update container set number_rows=50,number_columns=2,orientation='vertical' where container_id in (
+	select container_id from temp_sb_to_convert where NUMBER_POSITIONS=100
+);
+
+
+-- freezer rack
+
+create table temp_frzrk_to_convert as
+select * from (
+select distinct 	
+	p.container_id,
+	p.barcode,
+	p.institution_acronym,
+	p.NUMBER_POSITIONS,
+	count(c.container_id) numberActualPositions
+from
+	container p, 
+	container c 
+where 
+	p.container_id=c.parent_container_id and
+	c.container_type='position' and
+	p.container_type='freezer rack'
+group by
+	p.container_id,
+	p.NUMBER_POSITIONS,
+	p.barcode,
+	p.institution_acronym
+)
+where NUMBER_POSITIONS = numberActualPositions
+;
+
+select distinct number_positions from temp_frzrk_to_convert;
+-- oh, nevermind
+
+-- freezer box
+
+create table temp_frzbx_to_convert as
+select * from (
+select distinct 	
+	p.container_id,
+	p.barcode,
+	p.institution_acronym,
+	p.NUMBER_POSITIONS,
+	count(c.container_id) numberActualPositions
+from
+	container p, 
+	container c 
+where 
+	p.container_id=c.parent_container_id and
+	c.container_type='position' and
+	p.container_type='freezer box'
+group by
+	p.container_id,
+	p.NUMBER_POSITIONS,
+	p.barcode,
+	p.institution_acronym
+)
+where NUMBER_POSITIONS = numberActualPositions
+;
+
+update container set number_rows=10,number_columns=10,orientation='horizontal' where container_id in (
+	select container_id from temp_frzbx_to_convert where NUMBER_POSITIONS=100
+);
+
+
+
+update container set number_rows=5,number_columns=5,orientation='horizontal' where container_id in (
+	select container_id from temp_frzbx_to_convert where NUMBER_POSITIONS=25
+);
+
+
+update container set number_rows=9,number_columns=9,orientation='horizontal' where container_id in (
+	select container_id from temp_frzbx_to_convert where NUMBER_POSITIONS=81
+);
+
+
