@@ -5,15 +5,12 @@
 
 /Users/dlm/git/DDL/procedures/bulkUpdateContainer.sql:
 
-/Users/dlm/git/DDL/procedures/containerContentCheck.sql:
 
-/Users/dlm/git/DDL/procedures/createContainer.sql:
 
 /Users/dlm/git/DDL/procedures/moveContainerByBarcode.sql:
 
 /Users/dlm/git/DDL/procedures/moveManyPartToContainer.sql:
 /Users/dlm/git/DDL/procedures/movePartToContainer.sql:
-/Users/dlm/git/DDL/procedures/updateContainer.sql:
 
 /Users/dlm/git/DDL/triggers/uam_triggers/container.sql:
 
@@ -39,9 +36,7 @@
 
 /Users/dlm/git/DDL/procedures/bulkUpdateContainer.sql:
 
-/Users/dlm/git/DDL/procedures/containerContentCheck.sql:
 
-/Users/dlm/git/DDL/procedures/createContainer.sql:
 /Users/dlm/git/DDL/procedures/moveContainerByBarcode.sql:
 /Users/dlm/git/DDL/procedures/moveManyPartToContainer.sql:
 /Users/dlm/git/DDL/procedures/movePartToContainer.sql:
@@ -49,7 +44,6 @@
 
 
 /Users/dlm/git/DDL/procedures/updateAllChildrenContainer.sql:
-/Users/dlm/git/DDL/procedures/updateContainer.sql
 
 /Users/dlm/git/DDL/triggers/uam_triggers/container.sql:
 
@@ -57,17 +51,35 @@
 
 
 /Users/dlm/git/DDL/procedures/bulkUpdateContainer.sql:
-/Users/dlm/git/DDL/procedures/containerContentCheck.sql:
-/Users/dlm/git/DDL/procedures/createContainer.sql:
 /Users/dlm/git/DDL/procedures/moveContainerByBarcode.sql:
 /Users/dlm/git/DDL/procedures/moveManyPartToContainer.sql:
 /Users/dlm/git/DDL/procedures/movePartToContainer.sql:
 
 /Users/dlm/git/DDL/procedures/updateAllChildrenContainer.sql:
 
-/Users/dlm/git/DDL/procedures/updateContainer.sql:
 /Users/dlm/git/DDL/triggers/uam_triggers/container.sql:
 
+
+
+CREATE OR REPLACE procedure createContainer (....
+
+CREATE OR REPLACE procedure updateContainer (....
+
+CREATE OR REPLACE procedure containerContentCheck (
+
+--- files calling createContainer
+select barcode from container where container_type='freezer box' and POSITIONS_HOLD_CONTAINER_TYPE='cryovial';
+select barcode from container where container_type='freezer box' and container_id not in (select parent_container_id from container);
+
+
+/Users/dlm/git/arctos/EditContainer.cfm:
+
+/Users/dlm/git/arctos/containerPositions.cfm:
+
+/Users/dlm/git/arctos/EditContainer.cfm:
+  
+
+--- END files calling createContainer
 
 
 
@@ -140,6 +152,11 @@ update container set container_type='unknown' where  container_type='position' a
 alter table container add number_rows NUMBER;
 alter table container add number_columns NUMBER;
 alter table container add orientation varchar2(25);
+alter table container add positions_hold_container_type varchar2(25);
+
+
+ALTER TABLE container add CONSTRAINT fk_psn_hld_ctr_typ FOREIGN KEY (positions_hold_container_type) REFERENCES ctcontainer_type(container_type); 
+
 
 CREATE OR REPLACE TRIGGER trg_cont_defdate BEFORE UPDATE OR INSERT ON CONTAINER ....
 
@@ -176,6 +193,12 @@ update container set number_rows=11,number_columns=3,orientation='vertical' wher
 	select container_id from temp_frzr_to_convert where NUMBER_POSITIONS=33
 );
 	
+update container set positions_hold_container_type='freezer rack' where container_id in (
+	select container_id from temp_frzr_to_convert 
+);
+	
+
+
 
 update container set number_rows=12,number_columns=4,orientation='vertical' where container_id in (
 	select container_id from temp_frzr_to_convert where NUMBER_POSITIONS=48
@@ -256,7 +279,10 @@ update container set number_rows=50,number_columns=2,orientation='vertical' wher
 	select container_id from temp_sb_to_convert where NUMBER_POSITIONS=100
 );
 
-
+update container set positions_hold_container_type='slide' where container_id in (
+	select container_id from temp_sb_to_convert 
+);
+	
 -- freezer rack
 
 create table temp_frzrk_to_convert as
@@ -326,5 +352,11 @@ update container set number_rows=5,number_columns=5,orientation='horizontal' whe
 update container set number_rows=9,number_columns=9,orientation='horizontal' where container_id in (
 	select container_id from temp_frzbx_to_convert where NUMBER_POSITIONS=81
 );
+
+
+update container set positions_hold_container_type='cryovial' where container_id in (
+	select container_id from temp_frzbx_to_convert 
+);
+
 
 

@@ -31,10 +31,10 @@ FOR EACH ROW
 begin
 	:NEW.PARENT_INSTALL_DATE:=sysdate;
 	
-	if :NEW.number_rows is not null or :NEW.number_columns is not null or :NEW.orientation is not null then
+	if :NEW.number_rows is not null or :NEW.number_columns is not null or :NEW.orientation is not null or :NEW.POSITIONS_HOLD_CONTAINER_TYPE is not null then
 		-- if any, require all
-		if :NEW.number_rows is null or :NEW.number_columns is null or :NEW.orientation is null then
-			raise_application_error(-20000, 'FAIL: (number_rows,number_columns,orientation) must be given together');
+		if :NEW.number_rows is null or :NEW.number_columns is null or :NEW.orientation is null or :NEW.POSITIONS_HOLD_CONTAINER_TYPE is null then
+			raise_application_error(-20000, 'FAIL: (number_rows,number_columns,orientation,POSITIONS_HOLD_CONTAINER_TYPE) must be given together');
 		end if;
 		if :NEW.orientation not in ('vertical','horizontal') then
 			raise_application_error(-20000, 'FAIL: invalid orientation');

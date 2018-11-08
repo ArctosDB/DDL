@@ -12,9 +12,11 @@ CREATE OR REPLACE procedure updateContainer (
     v_barcode in varchar2,
     v_width in number,
     v_height in number,
-    v_length in number,
-    v_number_positions in number,
-    v_locked_position IN number,
+    v_length in number, 
+    v_number_rows in number,
+    v_number_columns in number,
+    v_orientation in varchar2,
+    v_posn_hld_ctr_typ in varchar2,
     v_institution_acronym in varchar2
    ) is 
 		old_child container%rowtype;
@@ -51,11 +53,14 @@ CREATE OR REPLACE procedure updateContainer (
         new_child.width := v_width;
         new_child.height := v_height;
         new_child.length := v_length;
-        new_child.locked_position := v_locked_position;
-        new_child.number_positions := v_number_positions;
+        new_child.number_rows := v_number_rows;
+        new_child.number_columns := v_number_columns;
+        new_child.orientation := v_orientation;
+        new_child.positions_hold_container_type := v_posn_hld_ctr_typ;
         new_child.institution_acronym := v_institution_acronym;
        containerContentCheck(old_child,new_child,parent,parent_position_count,parent_notposition_count,msg);
     	
+	            
     	--dbms_output.put_line('got back ' || msg);
     	
     	if msg is not null then
@@ -74,9 +79,11 @@ CREATE OR REPLACE procedure updateContainer (
         		WIDTH=v_width,
         		HEIGHT=v_height,
         		LENGTH=v_length,
-        		NUMBER_POSITIONS=v_number_positions,
-        		LOCKED_POSITION=v_locked_position,
-        		INSTITUTION_ACRONYM=v_institution_acronym
+        		INSTITUTION_ACRONYM=v_institution_acronym,
+	            NUMBER_ROWS=v_number_rows,
+	            NUMBER_COLUMNS=v_number_columns,
+	            ORIENTATION=v_orientation,
+	            POSITIONS_HOLD_CONTAINER_TYPE=v_posn_hld_ctr_typ
         	where
         		CONTAINER_ID=v_container_id;        	
         end if;

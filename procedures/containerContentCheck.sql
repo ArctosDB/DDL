@@ -50,6 +50,7 @@ CREATE OR REPLACE procedure containerContentCheck (
 			msg := msg || sep || 'Changing barcode is not allowed';
 			sep := '; ';
 		end if;
+		
 		-- if parent.container_id is 0, they're not moving so we don't need to bother checking anything relating to the parent
 		if parent.container_id != 0 then
 			-- user must have access to parent container
@@ -66,7 +67,7 @@ CREATE OR REPLACE procedure containerContentCheck (
 			end if;
 			-- limit the number of positions to parent's number_positions or fewer
 			-- (exact isn't possible in any obvious way)
-			if parent_position_count > parent.number_positions then
+			if parent_position_count > (parent.number_rows * parent.number_columns) then
 				msg := msg || sep || 'Too many positions';
 				sep := '; ';
 			end if;
@@ -81,8 +82,8 @@ CREATE OR REPLACE procedure containerContentCheck (
 			
 			
 			-- disallow positions when number_positions is null
-			if new_child.container_type = 'position' and parent.NUMBER_POSITIONS is null then
-				msg := msg || sep || 'Parent does not have a value in NUMBER_POSITIONS and cannot contain positions.';
+			if new_child.container_type = 'position' and parent.number_rows is null then
+				msg := msg || sep || 'Parent does not have position parameters.';
 				sep := '; ';
 			end if;
 			/*
@@ -99,19 +100,14 @@ CREATE OR REPLACE procedure containerContentCheck (
 				old_child.container_type = 'position' and
 				old_child.parent_container_id != 0 
 				then
-				msg := msg || sep || 'Already-placed Positions may not be moved.';
+				msg := msg || sep || 'Positions may not be moved.';
 				sep := '; ';
 			END IF;
 			
 			-- end position edit
 			-- don't allow creating positions from other container types, or creating other container type from positions
-			if new_child.container_type = 'position' and (old_child.container_type != 'position' and old_child.container_type not like '% lablel') then
-				msg := msg || sep || 'Positions may only be created from labels.';
-				sep := '; ';
-			END IF;
-			-- disallow movement of explicitly-locked containers
-			if old_child.locked_position=1 and new_child.parent_container_id != old_child.parent_container_id then
-				msg := msg || sep || 'This container is locked in position and may not be moved.';
+			if new_child.container_type = 'position' and (old_child.container_type != 'position') then
+				msg := msg || sep || 'Positions may only be created from existing containers.';
 				sep := '; ';
 			END IF;
 	
@@ -168,11 +164,6 @@ CREATE OR REPLACE procedure containerContentCheck (
 				msg := msg || sep || '"unknown" and "legacy container" may not be moved.';
 				sep:='; ';
 			END IF;
-			-- limit where positions can occur
-		    if new_child.container_type='position' and parent.container_type not in ('freezer','freezer box','freezer rack','microplate','shelf','slide box') then
-				msg := msg || sep || 'Positions are not allowed in ' || parent.container_type;
-				sep:='; ';
-			END IF;
 		end if; -- end parent = 0 check
 		-- now test all existing children of the container being edited (=new_child)
 		-- do not allow a container to "shrink" such that it's children no longer fit
@@ -190,6 +181,25 @@ CREATE OR REPLACE procedure containerContentCheck (
 			if c>0 then
 				msg := msg || sep || 'Edits to child size invalid; ' || c || ' children do not fit.';
 				sep:='; ';
+			end if;
+		end if;
+		
+		-- if this holds positions, don't allow editing
+		if new_child.positions_hold_container_type is not null then
+			-- has contents?
+			select count(*) into c from container where
+				parent_container_id=new_child.container_id;
+			if c > 0 then
+				-- don't allow changing position variables
+				if 
+					new_child.positions_hold_container_type != old_child.positions_hold_container_type or
+					new_child.number_rows != old_child.number_rows or
+					new_child.number_columns != old_child.number_columns or
+					new_child.orientation != old_child.orientation
+				then
+					msg := msg || sep || 'Changing position parameters of used containers is not allowed.';
+					sep:='; ';
+				end if;
 			end if;
 		end if;
 		msg_out:= msg;
