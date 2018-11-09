@@ -20,15 +20,20 @@ CREATE OR REPLACE procedure moveManyPartToContainer (
 
     begin
 	    if v_parent_container_type is not null then
-	    	-- change the parent container type
-	    	select * into old_child from container where barcode=v_parent_barcode;
-	    	new_child:=old_child;
-	    	new_child.container_type:=v_parent_container_type;
-	    	select * into parent from container where container_id=old_child.parent_container_id;
-	    	select count(*) into parent_position_count from container where container_type='position' and parent_container_id=parent.container_id;
-        	select count(*) into parent_notposition_count from container where container_type != 'position' and parent_container_id=parent.container_id;
-    	
-		    containerContentCheck(old_child,new_child,parent,parent_position_count,parent_notposition_count,msg);
+	    	if v_parent_container_type = 'position' then
+	    		msg:='position is not allowed here.';
+	    	else
+		    	-- change the parent container type
+		    	select * into old_child from container where barcode=v_parent_barcode;
+		    	new_child:=old_child;
+		    	new_child.container_type:=v_parent_container_type;
+		    	select * into parent from container where container_id=old_child.parent_container_id;
+		    	select count(*) into parent_position_count from container where container_type='position' and parent_container_id=parent.container_id;
+	        	select count(*) into parent_notposition_count from container where container_type != 'position' and parent_container_id=parent.container_id;
+	    	
+	        	
+			    containerContentCheck(old_child,new_child,parent,parent_position_count,parent_notposition_count,msg);
+			end if;
 			if msg is not null then
 	            raise_application_error(-20000, 'FAIL: ' || msg);
 	        else

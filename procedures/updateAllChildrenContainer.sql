@@ -11,18 +11,30 @@ CREATE OR REPLACE procedure updateAllChildrenContainer (
 		old_child container%rowtype;
 		new_child container%rowtype;
 		parent container%rowtype;
+		old_parent container%rowtype;
 		parent_position_count number;
 		parent_notposition_count number;
    		msg varchar2(4000);
    		n number;
     begin
-        
+	    
 	    -- pass off to containercheck EVERY old/new isntance, but change them all at once here if that works
         -- the only changes to the child is parent_container_id
         -- the parent doesn't change
         
 	  
         select * into parent from container where container_id=v_new_parent_container_id;
+        select * into old_parent from container where container_id=v_current_parent_container_id;
+        -- check positions; only allow this if everything is the same
+		if 
+			(nvl(parent.NUMBER_ROWS,-1)  != nvl(old_parent.NUMBER_ROWS,-1)) or
+			(nvl(parent.NUMBER_COLUMNS,-1)  != nvl(old_parent.NUMBER_COLUMNS,-1)) or
+			(nvl(parent.ORIENTATION,'dFLT')  != nvl(old_parent.ORIENTATION,'dFLT') ) or
+			(nvl(parent.POSITIONS_HOLD_CONTAINER_TYPE,'dFLT')  != nvl(old_parent.POSITIONS_HOLD_CONTAINER_TYPE,'dFLT'))
+		then
+        	raise_application_error(-20000, 'FAIL: old/new Parent position conflict.');
+        end if;
+        
         -- count of positions and not-positions already in the new parent
  		select count(*) into parent_position_count from container where container_type='position' and parent_container_id=v_new_parent_container_id;
         select count(*) into parent_notposition_count from container where container_type != 'position' and parent_container_id=v_new_parent_container_id;

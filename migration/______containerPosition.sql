@@ -1,63 +1,14 @@
 -- from https://github.com/ArctosDB/arctos/issues/1743
 
 -- files using position
-/Users/dlm/git/DDL/functions/containerCheck.sql:
-
-/Users/dlm/git/DDL/procedures/bulkUpdateContainer.sql:
 
 
 
-/Users/dlm/git/DDL/procedures/moveContainerByBarcode.sql:
-
-/Users/dlm/git/DDL/procedures/moveManyPartToContainer.sql:
-/Users/dlm/git/DDL/procedures/movePartToContainer.sql:
-
-/Users/dlm/git/DDL/triggers/uam_triggers/container.sql:
-
-
-/Users/dlm/git/arctos/containerPositions.cfm:
-/Users/dlm/git/arctos/EditContainer.cfm:
-
-
-
-/Users/dlm/git/arctos/EditContainer.cfm:
-
-
-
-
-
-/Users/dlm/git/arctos/loanFreezerLocn.cfm:
-
-
-
-/Users/dlm/git/DDL/functions/containerCheck.sql:
-
-
-
-/Users/dlm/git/DDL/procedures/bulkUpdateContainer.sql:
-
-
-/Users/dlm/git/DDL/procedures/moveContainerByBarcode.sql:
-/Users/dlm/git/DDL/procedures/moveManyPartToContainer.sql:
-/Users/dlm/git/DDL/procedures/movePartToContainer.sql:
 
 
 
 /Users/dlm/git/DDL/procedures/updateAllChildrenContainer.sql:
 
-/Users/dlm/git/DDL/triggers/uam_triggers/container.sql:
-
-
-
-
-/Users/dlm/git/DDL/procedures/bulkUpdateContainer.sql:
-/Users/dlm/git/DDL/procedures/moveContainerByBarcode.sql:
-/Users/dlm/git/DDL/procedures/moveManyPartToContainer.sql:
-/Users/dlm/git/DDL/procedures/movePartToContainer.sql:
-
-/Users/dlm/git/DDL/procedures/updateAllChildrenContainer.sql:
-
-/Users/dlm/git/DDL/triggers/uam_triggers/container.sql:
 
 
 
@@ -66,6 +17,14 @@ CREATE OR REPLACE procedure createContainer (....
 CREATE OR REPLACE procedure updateContainer (....
 
 CREATE OR REPLACE procedure containerContentCheck (
+
+
+CREATE OR REPLACE procedure bulkUpdateContainer is ....
+
+CREATE OR REPLACE procedure moveContainerByBarcode (
+
+CREATE OR REPLACE procedure moveManyPartToContainer (
+
 
 --- files calling createContainer
 select barcode from container where container_type='freezer box' and POSITIONS_HOLD_CONTAINER_TYPE='cryovial';
@@ -153,6 +112,13 @@ alter table container add number_rows NUMBER;
 alter table container add number_columns NUMBER;
 alter table container add orientation varchar2(25);
 alter table container add positions_hold_container_type varchar2(25);
+
+
+alter table cf_temp_lbl2contr add number_rows NUMBER;
+alter table cf_temp_lbl2contr add number_columns NUMBER;
+alter table cf_temp_lbl2contr add orientation varchar2(25);
+alter table cf_temp_lbl2contr add positions_hold_container_type varchar2(25);
+
 
 
 ALTER TABLE container add CONSTRAINT fk_psn_hld_ctr_typ FOREIGN KEY (positions_hold_container_type) REFERENCES ctcontainer_type(container_type); 

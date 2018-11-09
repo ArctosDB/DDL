@@ -26,6 +26,7 @@ CREATE OR REPLACE procedure bulkUpdateContainer is
         		select count(*) into parent_notposition_count from container where container_type != 'position' and parent_container_id=parent.container_id;
 	    	end if;
 	    		
+	    	
 	    	new_child:=old_child;
 	    	new_child.CONTAINER_TYPE:=r.CONTAINER_TYPE;
 	    	if r.label is not null then
@@ -67,14 +68,28 @@ CREATE OR REPLACE procedure bulkUpdateContainer is
 	    		new_child.WIDTH:=null;
 	    	end if;
 	    	
-	    	if r.NUMBER_POSITIONS is not null then
-	    		new_child.NUMBER_POSITIONS:=r.NUMBER_POSITIONS;
-	    	end if;	    
+	    	if r.POSITIONS_HOLD_CONTAINER_TYPE is not null then
+	    		new_child.POSITIONS_HOLD_CONTAINER_TYPE:=r.POSITIONS_HOLD_CONTAINER_TYPE;
+	    	end if;
+	    	if r.NUMBER_ROWS is not null then
+	    		new_child.NUMBER_ROWS:=r.NUMBER_ROWS;
+	    	end if;	   
+	    	if r.NUMBER_COLUMNS is not null then
+	    		new_child.NUMBER_COLUMNS:=r.NUMBER_COLUMNS;
+	    	end if;	   
+	    	if r.ORIENTATION is not null then
+	    		new_child.ORIENTATION:=r.ORIENTATION;
+	    	end if;	   
+	    	
 	    	if r.NUMBER_POSITIONS=0 then
 	    		new_child.NUMBER_POSITIONS:=null;
 	    	end if;
+	    	if new_child.container_type='position' or old_child.container_type='position' then
+	    		msg:='this form does not work with container type position.';
+	    	else
+	    		containerContentCheck(old_child,new_child,parent,parent_position_count,parent_notposition_count,msg);
+	    	end if;
 	    	
-	    	containerContentCheck(old_child,new_child,parent,parent_position_count,parent_notposition_count,msg);
 			if msg is not null then
 	            raise_application_error(-20000, 'FAIL: ' || msg);
 	        else
@@ -88,7 +103,10 @@ CREATE OR REPLACE procedure bulkUpdateContainer is
 	        		HEIGHT=new_child.HEIGHT,
 	        		LENGTH=new_child.LENGTH,
 	        		WIDTH=new_child.WIDTH,
-	        		NUMBER_POSITIONS=new_child.NUMBER_POSITIONS
+	        		NUMBER_ROWS=new_child.NUMBER_ROWS,
+	        		NUMBER_COLUMNS=new_child.NUMBER_COLUMNS,
+	        		ORIENTATION=new_child.ORIENTATION,
+	        		POSITIONS_HOLD_CONTAINER_TYPE=new_child.POSITIONS_HOLD_CONTAINER_TYPE
 	        	where
 	        		CONTAINER_ID=new_child.container_id;
 	        end if;

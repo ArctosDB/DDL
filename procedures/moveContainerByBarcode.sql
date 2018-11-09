@@ -29,6 +29,15 @@ CREATE OR REPLACE procedure moveContainerByBarcode (
    	if parent_container_type is not null then
    		msgprefix:=msgprefix || ' (' || parent_container_type || ')';
    	end if;
+   	
+   	
+   	if child_container_type = 'position' or parent_container_type='position' then
+   		msg := msg || sep || 'this application cannot move positions.' ;
+        sep := '; ';
+   	end if;
+    
+    
+    
    	-- if parent_container_type is null, we're not changing anything.
    	-- if it's not, we MAY be changing something
    	if parent_container_type is not null then
