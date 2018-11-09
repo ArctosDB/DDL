@@ -104,6 +104,14 @@ CREATE OR REPLACE procedure containerContentCheck (
 				sep := '; ';
 			END IF;
 			
+			if 
+				(new_child.container_type='position' and old_child.container_type != 'position') or
+				(old_child.container_type='position' and new_child.container_type != 'position')
+			then
+				msg := msg || sep || 'Positions may not be created or destroyed here.';
+				sep := '; ';
+			end if;
+			
 			-- end position edit
 			-- don't allow creating positions from other container types, or creating other container type from positions
 			if new_child.container_type = 'position' and (old_child.container_type != 'position') then
@@ -195,7 +203,8 @@ CREATE OR REPLACE procedure containerContentCheck (
 					new_child.positions_hold_container_type != old_child.positions_hold_container_type or
 					new_child.number_rows != old_child.number_rows or
 					new_child.number_columns != old_child.number_columns or
-					new_child.orientation != old_child.orientation
+					new_child.orientation != old_child.orientation or
+					new_child.container_type != old_child.container_type
 				then
 					msg := msg || sep || 'Changing position parameters of used containers is not allowed.';
 					sep:='; ';

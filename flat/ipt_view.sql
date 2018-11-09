@@ -33,7 +33,7 @@ create or replace view digir_query.ipt_view as select
 	--------------------------- identifiers ---------------------------
 	OTHERCATALOGNUMBERS otherCatalogNumbers,
 	'http://arctos.database.museum/guid/' || GUID individualID,
-	CATALOGNUMBERTEXT catalogNumber,
+	filtered_flat.guid catalogNumber,
 	GENBANKNUM associatedSequences,
 	COLLECTORNUMBER recordNumber, -- I think this is a very incomplete mapping
 	FIELD_NUM fieldNumber, -- also incomplete/incorrect
