@@ -43,6 +43,12 @@ CREATE OR REPLACE procedure updateContainer (
 		end if;
 		
         select * into old_child from container where container_id=v_container_id;
+        
+        if v_container_type='position' or old_child.container_type='position' then
+        	raise_application_error(-20000, 'FAIL: Positions cannot be edited.');
+        end if;
+        	
+        
         new_child.container_id := v_container_id;
         new_child.parent_container_id := v_parent_container_id;
         new_child.container_type := v_container_type;

@@ -3,14 +3,55 @@
 -- files using position
 
 
+select p.barcode from container p,container c where p.container_id=c.parent_container_id and c.container_type='position' and p.container_type='freezer box' and rownum<10;
 
 
 
 
-/Users/dlm/git/DDL/procedures/updateAllChildrenContainer.sql:
+create table bak_container20181113 as select * from container;
+UAM@ARCTOSTE> select count(*) from container;
 
+  COUNT(*)
+----------
+   7827188
 
+1 row selected.
 
+Elapsed: 00:00:02.37
+UAM@ARCTOSTE> select count(*) from bak_container20181113;
+
+  COUNT(*)
+----------
+   7827188
+
+   
+   UAM@ARCTOSTE> desc container
+ Name								   Null?    Type
+ ----------------------------------------------------------------- -------- --------------------------------------------
+ CONTAINER_ID							   NOT NULL NUMBER
+ PARENT_CONTAINER_ID						   NOT NULL NUMBER
+ CONTAINER_TYPE 						   NOT NULL VARCHAR2(30)
+ LABEL								   NOT NULL VARCHAR2(255)
+ DESCRIPTION								    VARCHAR2(255)
+ PARENT_INSTALL_DATE							    DATE
+ CONTAINER_REMARKS							    VARCHAR2(255)
+ BARCODE								    VARCHAR2(50)
+ PRINT_FG								    NUMBER(1)
+ WIDTH									    NUMBER
+ HEIGHT 								    NUMBER
+ LENGTH 								    NUMBER
+ NUMBER_POSITIONS							    NUMBER
+ LOCKED_POSITION							    NUMBER(1)
+ INSTITUTION_ACRONYM						   NOT NULL VARCHAR2(20)
+ NUMBER_ROWS								    NUMBER
+ NUMBER_COLUMNS 							    NUMBER
+ ORIENTATION								    VARCHAR2(25)
+ POSITIONS_HOLD_CONTAINER_TYPE						    VARCHAR2(25)
+
+ 
+ alter table container drop column NUMBER_POSITIONS
+
+CREATE OR REPLACE procedure updateAllChildrenContainer (....
 
 CREATE OR REPLACE procedure createContainer (....
 

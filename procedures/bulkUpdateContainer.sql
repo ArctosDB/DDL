@@ -15,6 +15,10 @@ CREATE OR REPLACE procedure bulkUpdateContainer is
 	        raise_application_error(-20000, 'FAIL: old container type mismatch');
 	    end if;
 	    for r in (select * from cf_temp_lbl2contr) loop
+	    	if r.CONTAINER_TYPE = 'position' then
+	    		 raise_application_error(-20000, 'FAIL: positions may not be edited.');
+	    	end if;
+	    
 	    	select * into old_child from container where barcode=r.barcode;
 	    	if old_child.parent_container_id = 0 then
 	    		parent.container_id:=0;
@@ -25,7 +29,17 @@ CREATE OR REPLACE procedure bulkUpdateContainer is
 	    		select count(*) into parent_position_count from container where container_type='position' and parent_container_id=parent.container_id;
         		select count(*) into parent_notposition_count from container where container_type != 'position' and parent_container_id=parent.container_id;
 	    	end if;
-	    		
+	    	if parent_position_count > 0 then
+	    		-- we're trying to update a container which holds positions; disallow if positions info is being updated
+	    		if 
+					(nvl(old_child.NUMBER_ROWS,-1)  != nvl(r.NUMBER_ROWS,-1)) or
+					(nvl(old_child.NUMBER_COLUMNS,-1)  != nvl(r.NUMBER_COLUMNS,-1)) or
+					(nvl(old_child.ORIENTATION,'dFLT')  != nvl(r.ORIENTATION,'dFLT') ) or
+					(nvl(old_child.POSITIONS_HOLD_CONTAINER_TYPE,'dFLT')  != nvl(r.POSITIONS_HOLD_CONTAINER_TYPE,'dFLT'))
+				then
+		        	raise_application_error(-20000, 'FAIL: Changing position layout of containers holding positions is not allowed.');
+		        end if;
+	    	end if;
 	    	
 	    	new_child:=old_child;
 	    	new_child.CONTAINER_TYPE:=r.CONTAINER_TYPE;
