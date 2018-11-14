@@ -95,9 +95,6 @@ CREATE OR REPLACE procedure bulkUpdateContainer is
 	    		new_child.ORIENTATION:=r.ORIENTATION;
 	    	end if;	   
 	    	
-	    	if r.NUMBER_POSITIONS=0 then
-	    		new_child.NUMBER_POSITIONS:=null;
-	    	end if;
 	    	if new_child.container_type='position' or old_child.container_type='position' then
 	    		msg:='this form does not work with container type position.';
 	    	else

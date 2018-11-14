@@ -3,10 +3,30 @@
 -- files using position
 
 
-select p.barcode from container p,container c where p.container_id=c.parent_container_id and c.container_type='position' and p.container_type='freezer box' and rownum<10;
+select distinct p.barcode from container p,container c where p.container_id=c.parent_container_id and c.container_type='position' and p.container_type='freezer box' and rownum<1000;
 
 
+select distinct p.barcode,p.container_type
+from container p,container c where p.container_id=c.parent_container_id and c.container_type='position' 
+order by
+container_type,barcode;
 
+
+-- empty boxes
+select distinct barcode from container where container_type='freezer box' and container_id not in (select parent_container_id from container);
+
+order by
+container_type,barcode;
+
+-- testing
+update container set number_rows=3,number_columns=11,orientation='vertical' where container_id=14844243;
+
+select barcode from container where container_type like '%label' and barcode is not null and rownum<2;
+
+-- examples
+http://arctos-test.tacc.utexas.edu/findContainer.cfm?container_id=129036
+http://arctos-test.tacc.utexas.edu/findContainer.cfm?barcode=103165
+http://arctos-test.tacc.utexas.edu/findContainer.cfm?container_id=17206034
 
 create table bak_container20181113 as select * from container;
 UAM@ARCTOSTE> select count(*) from container;
@@ -49,7 +69,10 @@ UAM@ARCTOSTE> select count(*) from bak_container20181113;
  POSITIONS_HOLD_CONTAINER_TYPE						    VARCHAR2(25)
 
  
- alter table container drop column NUMBER_POSITIONS
+ alter table container drop column NUMBER_POSITIONS;
+  alter table container drop column LOCKED_POSITION;
+
+ 
 
 CREATE OR REPLACE procedure updateAllChildrenContainer (....
 
