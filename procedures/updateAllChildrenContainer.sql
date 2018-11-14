@@ -54,7 +54,7 @@ CREATE OR REPLACE procedure updateAllChildrenContainer (
        -- position count doesn't always work properly due to transactions, so re-check here
        select count(*)  into n from container where parent_container_id=v_new_parent_container_id;
       -- dbms_output.put_line('n: ' || n);
-       if n > parent.number_positions then
+       if n > (parent.number_rows * parent.number_columns) then
        	raise_application_error(-20000, 'FAIL: Too many positions.');
        end if;
     end;
