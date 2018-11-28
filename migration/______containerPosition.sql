@@ -1,3 +1,4 @@
+
 -- from https://github.com/ArctosDB/arctos/issues/1743
 
 -- files using position
@@ -28,51 +29,41 @@ http://arctos-test.tacc.utexas.edu/findContainer.cfm?container_id=129036
 http://arctos-test.tacc.utexas.edu/findContainer.cfm?barcode=103165
 http://arctos-test.tacc.utexas.edu/findContainer.cfm?container_id=17206034
 
-create table bak_container20181113 as select * from container;
-UAM@ARCTOSTE> select count(*) from container;
 
-  COUNT(*)
-----------
-   7827188
 
-1 row selected.
 
-Elapsed: 00:00:02.37
-UAM@ARCTOSTE> select count(*) from bak_container20181113;
 
-  COUNT(*)
-----------
-   7827188
 
-   
-   UAM@ARCTOSTE> desc container
- Name								   Null?    Type
- ----------------------------------------------------------------- -------- --------------------------------------------
- CONTAINER_ID							   NOT NULL NUMBER
- PARENT_CONTAINER_ID						   NOT NULL NUMBER
- CONTAINER_TYPE 						   NOT NULL VARCHAR2(30)
- LABEL								   NOT NULL VARCHAR2(255)
- DESCRIPTION								    VARCHAR2(255)
- PARENT_INSTALL_DATE							    DATE
- CONTAINER_REMARKS							    VARCHAR2(255)
- BARCODE								    VARCHAR2(50)
- PRINT_FG								    NUMBER(1)
- WIDTH									    NUMBER
- HEIGHT 								    NUMBER
- LENGTH 								    NUMBER
- NUMBER_POSITIONS							    NUMBER
- LOCKED_POSITION							    NUMBER(1)
- INSTITUTION_ACRONYM						   NOT NULL VARCHAR2(20)
- NUMBER_ROWS								    NUMBER
- NUMBER_COLUMNS 							    NUMBER
- ORIENTATION								    VARCHAR2(25)
- POSITIONS_HOLD_CONTAINER_TYPE						    VARCHAR2(25)
 
- 
- alter table container drop column NUMBER_POSITIONS;
-  alter table container drop column LOCKED_POSITION;
 
- 
+
+
+
+
+
+
+
+
+create table bak_container20181127 as select * from container;
+select count(*) from container;
+9113396
+select count(*) from bak_container20181127;
+9113396
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 CREATE OR REPLACE procedure updateAllChildrenContainer (....
 
@@ -90,25 +81,11 @@ CREATE OR REPLACE procedure moveContainerByBarcode (
 CREATE OR REPLACE procedure moveManyPartToContainer (
 
 
---- files calling createContainer
-select barcode from container where container_type='freezer box' and POSITIONS_HOLD_CONTAINER_TYPE='cryovial';
-select barcode from container where container_type='freezer box' and container_id not in (select parent_container_id from container);
-
-
-/Users/dlm/git/arctos/EditContainer.cfm:
-
-/Users/dlm/git/arctos/containerPositions.cfm:
-
-/Users/dlm/git/arctos/EditContainer.cfm:
-  
-
---- END files calling createContainer
 
 
 
 update CTCONTAINER_TYPE set DESCRIPTION='Grid-mapped area. Cannot have barcode. Created only by position-handling forms from parent position data.' where container_type='position';
 
-insert into CTCONTAINER_TYPE (container_type,DESCRIPTION) values ('')
 
 
 -- clean up
@@ -219,18 +196,15 @@ group by
 where NUMBER_POSITIONS = numberActualPositions
 ;
 	
-update container set number_rows=11,number_columns=3,orientation='vertical' where container_id in (
+update container set number_rows=11,number_columns=3,orientation='vertical',positions_hold_container_type='freezer rack' where container_id in (
 	select container_id from temp_frzr_to_convert where NUMBER_POSITIONS=33
 );
 	
-update container set positions_hold_container_type='freezer rack' where container_id in (
-	select container_id from temp_frzr_to_convert 
-);
-	
 
 
 
-update container set number_rows=12,number_columns=4,orientation='vertical' where container_id in (
+
+update container set number_rows=12,number_columns=4,orientation='vertical',positions_hold_container_type='freezer rack' where container_id in (
 	select container_id from temp_frzr_to_convert where NUMBER_POSITIONS=48
 );
  
@@ -305,13 +279,10 @@ group by
 where NUMBER_POSITIONS = numberActualPositions
 ;
 
-update container set number_rows=50,number_columns=2,orientation='vertical' where container_id in (
+update container set number_rows=50,number_columns=2,orientation='vertical', positions_hold_container_type='slide' where container_id in (
 	select container_id from temp_sb_to_convert where NUMBER_POSITIONS=100
 );
 
-update container set positions_hold_container_type='slide' where container_id in (
-	select container_id from temp_sb_to_convert 
-);
 	
 -- freezer rack
 
@@ -368,25 +339,157 @@ group by
 where NUMBER_POSITIONS = numberActualPositions
 ;
 
-update container set number_rows=10,number_columns=10,orientation='horizontal' where container_id in (
+update container set number_rows=10,number_columns=10,orientation='horizontal',positions_hold_container_type='cryovial' where container_id in (
 	select container_id from temp_frzbx_to_convert where NUMBER_POSITIONS=100
 );
 
 
 
-update container set number_rows=5,number_columns=5,orientation='horizontal' where container_id in (
+update container set number_rows=5,number_columns=5,orientation='horizontal',positions_hold_container_type='cryovial' where container_id in (
 	select container_id from temp_frzbx_to_convert where NUMBER_POSITIONS=25
 );
 
 
-update container set number_rows=9,number_columns=9,orientation='horizontal' where container_id in (
+update container set number_rows=9,number_columns=9,orientation='horizontal',positions_hold_container_type='cryovial' where container_id in (
 	select container_id from temp_frzbx_to_convert where NUMBER_POSITIONS=81
 );
 
 
-update container set positions_hold_container_type='cryovial' where container_id in (
-	select container_id from temp_frzbx_to_convert 
-);
+select count(*) from container where number_positions is not null and number_positions != (number_rows * number_columns);
 
 
 
+
+-- https://github.com/ArctosDB/arctos/issues/1718
+alter table container_history add location_stack varchar2(4000);
+
+
+-- going to have to do this async so need a key
+alter table container_history add container_history_id number;
+create sequence sq_container_history_id;
+create public synonym sq_container_history_id for sq_container_history_id;
+grant select on sq_container_history_id to public;
+
+
+
+CREATE OR REPLACE PROCEDURE temp_update_junk IS
+begin
+ update container_history set container_history_id=sq_container_history_id.nextval where container_history_id is null;
+
+end;
+/
+
+
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+    job_name    => 'J_TEMP_UPDATE_JUNK',
+    job_type    => 'STORED_PROCEDURE',
+    job_action    => 'temp_update_junk',
+    enabled     => TRUE,
+    end_date    => NULL
+  );
+END;
+/ 
+
+
+select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_TEMP_UPDATE_JUNK';
+
+
+
+
+ALTER TABLE container_history ADD CONSTRAINT pk_container_history PRIMARY KEY (container_history_id);
+
+
+CREATE OR REPLACE TRIGGER GET_CONTAINER_HISTORY
+AFTER UPDATE or insert ON CONTAINER
+FOR EACH ROW
+BEGIN
+	-- location_stack causes mutation errors;
+	-- flag it as stale, update with a procedure+job
+	-- ignore if nothing we're logging has changed
+	if updating then
+		if :OLD.parent_container_id != :NEW.parent_container_id then
+			INSERT INTO container_history (
+		        container_history_id,
+		        container_id,
+		        parent_container_id,
+		        install_date,
+		        username,
+		        location_stack
+		    ) VALUES (
+		    	sq_container_history_id.nextval,
+			    :NEW.container_id,
+			    :NEW.parent_container_id,
+			    SYSDATE,
+			    SYS_CONTEXT('USERENV', 'SESSION_USER'),
+			    'stale'
+			 );
+		end if;
+	else
+		INSERT INTO container_history (
+		        container_history_id,
+		        container_id,
+		        parent_container_id,
+		        install_date,
+		        username,
+		        location_stack
+		    ) VALUES (
+		    	sq_container_history_id.nextval,
+			    :NEW.container_id,
+			    :NEW.parent_container_id,
+			    SYSDATE,
+			    SYS_CONTEXT('USERENV', 'SESSION_USER'),
+			    'stale'
+			 );
+	end if;
+END get_container_history;
+/
+
+select getContainerParentage(17478827) from dual;
+
+select length(getContainerParentage(17478827)) from dual;
+
+create index ix_contr_hist_lcn_stk on container_history(location_stack) tablespace uam_idx_1;
+
+CREATE OR REPLACE PROCEDURE proc_set_contr_locn_stk
+is
+BEGIN
+	FOR r IN (select container_history_id,container_id from container_history where location_stack='stale') LOOP
+		begin
+        	update container_history set location_stack=getContainerParentage(r.container_id) where container_history_id=r.container_history_id;
+        	exception when others then
+        		update container_history set location_stack='UPDATE_FAIL' where container_history_id=r.container_history_id;
+        end;
+    END LOOP;   
+END;
+/
+sho err;
+
+
+
+BEGIN
+DBMS_SCHEDULER.CREATE_JOB (
+    job_name           =>  'j_set_container_history_stack',
+    job_type           =>  'STORED_PROCEDURE',
+	job_action         =>  'proc_set_contr_locn_stk',
+	start_date         =>  SYSTIMESTAMP,
+	repeat_interval    =>  'freq=minutely; interval=10',
+	enabled            =>  TRUE,
+	end_date           =>  NULL,
+	comments           =>  'check container_history; push recent updates (flagged "stale") to location_stack.');
+END;
+/
+
+select * from all_scheduler_jobs where job_name='J_SET_CONTAINER_HISTORY_STACK';
+
+
+
+
+ alter table container drop column NUMBER_POSITIONS;
+  alter table container drop column LOCKED_POSITION;
+
+ 
+  
+  
+
+exec proc_set_contr_locn_stk;
