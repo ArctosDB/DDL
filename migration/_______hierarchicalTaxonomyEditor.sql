@@ -170,7 +170,7 @@ begin
 end;
 /
 
-select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_PROC_HIERAC_TAX_EXPORT';
+select STATE,LAST_START_DATE,NEXT_RUN_DATE,LAST_RUN_DURATION from all_scheduler_jobs where JOB_NAME='J_PROC_HIERAC_TAX_EXPORT';
 
 BEGIN
 DBMS_SCHEDULER.CREATE_JOB (
@@ -542,6 +542,7 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 				rownum<10000
 		) loop
 		--dbms_output.put_line('---------------------------------------------------------------' );
+			--dbms_output.put_line('dataset_id:' || t.dataset_id);
 			--dbms_output.put_line('got in ' || t.scientific_name);
 -			-- see if there's any classification data
 			-- if not, see what we can do....
@@ -561,7 +562,7 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 					--dbms_output.put_line('subspecies');
 					-- see if we can find a species
 					v_wrk:=substr(t.scientific_name,0,instr(t.scientific_name,' ',1,2));
-					dbms_output.put_line('species is ' || v_wrk);
+					--dbms_output.put_line('species is ' || v_wrk);
 					select count(*) into v_c from hierarchical_taxonomy where term=trim(v_wrk);
 					if v_c=1 then
 						select tid into v_pid from hierarchical_taxonomy where term=trim(v_wrk);
@@ -569,12 +570,12 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 				elsif t.scientific_name like '% %' then
 					v_term_type:='species';
 					v_wrk:=substr(t.scientific_name,0,instr(t.scientific_name,' '));
-					dbms_output.put_line('genus is ' || v_wrk);
+					--dbms_output.put_line('genus is ' || v_wrk);
 					select count(*) into v_c from hierarchical_taxonomy where term=trim(v_wrk);
 					if v_c=1 then
 						select tid into v_pid from hierarchical_taxonomy where term=trim(v_wrk);
 					end if;
-					dbms_output.put_line('species');
+					--dbms_output.put_line('species');
 				elsif t.scientific_name like '% % % %' then
 					v_term_type:='too_many_spaces';
 					--dbms_output.put_line('too_many_spaces');
@@ -582,6 +583,7 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 					v_term_type:='genus or something maybe IDK';
 				--	dbms_output.put_line('genus or something maybe IDK');
 				end if;
+				--dbms_output.put_line('first:' || t.scientific_name);
 				insert into hierarchical_taxonomy (
 					tid,
 					parent_tid,
@@ -600,7 +602,7 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 				insert into htax_temp_hierarcicized (taxon_name_id,dataset_id,status) values (t.taxon_name_id,t.dataset_id,'guessed_at_rank_noclass');
 
 			else
-				dbms_output.put_line('nrml:  ' || v_c);
+				--dbms_output.put_line('nrml:  ' || v_c);
 				begin
 				for r in (
 					select
@@ -619,7 +621,7 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 					-- assign to variables so we can use them in error reporting
 					v_term:=r.term;
 					v_term_type:=r.term_type;
-					dbms_output.put_line(v_term_type || '=' || v_term);
+					--dbms_output.put_line(v_term_type || '=' || v_term);
 					-- see if we already have one
 					select count(*) 
 						into v_c 
@@ -643,6 +645,8 @@ CREATE OR REPLACE PROCEDURE proc_hierac_tax IS
 						-- create the term
 						-- first grab the current ID
 						select someRandomSequence.nextval into v_tid from dual;
+						
+					--	dbms_output.put_line('second:' || v_term);
 						insert into hierarchical_taxonomy (
 							tid,
 							parent_tid,

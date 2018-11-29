@@ -43,7 +43,7 @@ POSITION_IN_CLASSIFICATION is null);
 
 
 CREATE OR REPLACE PROCEDURE proc_autogen_taxonterms IS
-	dn varchar2(4000);
+	d varchar2(4000);
 	tid number;
 	src  varchar2(4000);
 	sttid number;
@@ -58,33 +58,13 @@ begin
 		if c > 0 then
 			-- flush any old stuff
 			--dbms_output.put_line('classification_id: ' || r.classification_id);
-			delete from taxon_term where classification_id=r.classification_id and
-				term_type in ('display_name','scientific_name');
-			-- see if we can create one
-			select generateDisplayName(r.classification_id) into dn from dual;
-			--dbms_output.put_line('dn: ' || dn);
+			delete from taxon_term where classification_id=r.classification_id and term_type in ('display_name','scientific_name');
+			-- scientific_name first; it's used by the next thing we'll call
+			-- get the constants
 			select TAXON_NAME_ID,SOURCE into tid,src from taxon_term where TAXON_TERM_ID in (select min(TAXON_TERM_ID) from
 				taxon_term where classification_id=r.classification_id);
 			select scientific_name into nsn from taxon_name where taxon_name_id=tid;
-			
-			if dn is not null then
-				-- insert
-				insert into taxon_term (
-					TAXON_NAME_ID,
-					CLASSIFICATION_ID,
-					TERM,
-					TERM_TYPE,
-					SOURCE,
-					LASTDATE
-				) values (
-					tid,
-					r.classification_id,
-					dn,
-					'display_name',
-					src,
-					sysdate
-				);
-			end if;
+			--dbms_output.put_line('inserting: ' || nsn);
 			insert into taxon_term (
 				TAXON_NAME_ID,
 				CLASSIFICATION_ID,
@@ -100,9 +80,30 @@ begin
 				src,
 				sysdate
 			);
-			
+			-- see if we can create display name			
+			select generateDisplayName(r.classification_id) into d from dual;
+			--dbms_output.put_line('d:' || d);
+			if d is not null then
+				-- insert
+				--dbms_output.put_line('inserting: ' || d);
+				insert into taxon_term (
+					TAXON_NAME_ID,
+					CLASSIFICATION_ID,
+					TERM,
+					TERM_TYPE,
+					SOURCE,
+					LASTDATE
+				) values (
+					tid,
+					r.classification_id,
+					d,
+					'display_name',
+					src,
+					sysdate
+				);
+			end if;
 			-- temp log
-			insert into temp_dispnamelog (cid,tid,when) values (r.classification_id,tid,sysdate);
+			--insert into temp_dispnamelog (cid,tid,when) values (r.classification_id,tid,sysdate);
 		end if;
 		-- clean up
 		delete from cf_automaintain_taxonterms where classification_id=r.classification_id;
@@ -111,8 +112,27 @@ end;
 /
 sho err;
 
-
 exec proc_autogen_taxonterms;
+
+
+CREATE OR REPLACE PROCEDURE proc_autogen_taxonterms IS
+	d varchar2(4000);
+begin
+	select generateDisplayName2('10915465') into d from dual;
+	dbms_output.put_line(d);
+	
+end ;
+/
+
+
+
+
+insert into cf_automaintain_taxonterms(CLASSIFICATION_ID) values ('6A6D65CA-E4AB-7B67-4466BB24A47A0985');
+
+
+
+
+
 
 
 select taxon_name_id from taxon_term where classification_id='5A29D2E4-0F5F-FADC-717C73704DA3A902';

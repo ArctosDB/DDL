@@ -42,6 +42,7 @@ CREATE OR REPLACE procedure updateContainer (
        		parent.container_id:=0;
 		end if;
 		
+		
         select * into old_child from container where container_id=v_container_id;
         
         if v_container_type='position' or old_child.container_type='position' then

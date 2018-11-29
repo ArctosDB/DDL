@@ -227,5 +227,8 @@ BEGIN
 --select generateDisplayName('8E59308D-D265-ADDC-46F4860E3027F9C1') from dual;
 
  --select generateDisplayName('1ADFAF35-B80C-E3B7-29DF47F8A5FA241C') from dual;
- select generateDisplayName('5D32220D-B570-F79F-724E21918950855C') from dual;
- 
+-- select generateDisplayName('5D32220D-B570-F79F-724E21918950855C') from dual;
+ select generateDisplayName('10915465') from dual;
+
+ create public synonym generateDisplayName for generateDisplayName;
+ grant execute on generateDisplayName to public;

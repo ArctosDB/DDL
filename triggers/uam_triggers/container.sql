@@ -201,7 +201,7 @@ select min(container_id) from container where container_type='jar';
 alter table container_history add username varchar2(40);
 
 
-CREATE OR REPLACE TRIGGER GET_CONTAINER_HISTORY
+CREATE OR REPLACE TRIGGER GET_CONTAINER_HISTORY stale_see_container_positions.sql
 AFTER UPDATE or insert ON CONTAINER
 FOR EACH ROW
 BEGIN

@@ -82,14 +82,12 @@ COMPOUND TRIGGER
 				parent_container_id,
 				container_type,
 				label,
-				locked_position,
 				institution_acronym)
 			VALUES (
 				sq_container_id.nextval,
 				0,
 				'collection object',
 				label,
-				0,
 				institution_acronym);
 		 	--dbms_output.put_line('made container');
 		    INSERT INTO coll_obj_cont_hist (
@@ -198,14 +196,12 @@ BEGIN
 		parent_container_id,
 		container_type,
 		label,
-		locked_position,
 		institution_acronym)
 	VALUES (
 		sq_container_id.nextval,
 		0,
 		'collection object',
 		label,
-		0,
 		institution_acronym);
 		
     INSERT INTO coll_obj_cont_hist (
@@ -224,7 +220,7 @@ EXCEPTION
     	    -20000, 
     	    'trigger problems: ' || SQLERRM);
 END;
-
+/
 
 
 CREATE OR REPLACE do not use this see compound trigger  TRIGGER SPECIMEN_PART_CT_CHECK
