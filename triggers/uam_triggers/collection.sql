@@ -28,9 +28,9 @@ BEGIN
         VALUES (
             :NEW.collection_id,
             :NEW.collection_id,
-            'PUB_USR_' || upper(:NEW.institution_acronym) || '_' || upper(:NEW.collection_cde),
+            'PUB_USR_' || upper(regexp_replace(c.guid_prefix, ':', '_')),
             'userpw.' || :NEW.collection_id,
-            upper(:NEW.institution_acronym) || '_' || upper(:NEW.collection_cde),
+            upper(regexp_replace(c.guid_prefix, ':', '_')),
             :NEW.collection,
             :NEW.institution,
             :NEW.descr);
