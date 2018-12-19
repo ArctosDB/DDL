@@ -106,6 +106,11 @@ CREATE OR REPLACE FUNCTION isValidTaxonName (name  in varchar)
 		if REGEXP_COUNT(name,'[A-Z]') >1 then
 			return 'Too many uppercase characters';
 		end if;
+		if name like '%incertae sedis%' then
+			return 'Contains incertae sedis';
+		end if;
+		
+		
 		-- if we made it here we can't find any problems
 		return 'valid';
 	end;

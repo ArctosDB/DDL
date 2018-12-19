@@ -185,7 +185,8 @@ from
 	ipt_geology
 where
 	filtered_flat.collection_object_id=specimen_event.collection_object_id (+) and
-	specimen_event.specimen_event_type != 'unaccepted place of collection' and
+	--specimen_event.specimen_event_type != 'unaccepted place of collection' and
+	specimen_event.verificationstatus != 'unaccepted' and
 	specimen_event.collecting_event_id=collecting_event.collecting_event_id (+) and
 	collecting_event.locality_id=locality.locality_id (+) and
 	locality.geog_auth_rec_id=geog_auth_rec.geog_auth_rec_id (+) and
