@@ -28,13 +28,13 @@ CREATE OR REPLACE procedure batchCreateContainer is
         end if;
     
         -- if we made it here, rock on
+        
         insert into container (
 		  CONTAINER_ID,
 		  PARENT_CONTAINER_ID,
 		  CONTAINER_TYPE,
 		  LABEL,
 		  BARCODE,
-		  LOCKED_POSITION,
 		  INSTITUTION_ACRONYM,
 		  DESCRIPTION,
 		  CONTAINER_REMARKS
@@ -45,13 +45,16 @@ CREATE OR REPLACE procedure batchCreateContainer is
 		    CONTAINER_TYPE,
 		    LABEL,
 		    BARCODE,
-		    0,
 		    INSTITUTION_ACRONYM,
 		    DESCRIPTION,
 		    CONTAINER_REMARKS
 		  from
 		    cf_temp_container
-		);	
+		);
+		
+
+ 
+ 
 	end;
 /
 sho err;

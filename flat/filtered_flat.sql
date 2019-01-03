@@ -75,9 +75,10 @@ BEGIN
 	-- see if it's an encumbered record
 	select count(*) into c from flat where encumbrances LIKE '%mask record%' and collection_object_id=collobjid;
 	if c=1 then
-		-- this isn't supposed to be in filtered_flat, just mark as done
+		-- this isn't supposed to be in filtered_flat, delete and mark as done
+		delete from filtered_flat where collection_object_id=collobjid;
 		update flat set stale_flag=2 where collection_object_id=collobjid;
-	--	dbms_output.put_line('all done with isencumbered');
+		--dbms_output.put_line('all done with isencumbered');
 		return;
 	end if;
 	-- see if it's an insert

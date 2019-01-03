@@ -44,6 +44,16 @@ CREATE OR REPLACE FUNCTION isValidTaxonName (name  in varchar)
 		if regexp_like(name,'[^A-Za-z \-\.üë×ö]') then
 			return 'Invalid characters.';
 		end if;
+		if regexp_like(name,'×') then
+			if not regexp_like(name,'^×[A-Z]') then
+				return '× can only occur as first character';
+			end if;
+			if regexp_like(name,'×.*×') then
+				return '× can only occur once as first character';
+			end if;
+		end if;
+				
+		
 		-- no taxa is a single character
 		if length(trim(name)) = 1 then
 			return 'Too short.';
@@ -124,6 +134,11 @@ GRANT execute ON isValidTaxonName TO PUBLIC;
 -- select isValidTaxonName(scientific_name),scientific_name from taxon_name where isValidTaxonName(scientific_name) != 'valid' order by scientific_name;
 -- select scientific_name from taxon_name where isValidTaxonName(scientific_name) != 'valid' order by scientific_name;
 --select isValidTaxonName('Some name var. bla lus. boo') from dual;
-
+/*
 select isValidTaxonName ('Arctos (Euarctos)') from dual;
-
+select isValidTaxonName ('×Arctos') from dual;
+select isValidTaxonName ('Arctos × Awdfa') from dual;
+select isValidTaxonName ('Arctos×') from dual;
+select isValidTaxonName ('×Arctos') from dual;
+select isValidTaxonName ('×Arctos') from dual;
+*/
