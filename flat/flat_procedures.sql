@@ -1,3 +1,19 @@
+-- https://github.com/ArctosDB/arctos/issues/579
+
+create table flat_edit_history (
+	key number not null,
+	collection_object_id number not null,
+	user_p_name varchar2(255) not null,
+	edit_date date not null	
+);
+
+create or replace public synonym flat_edit_history for flat_edit_history;
+
+grant select on flat_edit_history to coldfusion_user;
+
+alter table flat add last_edited_table varchar2(255);
+alter table flat_edit_history add edited_table varchar2(255);
+
 /* 
 	last edit explanation:
 	
@@ -71,12 +87,14 @@ sho err;
 
 CREATE OR REPLACE PROCEDURE is_flat_stale IS 
     aid NUMBER;
+    pan varchar2(255);
 BEGIN
 	FOR r IN (
 		SELECT 
 		    collection_object_id,
 		    lastuser,
-		    lastdate 
+		    lastdate,
+		    last_edited_table
 		FROM 
 		    flat 
 		WHERE 
@@ -84,13 +102,43 @@ BEGIN
 		    ROWNUM < 1500
 	) LOOP
 			BEGIN
-		--dbms_output.put_line(r.collection_object_id);
-		-- update flat_media set stale_fg=1 where collection_object_id = r.collection_object_id;
-		update_flat(r.collection_object_id);
+				if r.lastuser='UAM' then
+					pan:='DBA';
+				else
+					select 
+            			nvl(max(agent.PREFERRED_AGENT_NAME),'unknown') PREFERRED_AGENT_NAME
+					into 
+						pan
+					from
+						agent,
+						agent_name
+					where
+						agent.agent_id=agent_name.agent_id and
+						agent_name.AGENT_NAME_TYPE='login' and
+						upper(agent_name.agent_name)=r.lastuser
+					;
+				end if;
+				insert into flat_edit_history (
+					key,
+					collection_object_id,
+					user_p_name,
+					edit_date,
+					edited_table
+				) values (
+					somerandomsequence.nextval,
+					r.collection_object_id,
+					pan,
+					r.lastdate,
+					r.last_edited_table
+				);
+
+				--dbms_output.put_line(r.collection_object_id);
+				-- update flat_media set stale_fg=1 where collection_object_id = r.collection_object_id;
+				update_flat(r.collection_object_id);
 		
-		--EXCEPTION
-		----    WHEN OTHERS THEN
-		--        NULL;
+				--EXCEPTION
+				----    WHEN OTHERS THEN
+				--        NULL;
 		END;
 		UPDATE flat 
 		SET stale_flag = 0 
@@ -100,6 +148,9 @@ END;
 /
 sho err;
 
+select stale_flag,count(*) from flat group by stale_flag;
+
+select user_p_name || ' : ' ||edited_table || ' @ ' || count(*) from flat_edit_history group by edited_table,user_p_name order by user_p_name,edited_table;
 
 -- time testing
 -- in TEST

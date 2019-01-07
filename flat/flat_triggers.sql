@@ -1,5 +1,12 @@
+ SELECT trigger_name, status FROM user_triggers where trigger_name='';
 
-  CREATE OR REPLACE TRIGGER "UAM"."TRG_SPECIMEN_EVENT_AU_FLAT"
+ 
+ 
+ 
+ 
+ 
+ 
+  CREATE OR REPLACE TRIGGER TRG_SPECIMEN_EVENT_AU_FLAT
     AFTER INSERT OR UPDATE OR DELETE ON SPECIMEN_EVENT
     FOR EACH ROW DECLARE
 	coid NUMBER;
@@ -12,31 +19,11 @@
 	UPDATE flat
 	    SET stale_flag = 1,
 	    lastuser=sys_context('USERENV', 'SESSION_USER'),
-	    lastdate=SYSDATE
+	    lastdate=SYSDATE,
+	    last_edited_table='specimen_event'
 	    WHERE collection_object_id = coid;
     end;
-
-
-
-
-CREATE OR REPLACE TRIGGER TR_BIOLINDIVRELN_AIUD_FLAT
-AFTER INSERT OR UPDATE OR DELETE ON BIOL_INDIV_RELATIONS
-FOR EACH ROW
-DECLARE id NUMBER;
-BEGIN
-    IF deleting THEN 
-        id := :OLD.collection_object_id;
-    ELSE
-        id := :NEW.collection_object_id;
-    END IF;
-        
-    UPDATE flat SET
-        stale_flag = 1,
-        lastuser = sys_context('USERENV', 'SESSION_USER'),
-        lastdate = SYSDATE
-    WHERE collection_object_id = id;
-END;
-
+/
 
 
 
@@ -57,7 +44,8 @@ BEGIN
     END IF;
 	if mr = 'shows cataloged_item' then
 	    UPDATE flat
-		SET stale_flag = 1
+		SET stale_flag = 1,
+	    last_edited_table='media_relations'
 	    WHERE collection_object_id = id;
 	end if;
 END;
@@ -68,7 +56,8 @@ AFTER UPDATE ON collection
 FOR EACH ROW
 BEGIN
 	UPDATE flat
-	SET stale_flag = 1
+	SET stale_flag = 1,
+	   last_edited_table='collection'
     WHERE collection_id = :OLD.collection_id;
 END;
 /
@@ -82,7 +71,8 @@ BEGIN
     	UPDATE flat
     	SET stale_flag = 1,
     	lastuser=sys_context('USERENV', 'SESSION_USER'),
-    	lastdate=SYSDATE
+    	lastdate=SYSDATE,
+	   last_edited_table='accn'
     	WHERE accn_id = :new.transaction_id;
 	END IF;
 END;
@@ -98,7 +88,8 @@ BEGIN
     	 UPDATE flat
     	    SET stale_flag = 1,
         	lastuser=sys_context('USERENV', 'SESSION_USER'),
-        	lastdate=SYSDATE
+        	lastdate=SYSDATE,
+	   last_edited_table='agent'
     	    WHERE collection_object_id in (
     	    	SELECT collection_object_id 
             	FROM collector 
@@ -124,31 +115,13 @@ BEGIN
 	UPDATE flat
 	SET stale_flag = 1,
 	lastuser=sys_context('USERENV', 'SESSION_USER'),
-	lastdate=SYSDATE
+	lastdate=SYSDATE,
+	   last_edited_table='attributes'
 	WHERE collection_object_id = id;
 END;
 /
 
---BIOL_INDIV_RELATIONS
---SELECT dbms_metadata.get_ddl('TRIGGER','TR_BIOLINDIVRELN_AIUD_FLAT') FROM dual;
--- DROPPED at otherID==relations update
-CREATE OR REPLACE TRIGGER TR_BIOLINDIVRELN_AIUD_FLAT
-AFTER INSERT OR UPDATE OR DELETE ON biol_indiv_relations
-FOR EACH ROW
-DECLARE id NUMBER;
-BEGIN
-    IF deleting 
-        THEN id := :OLD.collection_object_id;
-	    ELSE id := :NEW.collection_object_id;
-	END IF;
-	    
-	UPDATE flat
-	SET stale_flag = 1,
-	lastuser=sys_context('USERENV', 'SESSION_USER'),
-	lastdate=SYSDATE
-	WHERE collection_object_id = id;
-END;
-/
+
 
 --CATALOGED_ITEM
 --SELECT dbms_metadata.get_ddl('TRIGGER','TR_CATITEM_AD_FLAT') FROM dual;
@@ -175,7 +148,8 @@ BEGIN
 		collection_id,
 		catalognumbertext,
 		cataloged_item_type,
-		stale_flag)
+		stale_flag,
+		last_edited_table)
 	VALUES (
 		:NEW.collection_object_id,
 		:NEW.cat_num,
@@ -184,7 +158,8 @@ BEGIN
 		:NEW.collection_id,
 		to_char(:NEW.cat_num),
 		:NEW.cataloged_item_type,
-		1);
+		1,
+		'cataloged_item');
 END;
 /
 
@@ -197,7 +172,8 @@ BEGIN
 	UPDATE flat
 	SET stale_flag = 1,
 	lastuser=sys_context('USERENV', 'SESSION_USER'),
-	lastdate=SYSDATE
+	lastdate=SYSDATE,
+	   last_edited_table='cataloged_item'
     WHERE collection_object_id = :OLD.collection_object_id
 	OR collection_object_id = :NEW.collection_object_id;
 END;
@@ -218,7 +194,8 @@ BEGIN
 	UPDATE flat
 	SET stale_flag = 1,
 	lastuser=sys_context('USERENV', 'SESSION_USER'),
-	lastdate=SYSDATE
+	lastdate=SYSDATE,
+	   last_edited_table='citation'
     WHERE collection_object_id = id;
 END;
 /
@@ -232,13 +209,34 @@ BEGIN
 		UPDATE flat
 		SET stale_flag = 1,
 		lastuser=sys_context('USERENV', 'SESSION_USER'),
-		lastdate=SYSDATE
+		lastdate=SYSDATE,
+	   last_edited_table='publication'
 	    WHERE collection_object_id IN (SELECT collection_object_id FROM citation where publication_id = :NEW.publication_id);
 	end if;
 END;
 /
 --COLLECTING_EVENT
 --SELECT dbms_metadata.get_ddl('TRIGGER','TR_COLLEVENT_AU_FLAT') FROM dual;
+
+
+CREATE OR REPLACE TRIGGER TR_COLLEVENT_AU_FLAT AFTER
+	UPDATE ON COLLECTING_EVENT FOR EACH ROW BEGIN
+	UPDATE flat
+		SET stale_flag = 1,
+		lastuser=sys_context('USERENV', 'SESSION_USER'),
+		lastdate=SYSDATE,
+	   last_edited_table='collecting_event'
+		WHERE collection_object_id IN (
+           SELECT collection_object_id FROM specimen_event WHERE collecting_event_id = :NEW.collecting_event_id
+          );
+          
+      if  :NEW.locality_id != :OLD.locality_id then
+		update cache_anygeog set stale_fg=1 where collecting_event_id = :NEW.collecting_event_id;
+	end if;
+END;
+/
+
+/* old
 CREATE OR REPLACE TRIGGER TR_COLLEVENT_AU_FLAT
 	AFTER UPDATE ON collecting_event
 	FOR EACH ROW
@@ -248,7 +246,8 @@ CREATE OR REPLACE TRIGGER TR_COLLEVENT_AU_FLAT
 	SET 
 		stale_flag = 1,
 		lastuser=sys_context('USERENV', 'SESSION_USER'),
-		lastdate=SYSDATE
+		lastdate=SYSDATE,
+	   last_edited_table='collecting_event'
 	WHERE 
 		collecting_event_id = :NEW.collecting_event_id;
 	
@@ -257,7 +256,7 @@ CREATE OR REPLACE TRIGGER TR_COLLEVENT_AU_FLAT
 	end if;
 END;
 /
-
+*/
 --COLLECTOR
 --SELECT dbms_metadata.get_ddl('TRIGGER','TR_COLLECTOR_AIUD_FLAT') FROM dual;
 CREATE OR REPLACE TRIGGER TR_COLLECTOR_AIUD_FLAT
@@ -265,42 +264,33 @@ AFTER INSERT OR UPDATE OR DELETE ON collector
 FOR EACH ROW
 DECLARE 
     id NUMBER;
-    action VARCHAR2(30);
 BEGIN
     IF deleting THEN 
         id := :OLD.collection_object_id;
-        action:='delete collector';
 	ELSE 
 	    id := :NEW.collection_object_id;
-        action:='update or insert collector';
 	END IF;
-	    
-    UPDATE flat	SET stale_flag = 1 WHERE collection_object_id = id;
-	
-	
+	 
+	UPDATE 
+		flat
+	SET 
+		stale_flag = 1,
+		lastuser=sys_context('USERENV', 'SESSION_USER'),
+		lastdate=SYSDATE,
+	   last_edited_table='collector'
+	    WHERE collection_object_id  = id;
 
-	INSERT INTO edit_history (
-	    collection_object_id,
-	    lastuser,
-	    lastdate,
-	    edited_from_table,
-	    pushed_to_flat
-	) VALUES (
-	    id,
-	    sys_context('USERENV', 'SESSION_USER'),
-	    SYSDATE,
-	    action,
-	    0
-	);
-	
 END;
 /
+sho err;
+
 
 --COLL_OBJECT
 --SELECT dbms_metadata.get_ddl('TRIGGER','TR_COLLOBJECT_AIU_FLAT') FROM dual;
 
- SELECT trigger_name, status FROM user_triggers where trigger_name='';
- 
+
+
+
  
 CREATE OR REPLACE TRIGGER TR_COLLOBJECT_AIU_FLAT
 AFTER INSERT OR UPDATE ON coll_object
@@ -310,12 +300,10 @@ BEGIN
 		UPDATE flat
 		SET stale_flag = 1,
     	lastuser=sys_context('USERENV', 'SESSION_USER'),
-    	lastdate=SYSDATE
+    	lastdate=SYSDATE,
+	   last_edited_table='coll_object'
         WHERE collection_object_id = :NEW.collection_object_id;
-        
       
-	
-	
 	END LOOP;
 END;
 /
@@ -336,10 +324,37 @@ BEGIN
 	UPDATE flat
 	SET stale_flag = 1,
 	lastuser=sys_context('USERENV', 'SESSION_USER'),
-	lastdate=SYSDATE
+	lastdate=SYSDATE,
+	   last_edited_table='coll_object_encumbrance'
 	WHERE collection_object_id = id;
 END;
 /
+
+
+
+CREATE OR REPLACE TRIGGER TR_ENCUMBRANCE_AIUD_FLAT
+AFTER INSERT OR UPDATE OR DELETE ON encumbrance
+FOR EACH ROW
+DECLARE id NUMBER;
+BEGIN
+
+    IF deleting
+        THEN id := :OLD.encumbrance_id;
+        ELSE id := :NEW.encumbrance_id;
+    END IF;
+	
+    -- no need to fire if we're just changing remarks etc.
+    if :NEW.EXPIRATION_DATE != :OLD.EXPIRATION_DATE or :NEW.ENCUMBRANCE_ACTION != :OLD.ENCUMBRANCE_ACTION then
+	    UPDATE flat
+	    SET stale_flag = 1,
+	    lastuser = sys_context('USERENV', 'SESSION_USER'),
+	    lastdate = SYSDATE,
+	   last_edited_table='encumbrance'
+	    WHERE collection_object_id in (select collection_object_id from coll_object_encumbrance where encumbrance_id = id);
+	end if;
+END;
+/
+sho err;
 
 --COLL_OBJECT_REMARK
 --SELECT dbms_metadata.get_ddl('TRIGGER','TR_COLLOBJREM_AIUD_FLAT') FROM dual;
@@ -356,7 +371,8 @@ BEGIN
 	UPDATE flat
 	SET stale_flag = 1,
 	lastuser=sys_context('USERENV', 'SESSION_USER'),
-	lastdate=SYSDATE
+	lastdate=SYSDATE,
+	   last_edited_table='coll_object_remark'
 	WHERE collection_object_id = id;
 END;
 /
@@ -376,7 +392,8 @@ BEGIN
 	UPDATE flat
 	SET stale_flag = 1,
 	lastuser=sys_context('USERENV', 'SESSION_USER'),
-	lastdate=SYSDATE
+	lastdate=SYSDATE,
+	   last_edited_table='coll_obj_other_id_num'
     WHERE collection_object_id = id;
 END;
 /
@@ -394,7 +411,8 @@ BEGIN
 		UPDATE flat
 		SET stale_flag = 1,
 		lastuser=sys_context('USERENV', 'SESSION_USER'),
-		lastdate=SYSDATE
+		lastdate=SYSDATE,
+	   last_edited_table='geog_auth_rec'
 	    WHERE geog_auth_rec_id = :NEW.geog_auth_rec_id;
 	end if;
 END;
@@ -424,7 +442,8 @@ BEGIN
     	UPDATE flat
 	    SET stale_flag = 1,
     	lastuser=sys_context('USERENV', 'SESSION_USER'),
-    	lastdate=SYSDATE
+    	lastdate=SYSDATE,
+	   last_edited_table='identification'
 		WHERE collection_object_id = :NEW.collection_object_id;
     END IF;
 END;
@@ -445,7 +464,8 @@ BEGIN
     UPDATE flat
     SET stale_flag = 1,
 	lastuser=sys_context('USERENV', 'SESSION_USER'),
-	lastdate=SYSDATE
+	lastdate=SYSDATE,
+	   last_edited_table='identification_agent'
 	WHERE identification_id = id; 
 END;
 /
@@ -465,7 +485,8 @@ BEGIN
     UPDATE flat
     SET stale_flag = 1,
 	lastuser=sys_context('USERENV', 'SESSION_USER'),
-	lastdate=SYSDATE
+	lastdate=SYSDATE,
+	   last_edited_table='identification_taxonomy'
 	WHERE identification_id = id; 
 END;
 /
@@ -501,7 +522,8 @@ BEGIN
 		UPDATE flat
 	    SET stale_flag = 1,
 		lastuser=sys_context('USERENV', 'SESSION_USER'),
-		lastdate=SYSDATE
+		lastdate=SYSDATE,
+	   last_edited_table='locality'
 	    WHERE locality_id = :NEW.locality_id;
 	    
 	    
@@ -527,7 +549,8 @@ BEGIN
 	UPDATE flat
 	SET stale_flag = 1,
 	lastuser=sys_context('USERENV', 'SESSION_USER'),
-	lastdate=SYSDATE
+	lastdate=SYSDATE,
+	   last_edited_table='specimen_part'
 	WHERE collection_object_id = id;
 END;
 /
@@ -548,8 +571,57 @@ BEGIN
 	UPDATE flat
 	SET stale_flag = 1,
 	lastuser=sys_context('USERENV', 'SESSION_USER'),
-	lastdate=SYSDATE
+	lastdate=SYSDATE,
+	   last_edited_table='specimen_part_attribute'
 	WHERE collection_object_id = cid;
 END;
 /
 sho err;
+
+
+
+
+
+/*
+CREATE OR REPLACE TRIGGER TR_BIOLINDIVRELN_AIUD_FLAT
+AFTER INSERT OR UPDATE OR DELETE ON BIOL_INDIV_RELATIONS
+FOR EACH ROW
+DECLARE id NUMBER;
+BEGIN
+    IF deleting THEN 
+        id := :OLD.collection_object_id;
+    ELSE
+        id := :NEW.collection_object_id;
+    END IF;
+        
+    UPDATE flat SET
+        stale_flag = 1,
+        lastuser = sys_context('USERENV', 'SESSION_USER'),
+        lastdate = SYSDATE,
+	    last_edited_table='SPECIMEN_EVENT'
+    WHERE collection_object_id = id;
+END;
+
+--BIOL_INDIV_RELATIONS
+--SELECT dbms_metadata.get_ddl('TRIGGER','TR_BIOLINDIVRELN_AIUD_FLAT') FROM dual;
+-- DROPPED at otherID==relations update
+CREATE OR REPLACE TRIGGER TR_BIOLINDIVRELN_AIUD_FLAT
+AFTER INSERT OR UPDATE OR DELETE ON biol_indiv_relations
+FOR EACH ROW
+DECLARE id NUMBER;
+BEGIN
+    IF deleting 
+        THEN id := :OLD.collection_object_id;
+	    ELSE id := :NEW.collection_object_id;
+	END IF;
+	    
+	UPDATE flat
+	SET stale_flag = 1,
+	lastuser=sys_context('USERENV', 'SESSION_USER'),
+	lastdate=SYSDATE
+	WHERE collection_object_id = id;
+END;
+/
+
+*/
+
