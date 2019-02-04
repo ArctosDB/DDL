@@ -21,6 +21,8 @@ create table cf_report_cache (
 
 create public synonym  cf_report_cache for cf_report_cache;
 
+grant select on cf_report_cache to coldfusion_user;
+
 create unique index pk_cf_report_cache on cf_report_cache (cf_report_cache_id) tablespace uam_idx_1;
 
 
@@ -32,6 +34,20 @@ CREATE OR REPLACE TRIGGER tr_cf_report_cache_bi before insert ON cf_report_cache
    end;
 /
 
+
+
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+    job_name    => 'J_temp_update_junk',
+    job_type    => 'STORED_PROCEDURE',
+    job_action    => 'report_cache.rpt_cache_runall',
+    enabled     => TRUE,
+    end_date    => NULL
+  );
+END;
+/ 
+ * 
+ * 
 sho err;
 
 
@@ -293,7 +309,7 @@ PROCEDURE rpt_cache_s_anno IS
 			) values (
 				x.guid_prefix,
 				'bare_names',
-				'x',
+				'https://github.com/ArctosDB/arctos/issues/1894',
 				'Used taxa with no preferred classification',
 				to_char(sysdate,'YYYY-MM-DD'),
 				x.c || ' taxa are used by ' || x.guid_prefix || ' and do not have a preferred classification. NOTE: Contact a DBA for a report of names; there is no appropriate form.'
@@ -381,10 +397,55 @@ PROCEDURE rpt_cache_s_anno IS
 			) values (
 				x.guid_prefix,
 				'part_disposition',
-				'x',
+				'https://github.com/ArctosDB/arctos/issues',
 				'Parts entered more than 365 days ago with disposition being processed',
 				to_char(sysdate,'YYYY-MM-DD'),
-				x.c || ' parts in ' || x.guid_prefix || ' were entered more than 365 days ago with disposition being processed. NOTE:  Contact a DBA for a report of parts; there is no appropriate form.'
+				x.c || ' parts in ' || x.guid_prefix || ' were entered more than 365 days ago with disposition being processed. NOTE:  File an Issue for a report of parts; there is no appropriate form.'
+			);
+		end loop;
+	end;
+	
+	PROCEDURE rpt_cache_genbank_no_loan IS
+	BEGIN
+		delete from cf_report_cache where report_name='genbank_no_loan';
+		for x in (
+			select
+				collection.guid_prefix,
+				collection.collection_id,
+				count(*) c
+			from
+				collection,
+				cataloged_item,
+				coll_obj_other_id_num
+			where
+				collection.collection_id=cataloged_item.collection_id and
+				cataloged_item.collection_object_id=coll_obj_other_id_num.collection_object_id and
+				coll_obj_other_id_num.other_id_type='GenBank' and
+				cataloged_item.collection_object_id not in (
+      				-- data loans
+  					select collection_object_id from loan_item
+  					-- real loans
+					union
+					select derived_from_cat_item from specimen_part,loan_item where specimen_part.collection_object_id=loan_item.collection_object_id
+   			)
+ 			group by 
+ 				collection.guid_prefix,
+				collection.collection_id
+ 		) loop
+			insert into cf_report_cache (
+				guid_prefix,
+				report_name,
+				report_URL,
+				report_descr,
+				report_date,
+				summary_data
+			) values (
+				x.guid_prefix,
+				'genbank_no_loan',
+				'/info/undocumentedCitations.cfm?action=genbanknocite&collectionid=' || x.collection_id,
+				'Specimens with GenBank numbers and no loan history',
+				to_char(sysdate,'YYYY-MM-DD'),
+				x.c || ' ' || x.guid_prefix || ' specimens have GenBank numbers and do not have a loan history.'
 			);
 		end loop;
 	end;
@@ -400,6 +461,7 @@ PROCEDURE rpt_cache_s_anno IS
 		rpt_cache_sciname_nocl;
 		--rpt_cache_locsrvcmp
 		rpt_cache_oldpartdisr;
+		rpt_cache_genbank_no_loan;
 		
 	end;
 ---------------------------------------------------------------------------------------------------------------------------------------------
