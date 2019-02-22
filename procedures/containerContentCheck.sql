@@ -169,7 +169,7 @@ CREATE OR REPLACE procedure containerContentCheck (
 			 	new_child.container_type='legacy container' or 
 			 	parent.container_type='unknown' or 
 			 	new_child.container_type='unknown' then
-				msg := msg || sep || '"unknown" and "legacy container" may not be moved.';
+				msg := msg || sep || '"unknown" and "legacy container" may not be moved (ParentBarcode: ' || parent.barcode || '; ChildBarcode: ' || new_child.barcode || ').';
 				sep:='; ';
 			END IF;
 		end if; -- end parent = 0 check

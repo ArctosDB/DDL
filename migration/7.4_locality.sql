@@ -290,7 +290,7 @@ grant select on locality_archive to public;
 
 CREATE OR REPLACE TRIGGER trg_locality_archive
 	-- only care if there's been a successful change
-	after UPDATE ON locality
+	after insert or UPDATE ON locality
     FOR EACH ROW
     	declare nkey number;
     BEGIN
@@ -299,78 +299,130 @@ CREATE OR REPLACE TRIGGER trg_locality_archive
 	    -- actions
 	    -- NULL never equals NULL so need NVL
 	    --dbms_output.put_line('trg_locality_archive is firing');
-	    if 
-	    	:NEW.geog_auth_rec_id != :OLD.geog_auth_rec_id or
-	    	nvl(:NEW.spec_locality,'NULL') != nvl(:OLD.spec_locality,'NULL') or
-	    	nvl(:NEW.DEC_LAT,0) != nvl(:OLD.DEC_LAT,0) or	
-	    	nvl(:NEW.DEC_LONG,0) != nvl(:OLD.DEC_LONG,0) or
-	    	nvl(:NEW.MINIMUM_ELEVATION,0) != nvl(:OLD.MINIMUM_ELEVATION,0) or
-	    	nvl(:NEW.MAXIMUM_ELEVATION,0) != nvl(:OLD.MAXIMUM_ELEVATION,0) or
-	    	nvl(:NEW.ORIG_ELEV_UNITS,'NULL') != nvl(:OLD.ORIG_ELEV_UNITS,'NULL') or
-	    	nvl(:NEW.MIN_DEPTH,0) != nvl(:OLD.MIN_DEPTH,0) or
-	    	nvl(:NEW.MAX_DEPTH,0) != nvl(:OLD.MAX_DEPTH,0) or
-	    	nvl(:NEW.DEPTH_UNITS,'NULL') != nvl(:OLD.DEPTH_UNITS,'NULL') or
-	    	nvl(:NEW.MAX_ERROR_DISTANCE,0) != nvl(:OLD.MAX_ERROR_DISTANCE,0) or
-	    	nvl(:NEW.MAX_ERROR_UNITS,'NULL') != nvl(:OLD.MAX_ERROR_UNITS,'NULL') or
-	    	nvl(:NEW.DATUM,'NULL') != nvl(:OLD.DATUM,'NULL') or
-	    	nvl(:NEW.LOCALITY_REMARKS,'NULL') != nvl(:OLD.LOCALITY_REMARKS,'NULL') or
-	    	nvl(:NEW.GEOREFERENCE_SOURCE,'NULL') != nvl(:OLD.GEOREFERENCE_SOURCE,'NULL') or
-	    	nvl(:NEW.GEOREFERENCE_PROTOCOL,'NULL') != nvl(:OLD.GEOREFERENCE_PROTOCOL,'NULL') or
-	    	nvl(:NEW.LOCALITY_NAME,'NULL') != nvl(:OLD.LOCALITY_NAME,'NULL') or
-	    	dbms_lob.compare(nvl(:NEW.WKT_POLYGON,'NULL'),nvl(:OLD.WKT_POLYGON,'NULL')) != 0	
-	    	then
-	    		--dbms_output.put_line('got change');  
-	    		 -- now just grab all of the :OLD values
-		        -- :NEWs are current data in locality, no need to do anything with them
-		        insert into locality_archive (
-				 	locality_archive_id,
-				 	locality_id,
-				 	geog_auth_rec_id,
-				 	spec_locality,
-				 	DEC_LAT,
-				 	DEC_LONG,
-					MINIMUM_ELEVATION,
-					MAXIMUM_ELEVATION,
-					ORIG_ELEV_UNITS,
-					MIN_DEPTH,
-					MAX_DEPTH,
-					DEPTH_UNITS,
-					MAX_ERROR_DISTANCE,
-					MAX_ERROR_UNITS,
-					DATUM,
-					LOCALITY_REMARKS,
-					GEOREFERENCE_SOURCE,
-					GEOREFERENCE_PROTOCOL,
-					LOCALITY_NAME,
-				 	WKT_POLYGON,
-				 	whodunit,
-				 	changedate
-				 ) values (
-				 	sq_locality_archive_id.nextval,
-				 	:OLD.locality_id,
-				 	:OLD.geog_auth_rec_id,
-				 	:OLD.spec_locality,
-				 	:OLD.DEC_LAT,
-				 	:OLD.DEC_LONG,
-					:OLD.MINIMUM_ELEVATION,
-					:OLD.MAXIMUM_ELEVATION,
-					:OLD.ORIG_ELEV_UNITS,
-					:OLD.MIN_DEPTH,
-					:OLD.MAX_DEPTH,
-					:OLD.DEPTH_UNITS,
-					:OLD.MAX_ERROR_DISTANCE,
-					:OLD.MAX_ERROR_UNITS,
-					:OLD.DATUM,
-					:OLD.LOCALITY_REMARKS,
-					:OLD.GEOREFERENCE_SOURCE,
-					:OLD.GEOREFERENCE_PROTOCOL,
-					:OLD.LOCALITY_NAME,
-				 	:OLD.WKT_POLYGON,
-				 	sys_context('USERENV', 'SESSION_USER'),
-				 	sysdate
-				 );
-				--dbms_output.put_line('logged OLD values');  
-	    end if;
+	    if updating then
+		    if 
+		    	:NEW.geog_auth_rec_id != :OLD.geog_auth_rec_id or
+		    	nvl(:NEW.spec_locality,'NULL') != nvl(:OLD.spec_locality,'NULL') or
+		    	nvl(:NEW.DEC_LAT,0) != nvl(:OLD.DEC_LAT,0) or	
+		    	nvl(:NEW.DEC_LONG,0) != nvl(:OLD.DEC_LONG,0) or
+		    	nvl(:NEW.MINIMUM_ELEVATION,0) != nvl(:OLD.MINIMUM_ELEVATION,0) or
+		    	nvl(:NEW.MAXIMUM_ELEVATION,0) != nvl(:OLD.MAXIMUM_ELEVATION,0) or
+		    	nvl(:NEW.ORIG_ELEV_UNITS,'NULL') != nvl(:OLD.ORIG_ELEV_UNITS,'NULL') or
+		    	nvl(:NEW.MIN_DEPTH,0) != nvl(:OLD.MIN_DEPTH,0) or
+		    	nvl(:NEW.MAX_DEPTH,0) != nvl(:OLD.MAX_DEPTH,0) or
+		    	nvl(:NEW.DEPTH_UNITS,'NULL') != nvl(:OLD.DEPTH_UNITS,'NULL') or
+		    	nvl(:NEW.MAX_ERROR_DISTANCE,0) != nvl(:OLD.MAX_ERROR_DISTANCE,0) or
+		    	nvl(:NEW.MAX_ERROR_UNITS,'NULL') != nvl(:OLD.MAX_ERROR_UNITS,'NULL') or
+		    	nvl(:NEW.DATUM,'NULL') != nvl(:OLD.DATUM,'NULL') or
+		    	nvl(:NEW.LOCALITY_REMARKS,'NULL') != nvl(:OLD.LOCALITY_REMARKS,'NULL') or
+		    	nvl(:NEW.GEOREFERENCE_SOURCE,'NULL') != nvl(:OLD.GEOREFERENCE_SOURCE,'NULL') or
+		    	nvl(:NEW.GEOREFERENCE_PROTOCOL,'NULL') != nvl(:OLD.GEOREFERENCE_PROTOCOL,'NULL') or
+		    	nvl(:NEW.LOCALITY_NAME,'NULL') != nvl(:OLD.LOCALITY_NAME,'NULL') or
+		    	dbms_lob.compare(nvl(:NEW.WKT_POLYGON,'NULL'),nvl(:OLD.WKT_POLYGON,'NULL')) != 0	
+		    	then
+		    		--dbms_output.put_line('got change');  
+		    		 -- now just grab all of the :OLD values
+			        -- :NEWs are current data in locality, no need to do anything with them
+			        insert into locality_archive (
+					 	locality_archive_id,
+					 	locality_id,
+					 	geog_auth_rec_id,
+					 	spec_locality,
+					 	DEC_LAT,
+					 	DEC_LONG,
+						MINIMUM_ELEVATION,
+						MAXIMUM_ELEVATION,
+						ORIG_ELEV_UNITS,
+						MIN_DEPTH,
+						MAX_DEPTH,
+						DEPTH_UNITS,
+						MAX_ERROR_DISTANCE,
+						MAX_ERROR_UNITS,
+						DATUM,
+						LOCALITY_REMARKS,
+						GEOREFERENCE_SOURCE,
+						GEOREFERENCE_PROTOCOL,
+						LOCALITY_NAME,
+					 	WKT_POLYGON,
+					 	whodunit,
+					 	changedate
+					 ) values (
+					 	sq_locality_archive_id.nextval,
+					 	:OLD.locality_id,
+					 	:OLD.geog_auth_rec_id,
+					 	:OLD.spec_locality,
+					 	:OLD.DEC_LAT,
+					 	:OLD.DEC_LONG,
+						:OLD.MINIMUM_ELEVATION,
+						:OLD.MAXIMUM_ELEVATION,
+						:OLD.ORIG_ELEV_UNITS,
+						:OLD.MIN_DEPTH,
+						:OLD.MAX_DEPTH,
+						:OLD.DEPTH_UNITS,
+						:OLD.MAX_ERROR_DISTANCE,
+						:OLD.MAX_ERROR_UNITS,
+						:OLD.DATUM,
+						:OLD.LOCALITY_REMARKS,
+						:OLD.GEOREFERENCE_SOURCE,
+						:OLD.GEOREFERENCE_PROTOCOL,
+						:OLD.LOCALITY_NAME,
+					 	:OLD.WKT_POLYGON,
+					 	sys_context('USERENV', 'SESSION_USER'),
+					 	sysdate
+					 );
+					--dbms_output.put_line('logged OLD values');  
+		    end if;
+		end if;
+		if inserting then
+			 insert into locality_archive (
+			 	locality_archive_id,
+			 	locality_id,
+			 	geog_auth_rec_id,
+			 	spec_locality,
+			 	DEC_LAT,
+			 	DEC_LONG,
+				MINIMUM_ELEVATION,
+				MAXIMUM_ELEVATION,
+				ORIG_ELEV_UNITS,
+				MIN_DEPTH,
+				MAX_DEPTH,
+				DEPTH_UNITS,
+				MAX_ERROR_DISTANCE,
+				MAX_ERROR_UNITS,
+				DATUM,
+				LOCALITY_REMARKS,
+				GEOREFERENCE_SOURCE,
+				GEOREFERENCE_PROTOCOL,
+				LOCALITY_NAME,
+			 	WKT_POLYGON,
+			 	whodunit,
+			 	changedate
+			 ) values (
+			 	sq_locality_archive_id.nextval,
+			 	:NEW.locality_id,
+			 	:NEW.geog_auth_rec_id,
+			 	:NEW.spec_locality,
+			 	:NEW.DEC_LAT,
+			 	:NEW.DEC_LONG,
+				:NEW.MINIMUM_ELEVATION,
+				:NEW.MAXIMUM_ELEVATION,
+				:NEW.ORIG_ELEV_UNITS,
+				:NEW.MIN_DEPTH,
+				:NEW.MAX_DEPTH,
+				:NEW.DEPTH_UNITS,
+				:NEW.MAX_ERROR_DISTANCE,
+				:NEW.MAX_ERROR_UNITS,
+				:NEW.DATUM,
+				:NEW.LOCALITY_REMARKS,
+				:NEW.GEOREFERENCE_SOURCE,
+				:NEW.GEOREFERENCE_PROTOCOL,
+				:NEW.LOCALITY_NAME,
+			 	:NEW.WKT_POLYGON,
+			 	sys_context('USERENV', 'SESSION_USER'),
+			 	sysdate
+			 );
+		
+		end if;
   end;
 /
 sho err;

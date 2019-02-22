@@ -22,7 +22,15 @@ CREATE OR REPLACE procedure createContainer (
 		parent_notposition_count  number;
 		parent_number_positions number;
 		parent_position_orientation varchar2(255);
+		parent_container_type varchar2(255);
     begin
+	    -- make sure the parent isn't a label
+	    if v_parent_container_id is not null and v_parent_container_id > 0 then
+		    select container_type into parent_container_type from container where container_id=v_parent_container_id;
+		    if instr(parent_container_type,'label') > 0 then
+	        	 raise_application_error(-20000, 'Labels may not be parents.');
+	        end if;
+	    end if;
         -- only insert things that need no verification; do not put containers in parents EXCEPT positions
         if v_container_type not like '%position' and v_parent_container_id != 0 then
         	 raise_application_error(-20000, 'Only "%position" containers may be created with parents.');

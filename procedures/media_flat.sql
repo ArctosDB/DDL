@@ -218,12 +218,13 @@ BEGIN
         SELECT media_id from (
       		SELECT media_id,lastdate
           	FROM media_flat
-           	WHERE (lastdate IS NULL OR ((SYSDATE - lastdate) > 1))
+           	WHERE
+           	(lastdate IS NULL OR ((SYSDATE - lastdate) > 1))
           	order by lastdate desc
         ) where ROWNUM <= 10000
     ) LOOP
         begin
-            kw := '';
+	        kw := '';
             ksep:='';
             lsep:='';
             rsep:='';
@@ -269,7 +270,6 @@ BEGIN
                 where media_id = m.media_id
             ) LOOP
                 tabl := SUBSTR(r.media_relationship, instr(r.media_relationship, ' ', -1) + 1);
-                --dbms_output.put_line('table ' || tabl);
                 case tabl
                     when 'locality' then
                         select 
@@ -481,6 +481,7 @@ BEGIN
                    rsep := '|';
                 END IF;
             END LOOP; 
+            
             FOR l IN (
                 SELECT 
                     media_label,
@@ -491,10 +492,8 @@ BEGIN
                     media_id=m.media_id
             ) LOOP
                 lv:=l.media_label || '==' || l.label_value;
-
                 kwt:=regexp_replace(lv, '<[^<]+>', '');
                 tn:=nvl(length(kw),0) + nvl(length(kwt),0) + 20;
-
                 if (l.media_label='description') then
                     a_descr:= regexp_replace(l.label_value,'<[^<]+>','');
                 end if;
@@ -613,6 +612,12 @@ BEGIN
 END;
 /
 sho err;
+
+
+exec set_media_flat;
+
+
+
 
 
 

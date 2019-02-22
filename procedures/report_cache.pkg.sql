@@ -1,14 +1,6 @@
 
 /*
 
-exec report_cache.rpt_cache_runall;
-
-select * from cf_report_cache;
-
-delete from cf_report_cache;
-
-
-
 create table cf_report_cache (
 	cf_report_cache_id number not null,
 	guid_prefix varchar2(255),
@@ -34,31 +26,71 @@ CREATE OR REPLACE TRIGGER tr_cf_report_cache_bi before insert ON cf_report_cache
    end;
 /
 
+-- table to keep track of running these
 
+drop table cf_report_cache_control;
 
+create table cf_report_cache_control (
+	proc_name varchar2(255) not null,
+	last_run date not null
+);
+
+-- INIT: insert for every procedure in the package
+
+insert into cf_report_cache_control (proc_name,last_run) values ('rpt_cache_loan',sysdate);
+insert into cf_report_cache_control (proc_name,last_run) values ('rpt_cache_s_anno',sysdate);
+insert into cf_report_cache_control (proc_name,last_run) values ('rpt_cache_prj_anno',sysdate);
+insert into cf_report_cache_control (proc_name,last_run) values ('rpt_cache_tax_anno',sysdate);
+insert into cf_report_cache_control (proc_name,last_run) values ('rpt_cache_pub_anno',sysdate);
+insert into cf_report_cache_control (proc_name,last_run) values ('rpt_cache_sciname_nocl',sysdate);
+insert into cf_report_cache_control (proc_name,last_run) values ('rpt_cache_oldpartdisr',sysdate);
+insert into cf_report_cache_control (proc_name,last_run) values ('rpt_cache_genbank_no_loan',sysdate);
+insert into cf_report_cache_control (proc_name,last_run) values ('rpt_cache_genbank_no_cite',sysdate);
+insert into cf_report_cache_control (proc_name,last_run) values ('rpt_cache_cite_no_loan',sysdate);
+  
+
+-- run a job every day for now
+  
 BEGIN
-  DBMS_SCHEDULER.CREATE_JOB (
-    job_name    => 'J_temp_update_junk',
-    job_type    => 'STORED_PROCEDURE',
-    job_action    => 'report_cache.rpt_cache_runall',
-    enabled     => TRUE,
-    end_date    => NULL
-  );
+	DBMS_SCHEDULER.CREATE_JOB (
+		job_name		=> 'j_cf_report_cache',
+		job_type		=> 'STORED_PROCEDURE',
+		job_action		=> 'report_cache.rpt_cache_runone',
+		start_date		=> systimestamp,
+		repeat_interval	=> 'freq=daily; byhour=2; byminute=19',
+		enabled			=> TRUE,
+		end_date		=> NULL,
+		comments		=> 'refresh cf_report_cache');
 END;
 / 
- * 
- * 
-sho err;
+
+
 
 
  */
-set define off;
 
 CREATE OR REPLACE PACKAGE report_cache as
-  PROCEDURE rpt_cache_runall;
+  procedure rpt_cache_runone;
+  PROCEDURE rpt_cache_loan;
+  PROCEDURE rpt_cache_s_anno;
+  PROCEDURE rpt_cache_prj_anno;
+  PROCEDURE rpt_cache_tax_anno;
+  PROCEDURE rpt_cache_pub_anno;
+  PROCEDURE rpt_cache_sciname_nocl;
+  --PROCEDURE rpt_cache_locsrvcmp;
+  PROCEDURE rpt_cache_oldpartdisr;
+  PROCEDURE rpt_cache_genbank_no_loan;
+  PROCEDURE rpt_cache_genbank_no_cite;
+  PROCEDURE rpt_cache_cite_no_loan;
 END;
 /
 
+
+
+PROCEDURE rpt_cache_runall;
+  
+  
+set define off;  
 CREATE OR REPLACE PACKAGE BODY report_cache as
 	------------------------------------------------------------------------------------------------------------------------------------------
  PROCEDURE rpt_cache_loan IS
@@ -77,7 +109,7 @@ CREATE OR REPLACE PACKAGE BODY report_cache as
 			loan.transaction_id=trans.transaction_id and
 			trans.collection_id=collection.collection_id and
 			loan.loan_status != 'closed' and
-			(loan.RETURN_DUE_DATE is null or loan.RETURN_DUE_DATE > sysdate)
+			loan.RETURN_DUE_DATE < sysdate
 		group by
 			collection.guid_prefix,
 			collection.collection_id
@@ -312,7 +344,7 @@ PROCEDURE rpt_cache_s_anno IS
 				'https://github.com/ArctosDB/arctos/issues/1894',
 				'Used taxa with no preferred classification',
 				to_char(sysdate,'YYYY-MM-DD'),
-				x.c || ' taxa are used by ' || x.guid_prefix || ' and do not have a preferred classification. NOTE: Contact a DBA for a report of names; there is no appropriate form.'
+				x.c || ' taxa are used by ' || x.guid_prefix || ' and do not have a preferred classification. '
 			);
 		end loop;
 	end;
@@ -449,20 +481,108 @@ PROCEDURE rpt_cache_s_anno IS
 			);
 		end loop;
 	end;
+	
+	
+	PROCEDURE rpt_cache_genbank_no_cite IS
+	BEGIN
+		delete from cf_report_cache where report_name='genbank_no_cite';
+		for x in (
+			select
+				collection.guid_prefix,
+				collection.collection_id,
+				count(*) c
+			from
+				collection,
+				cataloged_item,
+				coll_obj_other_id_num
+			where
+				collection.collection_id=cataloged_item.collection_id and
+				cataloged_item.collection_object_id=coll_obj_other_id_num.collection_object_id and
+				coll_obj_other_id_num.other_id_type='GenBank' and
+				cataloged_item.collection_object_id not in (
+      				select collection_object_id from citation
+      			)
+ 			group by 
+ 				collection.guid_prefix,
+				collection.collection_id
+ 		) loop
+			insert into cf_report_cache (
+				guid_prefix,
+				report_name,
+				report_URL,
+				report_descr,
+				report_date,
+				summary_data
+			) values (
+				x.guid_prefix,
+				'genbank_no_cite',
+				'/info/undocumentedCitations.cfm?action=genbanknocite&collectionid=' || x.collection_id,
+				'Specimens with GenBank numbers and no citation',
+				to_char(sysdate,'YYYY-MM-DD'),
+				x.c || ' ' || x.guid_prefix || ' specimens have GenBank numbers and do not have a citation.'
+			);
+		end loop;
+	end;
+	
+	
+	
+	PROCEDURE rpt_cache_cite_no_loan IS
+	BEGIN
+		delete from cf_report_cache where report_name='cite_no_loan';
+		for x in (
+			select
+				collection.guid_prefix,
+				collection.collection_id,
+				count(*) c
+			from
+				collection,
+				cataloged_item,
+				citation
+			where
+				collection.collection_id=cataloged_item.collection_id and
+				cataloged_item.collection_object_id=citation.collection_object_id and
+				cataloged_item.collection_object_id not in (
+      				-- data loans
+				    select collection_object_id from loan_item
+				    -- real loans
+				    union
+					select derived_from_cat_item from specimen_part,loan_item where specimen_part.collection_object_id=loan_item.collection_object_id
+				)
+ 			group by 
+ 				collection.guid_prefix,
+				collection.collection_id
+ 		) loop
+			insert into cf_report_cache (
+				guid_prefix,
+				report_name,
+				report_URL,
+				report_descr,
+				report_date,
+				summary_data
+			) values (
+				x.guid_prefix,
+				'cite_no_loan',
+				'/info/undocumentedCitations.cfm?action=citsnoloan&collectionid=' || x.collection_id,
+				'Specimens with citations and no loan history.',
+				to_char(sysdate,'YYYY-MM-DD'),
+				x.c || ' ' || x.guid_prefix || ' specimens have citations and do not have a loan history.'
+			);
+		end loop;
+	end;
+				    
 	-------
 	-- this has to be last because Oracle is weird
-	 PROCEDURE rpt_cache_runall IS
+	
+	 PROCEDURE rpt_cache_runone IS
+	 	rpt varchar2(255);
+	 	v_sql varchar2(4000);
 	BEGIN
-		rpt_cache_loan;
-		rpt_cache_s_anno;
-		rpt_cache_prj_anno;
-		rpt_cache_tax_anno;
-		rpt_cache_pub_anno;
-		rpt_cache_sciname_nocl;
-		--rpt_cache_locsrvcmp
-		rpt_cache_oldpartdisr;
-		rpt_cache_genbank_no_loan;
-		
+		select max(proc_name) into rpt from cf_report_cache_control where  last_run=(select min(last_run) from cf_report_cache_control);
+		v_sql:='begin report_cache.' || rpt || '; end;';
+		--dbms_output.put_line('v_sql ' || v_sql);
+		--dbms_output.put_line('running ' || rpt);
+		execute immediate (v_sql);
+		update cf_report_cache_control set last_run=sysdate where proc_name=rpt;
 	end;
 ---------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -474,16 +594,16 @@ sho err;
 
 
 
+-- exec report_cache.rpt_cache_genbank_no_cite;
+-- exec report_cache.rpt_cache_cite_no_loan;
+-- exec report_cache.rpt_cache_runone	;	
 
 
 
 
 
 
-
-
-
-
+--select max(report_date) from cf_report_cache where report_name ='taxonomy_annotation';
 
 
 
