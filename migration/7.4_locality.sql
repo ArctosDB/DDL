@@ -252,6 +252,12 @@ sho err;
  -- exclude the service-derived stuff
  -- add who/when
  
+ -- add key to agents
+ 
+ alter table locality_archive add  changed_agent_id number;
+ update locality_archive set changed_agent_id=getAgentIDFromLogin(whodunit);
+  alter table locality_archive modify  changed_agent_id not null;
+
 create table locality_archive (
  	locality_archive_id number not null,
  	locality_id number,
@@ -344,7 +350,7 @@ CREATE OR REPLACE TRIGGER trg_locality_archive
 						GEOREFERENCE_PROTOCOL,
 						LOCALITY_NAME,
 					 	WKT_POLYGON,
-					 	whodunit,
+					 	changed_agent_id,
 					 	changedate
 					 ) values (
 					 	sq_locality_archive_id.nextval,
@@ -367,7 +373,7 @@ CREATE OR REPLACE TRIGGER trg_locality_archive
 						:OLD.GEOREFERENCE_PROTOCOL,
 						:OLD.LOCALITY_NAME,
 					 	:OLD.WKT_POLYGON,
-					 	sys_context('USERENV', 'SESSION_USER'),
+					 	getAgentIDFromLogin(sys_context('USERENV', 'SESSION_USER')),
 					 	sysdate
 					 );
 					--dbms_output.put_line('logged OLD values');  
@@ -395,7 +401,7 @@ CREATE OR REPLACE TRIGGER trg_locality_archive
 				GEOREFERENCE_PROTOCOL,
 				LOCALITY_NAME,
 			 	WKT_POLYGON,
-			 	whodunit,
+			 	changed_agent_id,
 			 	changedate
 			 ) values (
 			 	sq_locality_archive_id.nextval,
@@ -418,10 +424,9 @@ CREATE OR REPLACE TRIGGER trg_locality_archive
 				:NEW.GEOREFERENCE_PROTOCOL,
 				:NEW.LOCALITY_NAME,
 			 	:NEW.WKT_POLYGON,
-			 	sys_context('USERENV', 'SESSION_USER'),
+			 	getAgentIDFromLogin(sys_context('USERENV', 'SESSION_USER')),
 			 	sysdate
 			 );
-		
 		end if;
   end;
 /
