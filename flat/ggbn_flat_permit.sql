@@ -13,7 +13,7 @@ table temp_ggbn_permit as select distinct
 	-- I don't think these data need a primary key and I have no idea what we'll use if they do
 	--
 	-- foreign key to tissues
-	specimen_part.collection_object_id UnitID,
+	'http://arctos.database.museum/guid/'  || filtered_flat.guid || '?pid=' || specimen_part.collection_object_id UnitID,
 	filtered_flat.collection_id,
 	-- key to Occurrences; probably don't need this here but why not...
 	-- name OCCURRENCEID2 because reasons
