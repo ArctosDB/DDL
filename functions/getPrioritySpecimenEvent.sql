@@ -1,4 +1,14 @@
  /*
+	
+	Many Arctos specimens have multiple Specimen-Events for various reasons
+	Arctos also contains tabular views which can display data from only one event
+	This function finds a "priority" event, which is hopefully a less-than-random event based on criteria laid out by the collections.
+	
+	This function is also used to select an event for GGBN tissue mapping when there is no explicit link between parts and events
+	  
+ */
+ 
+ /*
 	NEW AND HOT!!
 		- old-n-busted below, in case
 	

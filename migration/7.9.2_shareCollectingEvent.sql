@@ -1,11 +1,11 @@
-TODO::
 
+ alter table collecting_event_archive add  changed_agent_id number;
+ update collecting_event_archive set changed_agent_id=getAgentIDFromLogin(whodunit);
+  alter table collecting_event_archive modify  changed_agent_id not null;
 
-
--- add info/collectingEventArchive.cfm to form control
--- add /ScheduledTasks/collectingEventChangeAlert.cfm to form control
--- create scheduled task for /ScheduledTasks/collectingEventChangeAlert.cfm
-
+  ALTER TABLE collecting_event_archive ADD CONSTRAINT fk_colevt_ark_agnt FOREIGN KEY (changed_agent_id) REFERENCES agent(agent_id);
+  
+  
 
 
 
@@ -84,7 +84,7 @@ CREATE OR REPLACE TRIGGER trg_collecting_event_archive
 	    		return;
 	    	end if;
 	    		
-	    		dbms_output.put_line('got change');  
+	    		--dbms_output.put_line('got change');  
 	    		 -- now just grab all of the :OLD values
 		        -- :NEWs are current data in locality, no need to do anything with them
 		
@@ -99,7 +99,7 @@ CREATE OR REPLACE TRIGGER trg_collecting_event_archive
 				ENDED_DATE,
 				COLLECTING_EVENT_NAME,
 				VERBATIM_COORDINATES,
-			 	whodunit,
+			 	changed_agent_id,
 			 	changedate
 			 ) values (
 			 	sq_collecting_event_archive_id.nextval,
@@ -112,7 +112,7 @@ CREATE OR REPLACE TRIGGER trg_collecting_event_archive
 			 	:OLD.ENDED_DATE,
 			 	:OLD.COLLECTING_EVENT_NAME,
 			 	:OLD.VERBATIM_COORDINATES,
-			 	sys_context('USERENV', 'SESSION_USER'),
+			 	getAgentIDFromLogin(sys_context('USERENV', 'SESSION_USER')),
 			 	sysdate
 			 );
 			--dbms_output.put_line('logged OLD values');  

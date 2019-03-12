@@ -3,6 +3,15 @@
 -- https://github.com/ArctosDB/arctos/issues/1672
 -- geology too
 
+
+ alter table geology_archive add  changed_agent_id number;
+ update geology_archive set changed_agent_id=getAgentIDFromLogin(whodunit);
+  alter table geology_archive modify  changed_agent_id not null;
+
+  ALTER TABLE geology_archive ADD CONSTRAINT fk_geo_ark_agnt FOREIGN KEY (changed_agent_id) REFERENCES agent(agent_id);
+
+  
+  
 create table geology_archive (
 	geology_archive_id number not null,
 	GEOLOGY_ATTRIBUTE_ID number not null,
@@ -110,7 +119,7 @@ CREATE OR REPLACE TRIGGER trg_geology_archive
 					GEOREFERENCE_PROTOCOL,
 					LOCALITY_NAME,
 				 	WKT_POLYGON,
-				 	whodunit,
+				 	changed_agent_id,
 				 	changedate
 				 ) (
 				 	select
@@ -134,7 +143,7 @@ CREATE OR REPLACE TRIGGER trg_geology_archive
 						GEOREFERENCE_PROTOCOL,
 						LOCALITY_NAME,
 					 	WKT_POLYGON,
-					 	sys_context('USERENV', 'SESSION_USER'),
+					 	getAgentIDFromLogin(sys_context('USERENV', 'SESSION_USER')),
 						sysdate
 					from
 						locality
@@ -157,7 +166,7 @@ CREATE OR REPLACE TRIGGER trg_geology_archive
 					GEO_ATT_DETERMINED_DATE,
 					GEO_ATT_DETERMINED_METHOD,
 					GEO_ATT_REMARK,
-					whodunit,
+					changed_agent_id,
 					changedate,
 					triggering_event
 				) values (
@@ -170,7 +179,7 @@ CREATE OR REPLACE TRIGGER trg_geology_archive
 					:NEW.GEO_ATT_DETERMINED_DATE,
 					:NEW.GEO_ATT_DETERMINED_METHOD,
 					:NEW.GEO_ATT_REMARK,
-					sys_context('USERENV', 'SESSION_USER'),
+					getAgentIDFromLogin(sys_context('USERENV', 'SESSION_USER')),
 					sysdate,
 					'inserting'
 				);
@@ -188,7 +197,7 @@ CREATE OR REPLACE TRIGGER trg_geology_archive
 					GEO_ATT_DETERMINED_DATE,
 					GEO_ATT_DETERMINED_METHOD,
 					GEO_ATT_REMARK,
-					whodunit,
+					changed_agent_id,
 					changedate,
 					triggering_event
 				) values (
@@ -201,7 +210,7 @@ CREATE OR REPLACE TRIGGER trg_geology_archive
 					:OLD.GEO_ATT_DETERMINED_DATE,
 					:OLD.GEO_ATT_DETERMINED_METHOD,
 					:OLD.GEO_ATT_REMARK,
-					sys_context('USERENV', 'SESSION_USER'),
+					getAgentIDFromLogin(sys_context('USERENV', 'SESSION_USER')),
 					sysdate,
 					'updating'
 				);
@@ -216,7 +225,7 @@ CREATE OR REPLACE TRIGGER trg_geology_archive
 					GEO_ATT_DETERMINED_DATE,
 					GEO_ATT_DETERMINED_METHOD,
 					GEO_ATT_REMARK,
-					whodunit,
+					changed_agent_id,
 					changedate,
 					triggering_event
 				) values (
@@ -229,7 +238,7 @@ CREATE OR REPLACE TRIGGER trg_geology_archive
 					:OLD.GEO_ATT_DETERMINED_DATE,
 					:OLD.GEO_ATT_DETERMINED_METHOD,
 					:OLD.GEO_ATT_REMARK,
-					sys_context('USERENV', 'SESSION_USER'),
+					getAgentIDFromLogin(sys_context('USERENV', 'SESSION_USER')),
 					sysdate,
 					'deleting'
 				);
@@ -257,6 +266,7 @@ sho err;
  alter table locality_archive add  changed_agent_id number;
  update locality_archive set changed_agent_id=getAgentIDFromLogin(whodunit);
   alter table locality_archive modify  changed_agent_id not null;
+  ALTER TABLE locality_archive ADD CONSTRAINT fk_loc_ark_agnt FOREIGN KEY (changed_agent_id) REFERENCES agent(agent_id);
 
 create table locality_archive (
  	locality_archive_id number not null,
