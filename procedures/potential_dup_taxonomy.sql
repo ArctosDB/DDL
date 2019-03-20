@@ -1,6 +1,6 @@
 CREATE OR REPLACE PROCEDURE temp_update_junk IS
 begin
-	for r in (select scientific_name from taxon_name where taxon_name_id not in (select taxon_name_id from cf_temp_potentialduptax_ck) and rownum < 10000) loop
+	for r in (select scientific_name from taxon_name where taxon_name_id not in (select taxon_name_id from cf_temp_potentialduptax_ck  where sysdate-LASTDATE<7) and rownum < 50000) loop
 		potential_dup_taxonomy(r.scientific_name);
 	end loop;
 end;
@@ -9,6 +9,42 @@ end;
 exec temp_update_junk;
 
 
+
+select count(*) from taxon_name where taxon_name_id not in (select taxon_name_id from cf_temp_potentialduptax_ck  where sysdate-LASTDATE<7);
+
+
+and rownum < 50000) loop
+		potential_dup_taxonomy(r.scientific_name);
+	end loop;
+	
+	
+	
+select sysdate-LASTDATE from cf_temp_potentialduptax_ck where taxon_name_id=(select taxon_name_id from taxon_name where scientific_name='Eumetopias jubatus');
+
+
+select to_char(LASTDATE,'YYYY-MM-DD'),sysdate-LASTDATE from cf_temp_potentialduptax_ck where  sysdate-LASTDATE>7 group by  to_char(LASTDATE,'YYYY-MM-DD'),sysdate-LASTDATE;
+
+
+
+ sysdate-LASTDATE<7
+
+
+select sysdate-LASTDATE from cf_temp_potentialduptax_ck  where to_char(LASTDATE,'YYYY-MM-DD')='2019-03-19';
+
+select max(lastdate) from cf_temp_potentialduptax_ck  where sysdate-LASTDATE>3;
+
+and rownum<20;
+
+
+
+
+alter table cf_temp_potentialduptax add n1 varchar2(255);
+alter table cf_temp_potentialduptax add n2 varchar2(255);
+
+update cf_temp_potentialduptax set n1=(select scientific_name from taxon_name where cf_temp_potentialduptax.taxon_name_id=taxon_name.taxon_name_id);
+update cf_temp_potentialduptax set n2=(select scientific_name from taxon_name where cf_temp_potentialduptax.DUPLICATION_TAXON_NAME_ID=taxon_name.taxon_name_id);
+
+create table temp_p_d as select distinct n1,n2 from cf_temp_potentialduptax;
 
 
 BEGIN
@@ -26,6 +62,32 @@ END;
 exec DBMS_SCHEDULER.DROP_JOB('J_TEMP_UPDATE_JUNK');
 
 
+
+		botabbr:='agamosp.|agamovar.|convar.|f.|lus.|modif.|monstr.|mut.|nm.|nothof.|nothosubsp.|nothovar.|prol.|subf.|subhybr.|subsp.|subsubvar.|subf.|subvar.|var.';
+		-- works but slow
+		select scientific_name from taxon_name where REGEXP_REPLACE(regexp_replace(scientific_name, ' ' || 'agamosp.|agamovar.|convar.|f.|lus.|modif.|monstr.|mut.|nm.|nothof.|nothosubsp.|nothovar.|prol.|subf.|subhybr.|subsp.|subsubvar.|subf.|subvar.|var.' || ' ', ' '),' {2,}', ' ')='Baccharis brachylaenoides brachylaenoides';
+		
+		select scientific_name from taxon_name where 
+		scientific_name like 'Baccharis brachylaenoides%' and REGEXP_REPLACE(regexp_replace(scientific_name, ' ' || 'agamosp.|agamovar.|convar.|f.|lus.|modif.|monstr.|mut.|nm.|nothof.|nothosubsp.|nothovar.|prol.|subf.|subhybr.|subsp.|subsubvar.|subf.|subvar.|var.' || ' ', ' '),' {2,}', ' ')='Baccharis brachylaenoides brachylaenoides';
+
+				
+				
+						select replace(regexp_replace('Baccharis brachylaenoides f. brachylaenoides', 'agamosp.|agamovar.|convar.|f.|lus.|modif.|monstr.|mut.|nm.|nothof.|nothosubsp.|nothovar.|prol.|subf.|subhybr.|subsp.|subsubvar.|subf.|subvar.|var.', '%'),' % ','%') from dual;
+	
+		
+		select  REGEXP_REPLACE(regexp_replace('Baccharis brachylaenoides f. brachylaenoides', ' ' || 'agamosp.|agamovar.|convar.|f.|lus.|modif.|monstr.|mut.|nm.|nothof.|nothosubsp.|nothovar.|prol.|subf.|subhybr.|subsp.|subsubvar.|subf.|subvar.|var.' || ' ', ' '),' {2,}', ' ') from dual;
+		
+		
+		if name like '%.%' then
+			-- only allow dots in botanical abbreviations
+			temp:=regexp_replace(name, ' ' || botabbr || ' ', ' ');
+			-- if there's still a dot, die
+			if temp like '%.%' then
+				return 'Invalid abbreviation.';
+			end if;
+		end if;
+		
+		
 select count(*) from cf_temp_potentialduptax;
 select count(*) from cf_temp_potentialduptax_ck;
 
@@ -43,6 +105,8 @@ UAM@ARCTOS> desc cf_temp_potentialduptax
 desc 
 
 
+drop PROCEDURE potential_dup_taxonomy;
+
 CREATE OR REPLACE PROCEDURE potential_dup_taxonomy (v_name IN varchar2)
  -- just find name variants; pass the checking off to another proc
 is
@@ -54,16 +118,27 @@ is
     t_ptrn varchar2(255);
     ptn_one varchar2(255);
     ptn_two varchar2(255);
+    v_sql varchar2(4000);
     
     type nt_type is table of VARCHAR2(30);
  	nt nt_type := nt_type(
- 		'aensis/ensis','alis/ata','ata/ula','atifolia/ifolia',
+ 		'aensis/ensis','alis/ata','ata/ula','atifolia/ifolia','a/s',
  		'escens/a','eata/eola','enisis/ensis','ensis/insis','ensis/ionalis','escens/icincta',
  		'ii/i','is/eus','ia/ium','ia/ius','ica/ulata','ides/phora','ii/iana','ivora/taria','ioides/oides',
  		'sis/ensis',
  		'ta/iens',
  		'ula/a','um/a','us/a'
  	);
+ 	--- complicated stuff first to reduce false errors
+ 	intp nt_type := nt_type(
+ 		'aea/ae','ae/i',
+ 		'ie/e','ii/i','ii/e','ii/','iae/ii',
+ 		'm/n',
+ 		'p/f',
+ 		'y/i'
+ 	);
+ 	-- from CTTAXON_TERM and isValidTaxonName
+
 BEGIN
 		-- ending replacements
 		--dbms_output.put_line(v_name);
@@ -80,29 +155,85 @@ BEGIN
 				--dbms_output.put_line(c);
 				if c>0 then
 					select taxon_name_id into r_tid from taxon_name where scientific_name=name_var;
-					select taxon_name_id into tid from taxon_name where scientific_name=v_name;
+					if tid is null then
+						select taxon_name_id into tid from taxon_name where scientific_name=v_name;
+					end if;
 					-- need to do more here when we're ready to create relationships
-					--dbms_output.put_line('inserting ' || v_name || ' ==> ' || name_var  || ' because ' || t_ptrn);
+					dbms_output.put_line('inserting ' || v_name || ' ==> ' || name_var  || ' because ' || t_ptrn);
 					insert into cf_temp_potentialduptax (taxon_name_id,duplication_taxon_name_id,lastdate) values (tid,r_tid,sysdate);
 				end if;
 			end if;
 		END LOOP;
 		-- END ending replacements
+		
+
 		-- dash
 		if instr(v_name,'-') > 0 then
 			name_var:=replace(v_name,'-');
 			select count(*) into c from taxon_name where scientific_name=name_var;
 			if c>0 then
 				select taxon_name_id into r_tid from taxon_name where scientific_name=name_var;
-				select taxon_name_id into tid from taxon_name where scientific_name=v_name;
+				if tid is null then
+					select taxon_name_id into tid from taxon_name where scientific_name=v_name;
+				end if;
 				-- need to do more here when we're ready to create relationships
 				--dbms_output.put_line('inserting ' || v_name || ' ==> ' || name_var || 'because dash-match');
 				insert into cf_temp_potentialduptax (taxon_name_id,duplication_taxon_name_id,lastdate) values (tid,r_tid,sysdate);
 			end if;
 		end if;
+		-- embedded replacements
+		FOR i IN 1..intp.count LOOP
+			t_ptrn:=intp(i);
+			 --dbms_output.put_line('Checking ' || t_ptrn);
+			 ptn_one:=SUBSTR(t_ptrn,1, INSTR(t_ptrn, '/',1) -1);
+			 ptn_two:=SUBSTR(t_ptrn,INSTR(t_ptrn, '/',1) +1);
+			 if instr(v_name,ptn_one) > 0 then
+			 	--dbms_output.put_line(v_name || ' contains ' || ptn_one);
+			 	--dbms_output.put_line('REGEXP_COUNT(v_name,ptn_one): ' || REGEXP_COUNT(v_name,ptn_one));
+			 	-- check each occurrence individually; this does not support combinations at this time
+			 	for x in 1..REGEXP_COUNT(v_name,ptn_one) loop
+			 		name_var:=regexp_replace(v_name,ptn_one,ptn_two,1,x);
+			 		--dbms_output.put_line(' name_var: ' || name_var);
+			 		select count(*) into c from taxon_name where scientific_name=name_var;
+			 		--dbms_output.put_line(c);
+				 	if c>0 then
+						select taxon_name_id into r_tid from taxon_name where scientific_name=name_var;
+						if tid is null then
+							select taxon_name_id into tid from taxon_name where scientific_name=v_name;
+						end if;
+						-- need to do more here when we're ready to create relationships
+						dbms_output.put_line('inserting ' || v_name || ' ==> ' || name_var  || ' because ' || t_ptrn);
+						insert into cf_temp_potentialduptax (taxon_name_id,duplication_taxon_name_id,lastdate) values (tid,r_tid,sysdate);
+					end if;
+			 	end loop;
+			 end if;
+		end loop;
 		
 		
-		
+		--- infraspecific ranks
+		if instr(v_name,'.') > 0 then
+			--dbms_output.put_line('Checking infraspecific ranks');	
+			for irt in (
+				select 
+          			scientific_name, 
+          			taxon_name_id 
+       			from 
+          			taxon_name 
+        		where 
+          			scientific_name != v_name and
+        			scientific_name like replace(regexp_replace(v_name, 'agamosp.|agamovar.|convar.|f.|lus.|modif.|monstr.|mut.|nm.|nothof.|nothosubsp.|nothovar.|prol.|subf.|subhybr.|subsp.|subsubvar.|subf.|subvar.|var.', '%'),' % ','%') and 
+         			REGEXP_REPLACE(regexp_replace(scientific_name, ' ' || 'agamosp.|agamovar.|convar.|f.|lus.|modif.|monstr.|mut.|nm.|nothof.|nothosubsp.|nothovar.|prol.|subf.|subhybr.|subsp.|subsubvar.|subf.|subvar.|var.' || ' ', ' '),' {2,}', ' ')
+          			=REGEXP_REPLACE(regexp_replace(v_name, ' ' || 'agamosp.|agamovar.|convar.|f.|lus.|modif.|monstr.|mut.|nm.|nothof.|nothosubsp.|nothovar.|prol.|subf.|subhybr.|subsp.|subsubvar.|subf.|subvar.|var.' || ' ', ' '),' {2,}', ' ')
+          	) loop
+				--dbms_output.put_line(irt.scientific_name);
+				if tid is null then
+					select taxon_name_id into tid from taxon_name where scientific_name=v_name;
+				end if;
+				dbms_output.put_line('inserting ' || v_name || ' ==> ' || irt.scientific_name  || ' because  infraspecific variation');
+				insert into cf_temp_potentialduptax (taxon_name_id,duplication_taxon_name_id,lastdate) values (tid,irt.taxon_name_id,sysdate);
+			end loop;
+		end if;
+
 		-- log the check
 		-- only fetch ID if we need to
 		if tid is null then
@@ -119,6 +250,44 @@ END;
 /
 sho err;
 
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('Proctotrematoides yamagutii');
+exec potential_dup_taxonomy('Carex brunnescens subsp. alaskana');
+exec potential_dup_taxonomy('Baccharis brachylaenoides f. cccc');
+
+exec potential_dup_taxonomy('Baccharis brachylaenoides f. brachylaenoides');
+exec potential_dup_taxonomy('Bactris ottostapfeana');
 exec potential_dup_taxonomy('Baccharis delicatula');
 exec potential_dup_taxonomy('Baccharoides pedunculatum');
 exec potential_dup_taxonomy('Baculogypsinoides spinosus');
@@ -145,21 +314,35 @@ exec potential_dup_taxonomy('Baccharis aracatubensis');
 exec potential_dup_taxonomy('Bactrocera decepta');
 exec potential_dup_taxonomy('Babiana rubro-cyanea');
 exec potential_dup_taxonomy('Polygala pseudo-coriacea');
-exec potential_dup_taxonomy('xxxxx');
-exec potential_dup_taxonomy('xxxxx');
-exec potential_dup_taxonomy('xxxxx');
-exec potential_dup_taxonomy('xxxxx');
-exec potential_dup_taxonomy('xxxxx');
-exec potential_dup_taxonomy('xxxxx');
-exec potential_dup_taxonomy('xxxxx');
-exec potential_dup_taxonomy('xxxxx');
-exec potential_dup_taxonomy('xxxxx');
-exec potential_dup_taxonomy('xxxxx');
-exec potential_dup_taxonomy('xxxxx');
+exec potential_dup_taxonomy('Allolobophora transpadana cinerea');
+exec potential_dup_taxonomy('Baccharis aliena');
+exec potential_dup_taxonomy('Baccharis elaeagnoides');
+exec potential_dup_taxonomy('Bactris caryotaefolia');
+exec potential_dup_taxonomy('Baccharis gilliesii');
+exec potential_dup_taxonomy('Abarema oxyphyllidia');
+exec potential_dup_taxonomy('Baccharis mapiriiensis');
+exec potential_dup_taxonomy('Baccharis vacciniifolia');
+exec potential_dup_taxonomy('Baccharis banksiaefolia');
+exec potential_dup_taxonomy('Baccharis marginalis var. viminea');
 
 exec potential_dup_taxonomy('Pompilus funebris');
 
+Baccharis kuntzeana,
+Baccharis kurtziana
 
+Bactris ottostaffeana,
+Bactris ottostapfeana
+
+Baccharis marginalis var. viminea,
+Baccharis marginalis var. vinimea
+
+
+Baccharis mapirensis,
+Baccharis mapirensis
+
+
+Abarema oxyphillidia,
+Abarema oxiphillidia
 /*
 select SUBSTR('Acartophthalmus nigrinus',-2) from dual;
  find Acartophthalmus nigrina.

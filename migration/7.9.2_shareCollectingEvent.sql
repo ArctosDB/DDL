@@ -154,10 +154,10 @@ BEGIN
 	-- collecting_event_name is unique so those will never be duplicates
 	-- but grab them anyway so we can flag them as being checked
 	for r in (
-		select * from collecting_event where rownum<200 and (last_dup_check_date is null or sysdate-last_dup_check_date > 30)
+		select * from collecting_event where rownum<150 and (last_dup_check_date is null or sysdate-last_dup_check_date > 30)
 	) loop
-			dbms_output.put_line(r.collecting_event_id);
-			dbms_output.put_line(r.VERBATIM_LOCALITY);
+			--dbms_output.put_line(r.collecting_event_id);
+			--dbms_output.put_line(r.VERBATIM_LOCALITY);
 			--dbms_output.put_line(r.last_dup_check_date);
 		for dups in (
 			select * from collecting_event where
@@ -180,13 +180,16 @@ BEGIN
 				
 				--dbms_output.put_line('update specimen_event	set	collecting_event_id=' || r.collecting_event_id || '	where collecting_event_id=' || dups.collecting_event_id);
 				
-				
+				--dbms_output.put_line('BEFORE UPDATE SPECIMEN EVENT: ' || SYSTIMESTAMP);
 				update 
 					specimen_event 
 				set 
 					collecting_event_id=r.collecting_event_id
 				where 
 					collecting_event_id=dups.collecting_event_id;
+					
+				
+				--dbms_output.put_line('AFTER UPDATE SPECIMEN EVENT: ' || SYSTIMESTAMP);
 				
 				update 
 					tag 
@@ -194,6 +197,9 @@ BEGIN
 					collecting_event_id=r.collecting_event_id 
 				where 
 					collecting_event_id=dups.collecting_event_id;
+					
+					
+				--dbms_output.put_line('AFTER UPDATE tag: ' || SYSTIMESTAMP);
 
 				update 
 					media_relations 
@@ -203,6 +209,9 @@ BEGIN
 					media_relationship like '% collecting_event' and
 					related_primary_key =dups.collecting_event_id;
 
+					
+				--dbms_output.put_line('AFTER UPDATE media_relations: ' || SYSTIMESTAMP);
+				
 				update 
 					bulkloader 
 				set 
@@ -210,10 +219,15 @@ BEGIN
 				where 
 					collecting_event_id=dups.collecting_event_id;
 
+					
+				--dbms_output.put_line('AFTER UPDATE bulkloader: ' || SYSTIMESTAMP);
 
 				-- and delete the duplicate locality
 				--dbms_output.put_line('gonna delete collecting_event');
 				delete from collecting_event where collecting_event_id=dups.collecting_event_id;
+				
+				
+				--dbms_output.put_line('AFTER DELETE collecting_event: ' || SYSTIMESTAMP);
 				
 				--dbms_output.put_line(' deleted collecting_event');
 			exception when others then
@@ -244,7 +258,7 @@ BEGIN
 
 		-- log the last check
 		-- pass in the admin_flag = 'proc auto_merge_locality' - we're not changing anything here
-				--dbms_output.put_line('gonna log....');
+		--dbms_output.put_line('gonna log....');
 		update collecting_event set admin_flag = 'proc auto_merge_locality',last_dup_check_date=sysdate where collecting_event_id=r.collecting_event_id;
 
 		-- if there are a lot of not-so-duplicates found, this can process many per run
@@ -263,6 +277,7 @@ sho err;
 
 exec auto_merge_collecting_event;
 
+exec dbms_scheduler.disable('j_auto_merge_collecting_event');
 
 
 
