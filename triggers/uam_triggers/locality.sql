@@ -216,6 +216,10 @@ CREATE OR REPLACE TRIGGER trg_locality_biu
         	if to_meters(:NEW.MINIMUM_ELEVATION,:NEW.ORIG_ELEV_UNITS)>to_meters(:NEW.MAXIMUM_ELEVATION,:NEW.ORIG_ELEV_UNITS) then
                 raise_application_error(-20001,'Minimum Elevation cannot be greater than Maximum Elevation');
              end if;
+             if to_meters(:NEW.MINIMUM_ELEVATION,:NEW.ORIG_ELEV_UNITS) < -413 or to_meters(:NEW.MAXIMUM_ELEVATION,:NEW.ORIG_ELEV_UNITS) > 8900 then
+                raise_application_error(-20001,'Elevation values are not valid.');
+             end if;
+             
          end if;
     end;
 /
