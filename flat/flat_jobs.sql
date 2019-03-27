@@ -19,7 +19,7 @@ select * from all_scheduler_jobs where job_name='CHECK_FLAT_STALE';
  SElect sid,serial#,user,command,blocking_session from v$session where command>0;
 
  
- select START_DATE,REPEAT_INTERVAL,END_DATE,ENABLED,STATE,RUN_COUNT,FAILURE_COUNT,LAST_START_DATE,LAST_RUN_DURATION,NEXT_RUN_DATE from all_scheduler_jobs where job_name='CHECK_FLAT_STALE';
+ select STATE,START_DATE,REPEAT_INTERVAL,END_DATE,ENABLED,STATE,RUN_COUNT,FAILURE_COUNT,LAST_START_DATE,LAST_RUN_DURATION,NEXT_RUN_DATE from all_scheduler_jobs where job_name='CHECK_FLAT_STALE';
      
      
      exec DBMS_SCHEDULER.DROP_JOB (JOB_NAME => 'J_UPDATE_CACHE_ANYGEOG', FORCE => TRUE);
