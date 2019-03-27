@@ -215,19 +215,23 @@ sho err;
 
 
 
--- run this every minute for now
+-- run this every minute - FREQ=MINUTELY;INTERVAL=30 - for now
 -- it can scale way back once things get caught up
+-- it's caught up, got to every 4 hours - FREQ=HOURLY; INTERVAL=4
+exec DBMS_SCHEDULER.DROP_JOB (JOB_NAME => 'j_find_tax_vars', FORCE => TRUE);
+
 BEGIN
   DBMS_SCHEDULER.CREATE_JOB (
-    job_name    => 'jfind_tax_vars',
+    job_name    => 'j_find_tax_vars',
     job_type    => 'STORED_PROCEDURE',
     job_action    => 'proc_find_tax_vars',
     enabled     => TRUE,
     start_date => systimestamp,
-    repeat_interval => 'FREQ=MINUTELY;INTERVAL=1'
+    repeat_interval => 'FREQ=HOURLY; INTERVAL=4'
   );
 END;
 / 
+ select START_DATE,REPEAT_INTERVAL,END_DATE,ENABLED,STATE,RUN_COUNT,FAILURE_COUNT,LAST_START_DATE,LAST_RUN_DURATION,NEXT_RUN_DATE from all_scheduler_jobs where lower(job_name)='j_find_tax_vars';
 
 
 -- check in
