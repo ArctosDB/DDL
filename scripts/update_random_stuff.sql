@@ -25,3 +25,28 @@ exec pause_maintanance('on');
 
 
 ----------------- END update locality
+
+
+------------------ update collecting_event
+exec pause_maintanance('off');
+
+lock table collecting_event in exclusive mode nowait;
+
+alter trigger  TR_COLLECTINGEVENT_BUID disable;
+alter trigger  TR_COLLEVENT_AU_FLAT disable;
+
+update collecting_event set VERBATIM_COORDINATES=null where VERBATIM_COORDINATES='/';
+
+
+alter trigger  TR_COLLECTINGEVENT_BUID enable;
+alter trigger  TR_COLLEVENT_AU_FLAT enable;
+
+exec pause_maintanance('on');
+
+
+commit;
+
+------------------ END update collecting_event
+
+
+

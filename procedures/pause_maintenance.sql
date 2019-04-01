@@ -11,6 +11,8 @@
  * DROP_OLDTABS
  * 
 */
+
+
 CREATE OR REPLACE procedure pause_maintanance (onoff IN varchar2) is 
    	begin
 	   	if onoff not in ('on','off') then
@@ -43,6 +45,8 @@ CREATE OR REPLACE procedure pause_maintanance (onoff IN varchar2) is
 	   		dbms_scheduler.disable('J_UPDATE_CACHE_ANYGEOG',force=>true);
 	   		dbms_scheduler.disable('J_UPDATE_CACHE_ANYTAXONNAME',force=>true);
 	   		dbms_scheduler.disable('SCH_ALA_PROCEDURES',force=>true);
+	   		dbms_scheduler.disable('J_FIND_TAX_VARS',force=>true);
+	   		
 	   	end if;
 	   	
 	   	
@@ -72,6 +76,7 @@ CREATE OR REPLACE procedure pause_maintanance (onoff IN varchar2) is
 	   		dbms_scheduler.enable('J_UPDATE_CACHE_ANYGEOG');
 	   		dbms_scheduler.enable('J_UPDATE_CACHE_ANYTAXONNAME');
 	   		dbms_scheduler.enable('SCH_ALA_PROCEDURES');
+	   		dbms_scheduler.enable('J_FIND_TAX_VARS');
 	   	end if;
 	   	
 	    dbms_output.put_line('');
@@ -112,7 +117,8 @@ CREATE OR REPLACE procedure pause_maintanance (onoff IN varchar2) is
 	   				'J_SET_MEDIA_FLAT',
 	   				'J_UPDATE_CACHE_ANYGEOG',
 	   				'J_UPDATE_CACHE_ANYTAXONNAME',
-	   				'SCH_ALA_PROCEDURES'
+	   				'SCH_ALA_PROCEDURES',
+	   				'J_FIND_TAX_VARS'
 	   			)
 	   	) loop
 	   		dbms_output.put_line(rpad(x.job_name,60,' ') || ' ==> ' || x.state);
