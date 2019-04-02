@@ -82,12 +82,14 @@ CREATE OR REPLACE PACKAGE report_cache as
   PROCEDURE rpt_cache_genbank_no_loan;
   PROCEDURE rpt_cache_genbank_no_cite;
   PROCEDURE rpt_cache_cite_no_loan;
+  PROCEDURE rpt_cache_genbank_mia;
+  
 END;
 /
 
 
 
-PROCEDURE rpt_cache_runall;
+--PROCEDURE rpt_cache_runall;
   
   
 set define off;  
@@ -569,6 +571,32 @@ PROCEDURE rpt_cache_s_anno IS
 			);
 		end loop;
 	end;
+	
+	
+	PROCEDURE rpt_cache_genbank_mia IS
+	BEGIN
+		delete from cf_report_cache where report_name='genbank_mia';
+		for x in (
+			select owner, FOUND_COUNT from cf_genbank_crawl where QUERY_TYPE='specimen_voucher:collection' and FOUND_COUNT>0
+ 		) loop
+			insert into cf_report_cache (
+				guid_prefix,
+				report_name,
+				report_URL,
+				report_descr,
+				report_date,
+				summary_data
+			) values (
+				x.owner,
+				'genbank_mia',
+				'/info/mia_in_genbank.cfm',
+				'Specimens with specimen_voucher:collection in GenBank and no GenBank link.',
+				to_char(sysdate,'YYYY-MM-DD'),
+				x.FOUND_COUNT || ' ' || x.owner || ' specimens have unlinked data in GenBank.'
+			);
+		end loop;
+	end;
+	
 				    
 	-------
 	-- this has to be last because Oracle is weird
@@ -598,7 +626,7 @@ sho err;
 -- exec report_cache.rpt_cache_cite_no_loan;
 -- exec report_cache.rpt_cache_runone	;	
 
-
+-- exec rpt_cache_genbank_mia
 
 
 

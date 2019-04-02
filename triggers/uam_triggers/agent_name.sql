@@ -4,14 +4,24 @@ CREATE OR REPLACE TRIGGER trg_agent_name_biu
  FOR EACH ROW 
      BEGIN
      IF :NEW.AGENT_NAME != trim(:NEW.AGENT_NAME) or :NEW.AGENT_NAME like '%  %' THEN
-           RAISE_APPLICATION_ERROR(-20001,'Extraneous spaces detected.');
-      END IF;
-  
+     	RAISE_APPLICATION_ERROR(-20001,'Extraneous spaces detected.');
+     END IF;
+     if instr(:new.agent_name,'¿') > 0 then
+     	RAISE_APPLICATION_ERROR(-20001,'¿ is not allowed in agent names.');
+     end if;
+     if :NEW.agent_name_type in ('first name','last name') then
+     	if regexp_instr(:new.agent_name,'[\(\)\?]') > 0 then
+      		RAISE_APPLICATION_ERROR(-20001,'(, ), and ? are not allowd in first or last names.');
+      	end if;
+      	if (:new.agent_name=upper(:new.agent_name)) or (:new.agent_name=lower(:new.agent_name)) then
+      		RAISE_APPLICATION_ERROR(-20001,'First and last names cannot be all upper or lower case.');
+      	end if;
+     end if; 
  END;
  /
-         
-         
-         
+      
+ 
+ 
 
 CREATE OR REPLACE TRIGGER PRE_UP_INS_AGENT_NAME 
 BEFORE INSERT ON AGENT_NAME
