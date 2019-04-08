@@ -13,13 +13,18 @@ CREATE OR REPLACE TRIGGER trg_agent_name_biu
      	if regexp_instr(:new.agent_name,'[\(\)\?]') > 0 then
       		RAISE_APPLICATION_ERROR(-20001,'(, ), and ? are not allowd in first or last names.');
       	end if;
-      	if (:new.agent_name=upper(:new.agent_name)) or (:new.agent_name=lower(:new.agent_name)) then
-      		RAISE_APPLICATION_ERROR(-20001,'First and last names cannot be all upper or lower case.');
+      	if :NEW.agent_name_type = 'last name' and (:new.agent_name=upper(:new.agent_name)) or (:new.agent_name=lower(:new.agent_name)) then
+      		RAISE_APPLICATION_ERROR(-20001,'Last name cannot be all upper or lower case.');
       	end if;
-     end if; 
+      	      	
+      	if :NEW.agent_name_type = 'first name' and
+      		( not regexp_like(:new.agent_name,'^[A-Z]\.$') ) and
+      		( :new.agent_name=upper(:new.agent_name)) or (:new.agent_name=lower(:new.agent_name) ) then
+      			RAISE_APPLICATION_ERROR(-20001,'First name cannot be all upper or lower case.');
+      	end if;
+   end if;   		
  END;
  /
-      
  
  
 
