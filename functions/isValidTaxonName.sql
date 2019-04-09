@@ -62,6 +62,9 @@ CREATE OR REPLACE FUNCTION isValidTaxonName (name  in varchar)
 		if lower(name) like '% x %' then
 			return 'Looks like a hybrid.';
 		end if;
+		if lower(name) like ' hybrid%' or lower(name) like '%hybrid ' then
+			return 'Looks like a hybrid.';
+		end if;
 		-- no taxon contains the "word" sp.
 		if lower(name) like '% sp %' or lower(name) like '% sp' then
 			return '"sp" is not a valid name-part';
