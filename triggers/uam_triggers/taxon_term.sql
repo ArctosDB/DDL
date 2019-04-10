@@ -17,7 +17,6 @@ create or replace trigger trg_taxon_term_cts before insert or update on taxon_te
 		c number;
 	begin
 		-- only care if local
-		-- EXCEPT Arctos Relationships; no enforcement there because we want to shove relationship data in
 		select /*+ RESULT_CACHE */ count(*) into c from CTTAXONOMY_SOURCE where source=:NEW.source ;
 		if c=1 then
 			-- it's local, check stuff
