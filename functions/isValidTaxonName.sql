@@ -41,7 +41,7 @@ CREATE OR REPLACE FUNCTION isValidTaxonName (name  in varchar)
 		--    https://github.com/ArctosDB/arctos/issues/1704
 		--    DO NOT allow ()
 		--if regexp_like(name,'[^A-Za-z -\.üë×ö\(\)]') th
-		if regexp_like(name,'[^A-Za-z \-\.üë×ö]') then
+		if regexp_like(name,'[^A-Za-z \.üë×ö-]') then
 			return 'Invalid characters.';
 		end if;
 		if regexp_like(name,'×') then
@@ -144,4 +144,10 @@ select isValidTaxonName ('Arctos × Awdfa') from dual;
 select isValidTaxonName ('Arctos×') from dual;
 select isValidTaxonName ('×Arctos') from dual;
 select isValidTaxonName ('×Arctos') from dual;
+
+UAM@ARCTOS> 
+
+select isvalidtaxonname('Rhynchonella eatonia-formiss') from dual;
+
+
 */
