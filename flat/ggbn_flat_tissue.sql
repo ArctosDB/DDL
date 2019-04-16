@@ -230,6 +230,8 @@ where
 	locality.locality_id=ipt_geology.locality_id (+)
 ;
 
+drop table ggbn_tissue_tbl;
+
 create table ggbn_tissue_tbl as select * from ggbn_tissue where 1=2;
 
 -- table needs refreshed periodically
