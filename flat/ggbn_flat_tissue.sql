@@ -17,12 +17,35 @@ create public synonym v_part_event_path for v_part_event_path;
 
 grant select on v_part_event_path to public;
 
+set define off;
+select
+	'institutionCode=' ||
+ 	substr(guid,1,instr(guid,':')-1) ||
+ 	'&collectionCode=' ||
+	 substr(guid,instr(guid,':')+1,instr(guid,':',1,2)-instr(guid,':')-1)  ||
+	 '&catalogNumber='||
+	 cat_num ||
+	 '&accesspoint=http://ipt.vertnet.org:8080/ipt/archive.do?r=msbmammalggbntest&guid=http://arctos.database.museum/guid/' || guid
+ 	from flat where rownum=1;
+ 	
+institutionCode=MSB&
+collectionCode=Mamm&catalogNumber=299265&accesspoint=http://ipt.vertnet.org:8080/ipt/archive.do?r=msbmammalggbntest&guid= http://arctos.database.museum/guid/MSB:Mamm:299265
+
+
 
 
 create or replace view ggbn_tissue as select distinct
 	'http://arctos.database.museum/guid/'  || filtered_flat.guid || '?pid=' || specimen_part.collection_object_id occurrenceID,
  	-- not sure this is needed?? May be necessary to link permits?
  	'http://arctos.database.museum/guid/'  || filtered_flat.guid || '?pid=' || specimen_part.collection_object_id UnitID,
+ 	'institutionCode=' ||
+ 	substr(guid,1,instr(guid,':')-1) ||
+ 		'&collectionCode=' ||
+		 substr(guid,instr(guid,':')+1,instr(guid,':',1,2)-instr(guid,':')-1)  ||
+		 '&catalogNumber='||
+		 cat_num ||
+	 	'&accesspoint=http://ipt.vertnet.org:8080/ipt/archive.do?r=msbmammalggbntest&guid=http://arctos.database.museum/guid/' || guid
+	 AS relatedResourceID,
 	'tissue' materialSampleType,
 	specimen_part.part_name preparationType,
 	part_coll_object.COLL_OBJECT_ENTERED_DATE preparationDate,
