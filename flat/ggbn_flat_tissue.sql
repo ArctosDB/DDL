@@ -260,6 +260,13 @@ END;
 
 
 select count(*) from ggbn_tissue_tbl;
+drop view digir_query.v_ggbn_tissue_tbl;
+
+grant select on ggbn_tissue_tbl to digir_query;
+create or replace view digir_query.v_ggbn_tissue_tbl as select * from uam.ggbn_tissue_tbl;
+
+
+
 
 drop view digir_query.ggbn_tissue;
 drop table digir_query.ggbn_tissue_tbl;

@@ -200,6 +200,8 @@ PROCEDURE b_bulkload_parts  (collobjid IN number) is
 	entered_person_id agent.agent_id%TYPE;
 	part_label varchar2(255);
 	r_parent_container_id container.parent_container_id%TYPE;
+	r_collection_id number;
+	r_institution_acronym container.institution_acronym%TYPE;
 BEGIN
 	--dbms_output.put_line ('parts...');
 	--dbms_output.put_line ('got catcollid...');
@@ -210,6 +212,7 @@ BEGIN
 		if num = 1 then -- there's a part - insert it
 			--dbms_output.put_line ('inserting a part...');
 			execute immediate 'select 
+				collection_id,
 				PART_NAME_' || i || ', 
 				PART_CONDITION_' || i || ', 
 				PART_BARCODE_' || i || ', 
@@ -220,6 +223,7 @@ BEGIN
 			from bulkloader 
 			where collection_object_id = ' || collobjid 
 			into 
+				r_collection_id,
 				r_partname,
 				r_condn,
 				r_barcode,
@@ -270,10 +274,12 @@ BEGIN
 	
 			--dbms_output.put_line ('made coll_obj_cont_hist');
 			if r_barcode is not null then
+				--select institution_acronym into r_institution_acronym from collection where collection_id=r_collection_id;
 			    -- find the container_id of the part we just made
 			    SELECT container_id INTO r_container_id FROM coll_obj_cont_hist WHERE collection_object_id = part_id;
 			    --dbms_output.put_line ('CURRENT part IS : ' || r_container_id);
 				SELECT container_id into r_parent_container_id FROM container WHERE barcode = r_barcode;
+				--and	institution_acronym=r_institution_acronym;
 				--dbms_output.put_line ('got parent contianer id: ' || r_parent_container_id);
 				UPDATE container SET 
 					parent_container_id = r_parent_container_id

@@ -31,6 +31,8 @@ a_coln varchar2(255);
 a_instn varchar2(255);
 --- collection_cde as determined from guid_prefix
 r_collection_cde varchar2(255);
+r_institution_acronym varchar2(255);
+
   BEGIN
 	FOR rec IN (SELECT * FROM bulkloader where collection_object_id=colobjid) LOOP
 		BEGIN
@@ -560,7 +562,11 @@ r_collection_cde varchar2(255);
     			END IF;
     			
     			if rec.PART_BARCODE_1 is not null then
-    				SELECT  /*+ RESULT_CACHE */  count(*) INTO numRecs FROM container WHERE barcode = rec.PART_BARCODE_1;
+    			   -- SELECT  /*+ RESULT_CACHE */ institution_acronym INTO r_institution_acronym FROM collection WHERE collection_id = rec.collection_id;
+
+    				SELECT  /*+ RESULT_CACHE */  count(*) INTO numRecs FROM container WHERE 
+    				--institution_acronym=r_institution_acronym and 
+    				barcode = rec.PART_BARCODE_1;
     				if numRecs = 0 then
     					thisError :=  thisError || '; PART_BARCODE_1 is invalid';
     				END IF;

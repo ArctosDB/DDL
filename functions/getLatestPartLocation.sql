@@ -10,7 +10,8 @@ begin
 		for a in (
 			SELECT ATTRIBUTE_VALUE FROM (
     			select 
-      				*
+      				ATTRIBUTE_VALUE,
+      				DETERMINED_DATE
     			FROM 
        				specimen_part_attribute
     			where
