@@ -399,6 +399,118 @@ json_locality	JSON Locality			Locality stack in JSON				locality	99	yes	no	getJs
 
 
 
+
+------------------------------------- https://github.com/ArctosDB/arctos/issues/1755 edits----------------------------------------
+-- comment out service-derived data
+-- refresh, hope....
+UAM@ARCTOS> select count(*) from cache_anygeog;
+
+  COUNT(*)
+----------
+   3,834,085
+
+   exec pause_maintenance('off');
+   update cache_anygeog set stale_fg=1;
+      exec pause_maintenance('on');
+
+   select stale_fg,count(*) from cache_anygeog group by stale_fg;
+   exec pause_maintenance('on');
+
+   
+   -- Plan B-or-so
+   alter table flat add locality_search_terms varchar2(4000);
+   
+   
+   create or replace function getFlatLocalitySearchTerms.....
+   
+   flat_procedures
+   filtered_flat
+			
+	-- not needed for this approach
+	exec DBMS_SCHEDULER.DROP_JOB (JOB_NAME => 'J_UPDATE_CACHE_ANYGEOG', FORCE => TRUE);
+
+			----initial update
+			
+			update flat set locality_search_terms=getFlatLocalitySearchTerms(collection_object_id) where stale_flag!=1 and locality_search_terms is null and rownum<100000;
+			
+			select count(*) from flat where locality_search_terms='pending';
+			select count(*) from flat where locality_search_terms is null;
+			
+			update flat set locality_search_terms='pending' where locality_search_terms  is null;
+			update flat set locality_search_terms=getFlatLocalitySearchTerms(collection_object_id) where locality_search_terms='pending' and rownum<100000;
+			
+			create index ix_f_loc_srch_trm on flat(locality_search_terms) tablespace uam_idx_1;
+			create index ix_f_f_loc_srch_trm on flat(locality_search_terms) tablespace uam_idx_1;
+			
+			update filtered_flat set locality_search_terms='pending' where locality_search_terms  is null;
+
+			select count(*) from filtered_flat where locality_search_terms is null;
+						
+			
+			
+			DROP INDEX ix_f_txt_tloc_srch_trms;
+			DROP INDEX ix_f_f_txt_tloc_srch_trms;
+			
+			CTXCAT
+			
+			CREATE INDEX ix_f_txt_tloc_srch_trms ON flat(locality_search_terms) INDEXTYPE IS CTXSYS.CTXCAT;
+			
+			PARAMETERS ('SYNC (EVERY "SYSDATE + 1/24")'); 
+
+		exec ctx_ddl.drop_preference ( 'idx_tablespace' );
+exec ctx_ddl.create_preference( 'idx_tablespace', 'UAM_IDX_1' );
+exec ctx_ddl.set_attribute ( 'idx_tablespace', 'UAM_IDX_1', 'true' );
+
+
+create index  some_text_idx on your_table(text_col)  indextype is ctxsys.context PARAMETERS ('storage your_tablespace sync (on commit)')
+
+
+			CREATE INDEX ix_f_txt_tloc_srch_trms ON flat(locality_search_terms) INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS ('sync (on commit)'); 
+			CREATE INDEX ix_f_f_txt_tloc_srch_trms ON FILTERED_flat(locality_search_terms) INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS ('sync (on commit)'); 
+			
+		CREATE INDEX ix_f_has_tissues ON flat(has_tissues) tablespace uam_idx_1;
+		
+		
+		
+			CREATE INDEX message_content_ctx_ix ON my_test_table(message_content)
+  INDEXTYPE IS CTXSYS.CONTEXT
+  PARAMETERS ('SYNC (EVERY "SYSDATE + 15/24")');
+ 
+  
+  
+  
+			CREATE INDEX ix_f_f_txt_tloc_srch_trms ON FILTERED_flat(locality_search_terms) INDEXTYPE IS CTXSYS.CONTEXT; 
+			
+			SELECT COUNT(*) FROM flat WHERE CONTAINS (locality_search_terms, 'BARROW') > 0;
+						SELECT COUNT(*) FROM flat WHERE locality_search_terms LIKE '%BARROW%';
+
+			
+			
+			
+CREATE OR REPLACE PROCEDURE temp_update_junk 
+is begin
+				update filtered_flat set locality_search_terms=(select locality_search_terms from flat where filtered_flat.collection_object_id=flat.collection_object_id)
+				where locality_search_terms is null and rownum<100000;
+				
+	end;
+/
+
+BEGIN
+  DBMS_SCHEDULER.drop_job (
+   job_name => 'J_TEMP_UPDATE_JUNK',
+   force    => TRUE);
+END;
+/
+
+
+
+
+
+		select getFlatLocalitySearchTerms(12) from dual;
+   select getFlatLocalitySearchTerms(collection_object_id) from flat where rownum<100;
+   
+------------------------------------- END https://github.com/ArctosDB/arctos/issues/1755 ----------------------------------------
+
 -- cache any_geog search
 -- get this going at prod - BELOW HERE IS DONE AT PROD
 
@@ -446,7 +558,7 @@ begin
 	for r in (
 		select collecting_event_id from (
 			select collecting_event_id,lastdate from cache_anygeog where stale_fg=1 group by collecting_event_id,lastdate order by lastdate
-		) where rownum<5000 group by collecting_event_id
+		) where rownum<2500 group by collecting_event_id
 	) loop
 		--dbms_output.put_line('collecting_event_id: ' || r.collecting_event_id);
 		--- first grab identifiers
@@ -504,6 +616,10 @@ begin
 									collecting_event.collecting_event_id=r.collecting_event_id and
 									collecting_event.locality_id=locality.locality_id and
 									locality.geog_auth_rec_id=geog_auth_rec.geog_auth_rec_id 
+							/*
+							 *  https://github.com/ArctosDB/arctos/issues/1755 edits----------------------------------------
+							 * comment out service-derived data
+							 * refresh, hope....
 							UNION
 								select
 									upper(S$GEOGRAPHY) term
@@ -513,6 +629,7 @@ begin
 									S$GEOGRAPHY is not null and
 									collecting_event.collecting_event_id=r.collecting_event_id and
 									collecting_event.locality_id=locality.locality_id
+							*/
 							UNION
 								select
 									upper(LOCALITY_NAME) term
@@ -618,8 +735,10 @@ select STALE_FG,count(*) from cache_anygeog group by STALE_FG;
     create index ix_cache_anygeog_seid on cache_anygeog (specimen_event_id) tablespace uam_idx_1; 
     create index ix_cache_anygeog_geostr on cache_anygeog (geostring) tablespace uam_idx_1; 
 	create index ix_cache_anygeog_ceid on cache_anygeog (collecting_event_id) tablespace uam_idx_1; 
-
-    desc all_indexes
+	create index ix_cache_anygeog_locid on cache_anygeog (LOCALITY_ID) tablespace uam_idx_1; 
+	create index ix_cache_anygeog_stfg on cache_anygeog (stale_fg) tablespace uam_idx_1; 
+    
+	desc all_indexes
     
     select * from all_indexes where lower(index_name)='ix_cache_anygeog_geostr';
 	-- and a new job to maintain

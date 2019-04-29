@@ -1,4 +1,6 @@
 
+alter table filtered_flat add  locality_search_terms varchar2(4000);
+
 -- filtered_flat is a table
 -- should look a lot like flat
 
@@ -221,7 +223,8 @@ BEGIN
 		formatted_scientific_name,
 		ISPUBLISHED,
         has_tissues,
-        taxon_rank
+        taxon_rank,
+        locality_search_terms
 	) = (
 	 SELECT
         flags,
@@ -409,7 +412,8 @@ BEGIN
 		formatted_scientific_name,
 		ISPUBLISHED,
         has_tissues,
-        taxon_rank
+        taxon_rank,
+        locality_search_terms
     FROM
         flat
     WHERE

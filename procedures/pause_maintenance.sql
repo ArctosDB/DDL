@@ -13,7 +13,7 @@
 */
 
 
-CREATE OR REPLACE procedure pause_maintanance (onoff IN varchar2) is 
+CREATE OR REPLACE procedure pause_maintenance (onoff IN varchar2) is 
    	begin
 	   	if onoff not in ('on','off') then
 	   		raise_application_error(-20001,'bad call: parameters are "on" (start all jobs) and "off" (stop all jobs).');
@@ -42,7 +42,7 @@ CREATE OR REPLACE procedure pause_maintanance (onoff IN varchar2) is
 	   		dbms_scheduler.disable('J_SET_BROWSE',force=>true);
 	   		dbms_scheduler.disable('J_SET_CONTAINER_HISTORY_STACK',force=>true);
 	   		dbms_scheduler.disable('J_SET_MEDIA_FLAT',force=>true);
-	   		dbms_scheduler.disable('J_UPDATE_CACHE_ANYGEOG',force=>true);
+	   		--dbms_scheduler.disable('J_UPDATE_CACHE_ANYGEOG',force=>true);
 	   		dbms_scheduler.disable('J_UPDATE_CACHE_ANYTAXONNAME',force=>true);
 	   		dbms_scheduler.disable('SCH_ALA_PROCEDURES',force=>true);
 	   		dbms_scheduler.disable('J_FIND_TAX_VARS',force=>true);
@@ -73,7 +73,7 @@ CREATE OR REPLACE procedure pause_maintanance (onoff IN varchar2) is
 	   		dbms_scheduler.enable('J_SET_BROWSE');
 	   		dbms_scheduler.enable('J_SET_CONTAINER_HISTORY_STACK');
 	   		dbms_scheduler.enable('J_SET_MEDIA_FLAT');
-	   		dbms_scheduler.enable('J_UPDATE_CACHE_ANYGEOG');
+	   		--dbms_scheduler.enable('J_UPDATE_CACHE_ANYGEOG');
 	   		dbms_scheduler.enable('J_UPDATE_CACHE_ANYTAXONNAME');
 	   		dbms_scheduler.enable('SCH_ALA_PROCEDURES');
 	   		dbms_scheduler.enable('J_FIND_TAX_VARS');
@@ -115,7 +115,7 @@ CREATE OR REPLACE procedure pause_maintanance (onoff IN varchar2) is
 	   				'J_SET_BROWSE',
 	   				'J_SET_CONTAINER_HISTORY_STACK',
 	   				'J_SET_MEDIA_FLAT',
-	   				'J_UPDATE_CACHE_ANYGEOG',
+	   				--'J_UPDATE_CACHE_ANYGEOG',
 	   				'J_UPDATE_CACHE_ANYTAXONNAME',
 	   				'SCH_ALA_PROCEDURES',
 	   				'J_FIND_TAX_VARS'
@@ -147,4 +147,4 @@ CREATE OR REPLACE procedure pause_maintanance (onoff IN varchar2) is
 /
 sho err;
 
-exec pause_maintanance('on');
+exec pause_maintenance('on');

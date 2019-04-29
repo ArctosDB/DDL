@@ -255,7 +255,8 @@ BEGIN
 		PARTS,
 		INDIVIDUALCOUNT,
 		has_tissues,
-		taxon_rank
+		taxon_rank,
+		locality_search_terms
 	) = (SELECT
 			cataloged_item.CAT_NUM,
 			cataloged_item.ACCN_ID,
@@ -296,7 +297,8 @@ BEGIN
 			concatParts(cataloged_item.collection_object_id),
 			getIndividualCount(cataloged_item.collection_object_id),
 			getIfTissues(cataloged_item.collection_object_id),
-			getTaxonRank(cataloged_item.collection_object_id)
+			getTaxonRank(cataloged_item.collection_object_id),
+			getFlatLocalitySearchTerms(cataloged_item.collection_object_id)
 		from
 			cataloged_item,
 			collection,

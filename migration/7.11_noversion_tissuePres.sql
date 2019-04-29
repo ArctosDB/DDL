@@ -48,3 +48,40 @@ CREATE OR REPLACE TRIGGER TR_log_part_preservation AFTER INSERT or update or del
 	END;
 / 
 sho err;
+
+-- https://github.com/ArctosDB/arctos/issues/1875
+-- add 'tissueness' to the CT
+
+alter table CTPART_PRESERVATION add tissue_fg number;
+
+alter table CTPART_PRESERVATION add constraint ck_tiss_fg CHECK (tissue_fg IN (NULL,0,1));
+
+alter table log_ctpart_preservation add n_tissue_fg number;
+alter table log_ctpart_preservation add o_tissue_fg number;
+
+CREATE OR REPLACE TRIGGER TR_log_part_preservation AFTER INSERT or update or delete ON ctpart_preservation
+	FOR EACH ROW
+	BEGIN
+		insert into log_ctpart_preservation (
+			username,
+			when,
+			n_DESCRIPTION,
+			n_part_preservation,
+			o_DESCRIPTION,
+			o_part_preservation,
+			n_tissue_fg,
+			o_tissue_fg
+		) values (
+			SYS_CONTEXT('USERENV','SESSION_USER'),
+			sysdate,
+			:NEW.DESCRIPTION,
+			:NEW.part_preservation,
+			:OLD.DESCRIPTION,
+			:OLD.part_preservation
+			:NEW.tissue_fg
+			:OLD.tissue_fg
+		);
+	END;
+/ 
+sho err;
+
