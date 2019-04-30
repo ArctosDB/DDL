@@ -30,8 +30,8 @@
 	FOR rec IN (SELECT * FROM bulkloader_stage where collection_object_id=colobjid) LOOP
 
 */
-
-	CREATE OR REPLACE FUNCTION bulk_stage_check_one (colobjid  in NUMBER)
+			
+CREATE OR REPLACE FUNCTION bulk_stage_check_one (colobjid  in NUMBER)
 return varchar2
 as
  thisError varchar2(4000);
@@ -64,6 +64,8 @@ a_coln varchar2(255);
 a_instn varchar2(255);
 --- collection_cde as determined from guid_prefix
 r_collection_cde varchar2(255);
+r_institution_acronym varchar2(255);
+
   BEGIN
 	FOR rec IN (SELECT * FROM bulkloader_stage where collection_object_id=colobjid) LOOP
 		BEGIN
@@ -593,7 +595,11 @@ r_collection_cde varchar2(255);
     			END IF;
     			
     			if rec.PART_BARCODE_1 is not null then
-    				SELECT  /*+ RESULT_CACHE */  count(*) INTO numRecs FROM container WHERE barcode = rec.PART_BARCODE_1;
+    			   -- SELECT  /*+ RESULT_CACHE */ institution_acronym INTO r_institution_acronym FROM collection WHERE collection_id = rec.collection_id;
+
+    				SELECT  /*+ RESULT_CACHE */  count(*) INTO numRecs FROM container WHERE 
+    				--institution_acronym=r_institution_acronym and 
+    				barcode = rec.PART_BARCODE_1;
     				if numRecs = 0 then
     					thisError :=  thisError || '; PART_BARCODE_1 is invalid';
     				END IF;
@@ -601,10 +607,6 @@ r_collection_cde varchar2(255);
    					if numRecs != 0 then
    						thisError :=  thisError || '; PART_BARCODE_1 is a label';
    					END IF;
-    			else
-    				if rec.PART_CONTAINER_LABEL_1 is not null then
-    					thisError :=  thisError || '; PART_CONTAINER_LABEL_1 requires barcode';
-    				END IF;
     			END IF;
     			if rec.PART_LOT_COUNT_1 is null or is_number(rec.PART_LOT_COUNT_1) = 0 then
     				thisError :=  thisError || '; PART_LOT_COUNT_1 is invalid';
@@ -632,10 +634,6 @@ r_collection_cde varchar2(255);
    					if numRecs != 0 then
    						thisError :=  thisError || '; PART_BARCODE_2 is a label';
    					END IF;
-    			else
-    				if rec.PART_CONTAINER_LABEL_2 is not null then
-    					thisError :=  thisError || '; PART_CONTAINER_LABEL_2 requires barcode';
-    				END IF;
     			END IF;
     			if rec.PART_LOT_COUNT_2 is null or is_number(rec.PART_LOT_COUNT_2) = 0 then
     				thisError :=  thisError || '; PART_LOT_COUNT_2 is invalid';
@@ -663,10 +661,6 @@ r_collection_cde varchar2(255);
    					if numRecs != 0 then
    						thisError :=  thisError || '; PART_BARCODE_3 is a label';
    					END IF;
-    			else
-    				if rec.PART_CONTAINER_LABEL_3 is not null then
-    					thisError :=  thisError || '; PART_CONTAINER_LABEL_3 requires barcode';
-    				END IF;
     			END IF;
     			if rec.PART_LOT_COUNT_3 is null or is_number(rec.PART_LOT_COUNT_3) = 0 then
     				thisError :=  thisError || '; PART_LOT_COUNT_3 is invalid';
@@ -694,10 +688,6 @@ r_collection_cde varchar2(255);
    					if numRecs != 0 then
    						thisError :=  thisError || '; PART_BARCODE_4 is a label';
    					END IF;
-    			else
-    				if rec.PART_CONTAINER_LABEL_4 is not null then
-    					thisError :=  thisError || '; PART_CONTAINER_LABEL_4 requires barcode';
-    				END IF;
     			END IF;
     			if rec.PART_LOT_COUNT_4 is null or is_number(rec.PART_LOT_COUNT_4) = 0 then
     				thisError :=  thisError || '; PART_LOT_COUNT_4 is invalid';
@@ -725,10 +715,6 @@ r_collection_cde varchar2(255);
    					if numRecs != 0 then
    						thisError :=  thisError || '; PART_BARCODE_5 is a label';
    					END IF;
-    			else
-    				if rec.PART_CONTAINER_LABEL_5 is not null then
-    					thisError :=  thisError || '; PART_CONTAINER_LABEL_5 requires barcode';
-    				END IF;
     			END IF;
     			if rec.PART_LOT_COUNT_5 is null or is_number(rec.PART_LOT_COUNT_5) = 0 then
     				thisError :=  thisError || '; PART_LOT_COUNT_5 is invalid';
@@ -756,10 +742,6 @@ r_collection_cde varchar2(255);
    					if numRecs != 0 then
    						thisError :=  thisError || '; PART_BARCODE_6 is a label';
    					END IF;
-    			else
-    				if rec.PART_CONTAINER_LABEL_6 is not null then
-    					thisError :=  thisError || '; PART_CONTAINER_LABEL_6 requires barcode';
-    				END IF;
     			END IF;
     			if rec.PART_LOT_COUNT_6 is null or is_number(rec.PART_LOT_COUNT_6) = 0 then
     				thisError :=  thisError || '; PART_LOT_COUNT_6 is invalid';
@@ -787,10 +769,6 @@ r_collection_cde varchar2(255);
    					if numRecs != 0 then
    						thisError :=  thisError || '; PART_BARCODE_7 is a label';
    					END IF;
-    			else
-    				if rec.PART_CONTAINER_LABEL_7 is not null then
-    					thisError :=  thisError || '; PART_CONTAINER_LABEL_7 requires barcode';
-    				END IF;
     			END IF;
     			if rec.PART_LOT_COUNT_7 is null or is_number(rec.PART_LOT_COUNT_7) = 0 then
     				thisError :=  thisError || '; PART_LOT_COUNT_7 is invalid';
@@ -818,10 +796,6 @@ r_collection_cde varchar2(255);
    					if numRecs != 0 then
    						thisError :=  thisError || '; PART_BARCODE_8 is a label';
    					END IF;
-    			else
-    				if rec.PART_CONTAINER_LABEL_8 is not null then
-    					thisError :=  thisError || '; PART_CONTAINER_LABEL_8 requires barcode';
-    				END IF;
     			END IF;
     			if rec.PART_LOT_COUNT_8 is null or is_number(rec.PART_LOT_COUNT_8) = 0 then
     				thisError :=  thisError || '; PART_LOT_COUNT_8 is invalid';
@@ -849,10 +823,6 @@ r_collection_cde varchar2(255);
    					if numRecs != 0 then
    						thisError :=  thisError || '; PART_BARCODE_9 is a label';
    					END IF;
-    			else
-    				if rec.PART_CONTAINER_LABEL_9 is not null then
-    					thisError :=  thisError || '; PART_CONTAINER_LABEL_9 requires barcode';
-    				END IF;
     			END IF;
     			if rec.PART_LOT_COUNT_9 is null or is_number(rec.PART_LOT_COUNT_9) = 0 then
     				thisError :=  thisError || '; PART_LOT_COUNT_9 is invalid';
@@ -880,10 +850,6 @@ r_collection_cde varchar2(255);
    					if numRecs != 0 then
    						thisError :=  thisError || '; PART_BARCODE_10 is a label';
    					END IF;
-    			else
-    				if rec.PART_CONTAINER_LABEL_10 is not null then
-    					thisError :=  thisError || '; PART_CONTAINER_LABEL_10 requires barcode';
-    				END IF;
     			END IF;
     			if rec.PART_LOT_COUNT_10 is null or is_number(rec.PART_LOT_COUNT_10) = 0 then
     				thisError :=  thisError || '; PART_LOT_COUNT_10 is invalid';
@@ -911,10 +877,6 @@ r_collection_cde varchar2(255);
    					if numRecs != 0 then
    						thisError :=  thisError || '; PART_BARCODE_11 is a label';
    					END IF;
-    			else
-    				if rec.PART_CONTAINER_LABEL_11 is not null then
-    					thisError :=  thisError || '; PART_CONTAINER_LABEL_11 requires barcode';
-    				END IF;
     			END IF;
     			if rec.PART_LOT_COUNT_11 is null or is_number(rec.PART_LOT_COUNT_11) = 0 then
     				thisError :=  thisError || '; PART_LOT_COUNT_11 is invalid';
@@ -942,10 +904,6 @@ r_collection_cde varchar2(255);
    					if numRecs != 0 then
    						thisError :=  thisError || '; PART_BARCODE_12 is a label';
    					END IF;
-    			else
-    				if rec.PART_CONTAINER_LABEL_12 is not null then
-    					thisError :=  thisError || '; PART_CONTAINER_LABEL_12 requires barcode';
-    				END IF;
     			END IF;
     			if rec.PART_LOT_COUNT_12 is null or is_number(rec.PART_LOT_COUNT_12) = 0 then
     				thisError :=  thisError || '; PART_LOT_COUNT_12 is invalid';
@@ -1115,5 +1073,6 @@ r_collection_cde varchar2(255);
 END;
 /
 sho err;
+
 CREATE OR REPLACE PUBLIC SYNONYM bulk_stage_check_one FOR bulk_stage_check_one;
 GRANT EXECUTE ON bulk_stage_check_one TO PUBLIC;

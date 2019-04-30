@@ -190,7 +190,6 @@ PROCEDURE b_bulkload_parts  (collobjid IN number) is
 	r_partname  specimen_part.PART_NAME%TYPE;
 	r_condn  coll_object.CONDITION%TYPE;
 	r_barcode  container.BARCODE%TYPE;
-	r_label  container.LABEL%TYPE;
 	r_lotcount  coll_object.LOT_COUNT%TYPE;
 	r_disposition  coll_object.COLL_OBJ_DISPOSITION%TYPE;
 	r_partremark  coll_object_remark.COLL_OBJECT_REMARKS%TYPE;
@@ -216,7 +215,6 @@ BEGIN
 				PART_NAME_' || i || ', 
 				PART_CONDITION_' || i || ', 
 				PART_BARCODE_' || i || ', 
-				PART_CONTAINER_LABEL_' || i || ', 
 				PART_LOT_COUNT_' || i || ', 
 				PART_DISPOSITION_' || i || ', 
 				PART_REMARK_' || i || ' 
@@ -227,7 +225,6 @@ BEGIN
 				r_partname,
 				r_condn,
 				r_barcode,
-				r_label,
 				r_lotcount,
 				r_disposition,
 				r_partremark
@@ -285,9 +282,6 @@ BEGIN
 					parent_container_id = r_parent_container_id
 				WHERE 
 					container_id = r_container_id;
-				if r_label is not null then
-					UPDATE container SET label = r_label where container_id = r_container_id;
-				end if;
 			end if;			
 		end if;
 		--dbms_output.put_line ('parts loop de looooppppeeeee.....');
