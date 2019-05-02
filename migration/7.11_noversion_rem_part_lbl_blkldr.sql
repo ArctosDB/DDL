@@ -122,6 +122,18 @@ alter table bulkloader drop column part_container_label_12;
 alter table bulkloader_stage drop column part_container_label_12;
 
 
+alter table pre_bulkloader drop column part_container_label_1;
+alter table pre_bulkloader drop column part_container_label_2;
+alter table pre_bulkloader drop column part_container_label_3;
+alter table pre_bulkloader drop column part_container_label_4;
+alter table pre_bulkloader drop column part_container_label_5;
+alter table pre_bulkloader drop column part_container_label_6;
+alter table pre_bulkloader drop column part_container_label_7;
+alter table pre_bulkloader drop column part_container_label_8;
+alter table pre_bulkloader drop column part_container_label_9;
+alter table pre_bulkloader drop column part_container_label_10;
+alter table pre_bulkloader drop column part_container_label_11;
+alter table pre_bulkloader drop column part_container_label_12;
 
 
 
@@ -133,8 +145,165 @@ alter table bulkloader_stage drop column part_container_label_12;
 
 -----------p2
 select 
-c.institution_acronym,
-p.institution_acronym,
-c.container_type,
-c.container_id from container p, container c where p.parent_container_id=c.container_id and p.container_type='collection object' and 
-c.institution_acronym!=p.institution_acronym;
+	part_inst || '-->' || ctr_inst
+from (
+	select 
+		p.institution_acronym part_inst,
+		c.institution_acronym ctr_inst,
+		c.container_type,
+		c.container_id 
+	from 
+		container p, 
+		container c 
+	where 
+		p.parent_container_id=c.container_id and 
+		p.container_type='collection object' and 
+	c.institution_acronym!=p.institution_acronym
+)
+group by
+	part_inst,
+	ctr_inst
+;
+
+PART_INST||'-->'||CTR_INST
+------------------------------------------------------------------------------------------------------------------------
+KWP-->UAM
+DMNS-->MSB
+DMNS-->UAM
+
+
+--- DMNS parts in UAM containers
+create table temp_dmns_p_uam_c as
+select
+	flat.guid,
+	c.barcode,
+	getContainerParentage(c.container_id) partCtrStk,
+	specimen_part.collection_object_id partID,
+	c.container_id part_container_id,
+	specimen_part.part_name
+from
+	flat,
+	specimen_part,
+	coll_obj_cont_hist,
+	container p,
+	container c
+where
+	flat.collection_object_id=specimen_part.derived_from_cat_item and
+	specimen_part.collection_object_id=coll_obj_cont_hist.collection_object_id and
+	coll_obj_cont_hist.container_id=p.container_id and
+	p.parent_container_id=c.container_id and
+	c.institution_acronym='UAM' and
+	p.institution_acronym='DMNS' 
+;
+	
+
+--- MSB parts in MVZ containers
+create table temp_msb_p_mvz_c as
+select
+	flat.guid,
+	c.barcode,
+	getContainerParentage(c.container_id) partCtrStk,
+	specimen_part.collection_object_id partID,
+	c.container_id part_container_id,
+	specimen_part.part_name
+from
+	flat,
+	specimen_part,
+	coll_obj_cont_hist,
+	container p,
+	container c
+where
+	flat.collection_object_id=specimen_part.derived_from_cat_item and
+	specimen_part.collection_object_id=coll_obj_cont_hist.collection_object_id and
+	coll_obj_cont_hist.container_id=p.container_id and
+	p.parent_container_id=c.container_id and
+	c.institution_acronym='MVZ' and
+	p.institution_acronym='MSB' 
+;
+	
+
+
+--- UAM parts in MSB containers
+create table temp_uam_p_msb_c as
+select
+	flat.guid,
+	c.barcode,
+	getContainerParentage(c.container_id) partCtrStk,
+	specimen_part.collection_object_id partID,
+	c.container_id part_container_id,
+	specimen_part.part_name
+from
+	flat,
+	specimen_part,
+	coll_obj_cont_hist,
+	container p,
+	container c
+where
+	flat.collection_object_id=specimen_part.derived_from_cat_item and
+	specimen_part.collection_object_id=coll_obj_cont_hist.collection_object_id and
+	coll_obj_cont_hist.container_id=p.container_id and
+	p.parent_container_id=c.container_id and
+	c.institution_acronym='MSB' and
+	p.institution_acronym='UAM' 
+;
+	
+
+
+--- UAM parts in MVZ containers
+create table temp_uam_p_mvz_c as
+select
+	flat.guid,
+	c.barcode,
+	getContainerParentage(c.container_id) partCtrStk,
+	specimen_part.collection_object_id partID,
+	c.container_id part_container_id,
+	specimen_part.part_name
+from
+	flat,
+	specimen_part,
+	coll_obj_cont_hist,
+	container p,
+	container c
+where
+	flat.collection_object_id=specimen_part.derived_from_cat_item and
+	specimen_part.collection_object_id=coll_obj_cont_hist.collection_object_id and
+	coll_obj_cont_hist.container_id=p.container_id and
+	p.parent_container_id=c.container_id and
+	c.institution_acronym='MVZ' and
+	p.institution_acronym='UAM' 
+;
+	
+--- MVZ parts in UAM containers
+create table temp_mvz_p_uam_c as
+select
+	flat.guid,
+	c.barcode,
+	getContainerParentage(c.container_id) partCtrStk,
+	specimen_part.collection_object_id partID,
+	c.container_id part_container_id,
+	specimen_part.part_name
+from
+	flat,
+	specimen_part,
+	coll_obj_cont_hist,
+	container p,
+	container c
+where
+	flat.collection_object_id=specimen_part.derived_from_cat_item and
+	specimen_part.collection_object_id=coll_obj_cont_hist.collection_object_id and
+	coll_obj_cont_hist.container_id=p.container_id and
+	p.parent_container_id=c.container_id and
+	c.institution_acronym='UAM' and
+	p.institution_acronym='MVZ' 
+;
+	
+ and
+(
+	c.institution_acronym!='UAM' and p.institution_acronym!='KWP' or
+	c.institution_acronym!='MSB' and p.institution_acronym!='DGR' or
+	c.institution_acronym!='UAM' and p.institution_acronym!='UAMb' or
+	c.institution_acronym!='UAM' and p.institution_acronym!='KNWR'
+);
+
+
+
