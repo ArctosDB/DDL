@@ -33,7 +33,7 @@ collectionCode=Mamm&catalogNumber=299265&accesspoint=http://ipt.vertnet.org:8080
 
 
 
-
+set define off;
 create or replace view ggbn_tissue as select distinct
 	'http://arctos.database.museum/guid/'  || filtered_flat.guid || '?pid=' || specimen_part.collection_object_id occurrenceID,
  	-- not sure this is needed?? May be necessary to link permits?
@@ -44,7 +44,7 @@ create or replace view ggbn_tissue as select distinct
 		 substr(guid,instr(guid,':')+1,instr(guid,':',1,2)-instr(guid,':')-1)  ||
 		 '&catalogNumber='||
 		 cat_num ||
-	 	'&accesspoint=http://ipt.vertnet.org:8080/ipt/archive.do?r=msbmammalggbntest&guid=http://arctos.database.museum/guid/' || guid
+	 	'&accesspoint=http://ipt.vertnet.org:8080/ipt/archive.do?r=arctos_ggbn&guid=http://arctos.database.museum/guid/' || guid
 	 AS relatedResourceID,
 	'tissue' materialSampleType,
 	specimen_part.part_name preparationType,
@@ -258,6 +258,17 @@ BEGIN
 END;
 / 
 
+-- immediate refresh
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+    job_name    => 'J_temp_update_junk',
+    job_type    => 'STORED_PROCEDURE',
+    job_action    => 'proc_ref_ggbn_tbl',
+    enabled     => TRUE,
+    end_date    => NULL
+  );
+END;
+/ 
 
 select count(*) from ggbn_tissue_tbl;
 drop view digir_query.v_ggbn_tissue_tbl;
