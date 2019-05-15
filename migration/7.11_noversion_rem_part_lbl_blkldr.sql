@@ -137,6 +137,22 @@ alter table pre_bulkloader drop column part_container_label_12;
 
 
 
+alter table bulkloader_clone drop column part_container_label_1;
+alter table bulkloader_clone drop column part_container_label_2;
+alter table bulkloader_clone drop column part_container_label_3;
+alter table bulkloader_clone drop column part_container_label_4;
+alter table bulkloader_clone drop column part_container_label_5;
+alter table bulkloader_clone drop column part_container_label_6;
+alter table bulkloader_clone drop column part_container_label_7;
+alter table bulkloader_clone drop column part_container_label_8;
+alter table bulkloader_clone drop column part_container_label_9;
+alter table bulkloader_clone drop column part_container_label_10;
+alter table bulkloader_clone drop column part_container_label_11;
+alter table bulkloader_clone drop column part_container_label_12;
+
+
+
+
 
 
 

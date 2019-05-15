@@ -618,6 +618,7 @@ exec set_media_flat;
 
 
 
+select count(*)  FROM media_flat WHERE (lastdate IS NULL OR ((SYSDATE - lastdate) > 1));
 
 
 

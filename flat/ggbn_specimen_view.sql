@@ -67,4 +67,7 @@ create or replace view digir_query.ggbn_specimen_view as select
    	'http://arctos.database.museum/guid/' || GUID occurrenceID
 from
 	filtered_flat
+where
+	guid is not null
 ;
+

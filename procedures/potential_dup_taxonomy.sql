@@ -2,6 +2,8 @@
 CREATE OR REPLACE PROCEDURE makeRecipTaxRel(id1 IN number, id2 in number, rel in varchar2)
 is
 	c number;
+	tax_a taxon_name.scientific_name%TYPE;
+	tax_b taxon_name.scientific_name%TYPE;
 begin
 	select sum(c) into c from (
 		select count(*) c from taxon_relations where TAXON_NAME_ID=id1 and RELATED_TAXON_NAME_ID=id2
@@ -10,6 +12,29 @@ begin
 	);
 	
 	if c = 0 then
+		-- if we made it this far we're supposed to create relationships
+		-- reject relationships that are
+		--    monomials containing only letters that end with inae and ini
+ 		
+		select scientific_name into tax_a from taxon_name where TAXON_NAME_ID=id1;
+		select scientific_name into tax_b from taxon_name where TAXON_NAME_ID=id2;
+		--		dbms_output.put_line('tax_a:' || tax_a);
+		--		dbms_output.put_line('tax_b:' || tax_b);
+
+		if 
+			-- only for monomials consisting only of letters
+			(not regexp_like(tax_a,'[^[:alpha:]]')) and
+			(not regexp_like(tax_a,'[^[:alpha:]]')) and
+			(
+				(tax_a like '%inae' and tax_b like '%ini') or 
+				(tax_a like '%ini' and tax_b like '%inae')
+			)
+		then
+			--dbms_output.put_line('exiting');
+			return;
+		end if;
+	
+		
 		--dbms_output.put_line('creating a relationships....');
 		insert into taxon_relations (
 			TAXON_RELATIONS_ID,
