@@ -47,6 +47,8 @@ CREATE OR REPLACE procedure pause_maintenance (onoff IN varchar2) is
 	   		dbms_scheduler.disable('SCH_ALA_PROCEDURES',force=>true);
 	   		dbms_scheduler.disable('J_FIND_TAX_VARS',force=>true);
 	   		dbms_scheduler.disable('J_PROC_CACHE_STATS',force=>true);
+	   		dbms_scheduler.disable('J_CACHE_GEOREF_STATS',force=>true);
+	   		
 	   		
 	   	end if;
 	   	
@@ -79,6 +81,8 @@ CREATE OR REPLACE procedure pause_maintenance (onoff IN varchar2) is
 	   		dbms_scheduler.enable('SCH_ALA_PROCEDURES');
 	   		dbms_scheduler.enable('J_FIND_TAX_VARS');
 	   		dbms_scheduler.enable('J_PROC_CACHE_STATS');
+	   		dbms_scheduler.enable('J_CACHE_GEOREF_STATS');
+	   		
 	   	end if;
 	   	
 	    dbms_output.put_line('');
@@ -121,7 +125,8 @@ CREATE OR REPLACE procedure pause_maintenance (onoff IN varchar2) is
 	   				'J_UPDATE_CACHE_ANYTAXONNAME',
 	   				'SCH_ALA_PROCEDURES',
 	   				'J_FIND_TAX_VARS',
-	   				'J_PROC_CACHE_STATS'
+	   				'J_PROC_CACHE_STATS',
+	   				'J_CACHE_GEOREF_STATS'
 	   			)
 	   	) loop
 	   		dbms_output.put_line(rpad(x.job_name,60,' ') || ' ==> ' || x.state);
