@@ -660,9 +660,7 @@ BEGIN
                 dec_lat IS NULL AND -- because we didnt get event coordinates - assume for other coordinate info
                 locality_name IS NULL AND -- because we tested that above and will use it if it exists
                 nvl(concatGeologyAttributeDetail(locality.locality_id),'NULL') = nvl(b_concatGeologyAttributeDetail(rec.collection_object_id),'NULL') and
-                -- this needs developed if we ever add WKT to the bulkloader
-                --wkt_polygon is null
-                dbms_lob.compare(nvl(rec.WKT_POLYGON,'Null'),nvl(WKT_POLYGON,'Null'))=0
+                NVL(wkt_media_id,-1) = nvl(rec.wkt_media_id,-1)
             ;
         ELSE          
            select 
@@ -692,7 +690,7 @@ BEGIN
                 nvl(concatGeologyAttributeDetail(locality.locality_id),'NULL') = nvl(b_concatGeologyAttributeDetail(rec.collection_object_id),'NULL') and
                  -- this needs developed if we ever add WKT to the bulkloader
                 --wkt_polygon is null
-                dbms_lob.compare(nvl(rec.WKT_POLYGON,'Null'),nvl(WKT_POLYGON,'Null'))=0
+                NVL(wkt_media_id,-1) = nvl(rec.wkt_media_id,-1)
             ;
         END IF; 
         if gLocalityId is null then
@@ -741,7 +739,7 @@ BEGIN
                  DATUM,
                  georeference_source,
                  georeference_protocol,
-                 wkt_polygon
+                 wkt_media_id
             ) values (
                 gLocalityId,
                 gGeog_auth_rec_id,
@@ -760,7 +758,7 @@ BEGIN
                 v_DATUM,
                 v_georeference_source,
                 v_georeference_protocol,
-                rec.wkt_polygon
+                rec.wkt_media_id
             );
             --dbms_output.put_line('made a locality');
             for i IN 1 .. 6 LOOP -- number of geology attributes

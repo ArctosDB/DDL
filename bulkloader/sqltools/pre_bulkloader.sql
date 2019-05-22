@@ -1,3 +1,7 @@
+
+
+TODO::: wkt_polygon -->wkt_media_id
+
 drop table pre_bulkloader;
 
 create table pre_bulkloader as select * from bulkloader where 1=2;

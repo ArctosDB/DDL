@@ -16,3 +16,6 @@ CREATE TABLE COLLECTION_CONTACTS (
 			FOREIGN KEY (CONTACT_ROLE)
 			REFERENCES CTCOLL_CONTACT_ROLE (CONTACT_ROLE)
 ) TABLESPACE UAM_DAT_1;
+
+
+create unique index ix_colct_cntc_agnt_role on collection_contacts (COLLECTION_ID,CONTACT_ROLE,CONTACT_AGENT_ID) tablespace uam_idx_1;

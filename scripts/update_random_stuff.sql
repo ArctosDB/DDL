@@ -1,7 +1,7 @@
 ------------------ update locality
 
 
-exec maintenance('off');
+exec pause_maintenance('off');
 
 lock table locality in exclusive mode nowait;
 
@@ -21,14 +21,14 @@ alter trigger TRG_LOCALITY_BIU enable;
 alter trigger TR_LOCALITY_BUD enable;
 
 
-exec maintenance('on');
+exec pause_maintenance('on');
 
 
 ----------------- END update locality
 
 
 ------------------ update collecting_event
-exec maintenance('off');
+exec pause_maintenance('off');
 
 lock table collecting_event in exclusive mode nowait;
 
@@ -41,7 +41,7 @@ update collecting_event set VERBATIM_COORDINATES=null where VERBATIM_COORDINATES
 alter trigger  TR_COLLECTINGEVENT_BUID enable;
 alter trigger  TR_COLLEVENT_AU_FLAT enable;
 
-exec maintenance('on');
+exec pause_maintenance('on');
 
 
 commit;

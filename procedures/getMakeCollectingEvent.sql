@@ -56,7 +56,7 @@ insert into temp_getMakeCE_flds (fld,ord) values ('DEC_LONG_MIN',34);
 insert into temp_getMakeCE_flds (fld,ord) values ('UTM_ZONE',35);
 insert into temp_getMakeCE_flds (fld,ord) values ('UTM_EW',36);
 insert into temp_getMakeCE_flds (fld,ord) values ('UTM_NS',37);
-insert into temp_getMakeCE_flds (fld,ord) values ('WKT_POLYGON',38);
+insert into temp_getMakeCE_flds (fld,ord) values ('WKT_MEDIA_ID',38);
 
 insert into temp_getMakeCE_flds (fld,ord) values ('LOCALITY_REMARKS',39);
 
@@ -173,7 +173,7 @@ CREATE OR REPLACE procedure getMakeCollectingEvent (
  	v_UTM_ZONE in collecting_event.UTM_ZONE%type default null,
  	v_UTM_EW in collecting_event.UTM_EW%type default null,
  	v_UTM_NS in collecting_event.UTM_NS%type default null,
-	v_WKT_POLYGON in locality.WKT_POLYGON%type default null,
+	v_WKT_MEDIA_ID in number default null,
  	
  	
  	
@@ -468,7 +468,7 @@ CREATE OR REPLACE procedure getMakeCollectingEvent (
 	                dec_lat IS NULL AND -- because we didnt get event coordinates - assume for other coordinate info
 	                locality_name IS NULL AND -- because we tested that above and will use it if it exists
 	                nvl(concatGeologyAttributeDetail(locality.locality_id),'NULL') = nvl(v_cc_geo_attrs,'NULL') and
-	                dbms_lob.compare(nvl(v_WKT_POLYGON,'Null'),nvl(WKT_POLYGON,'Null'))=0;
+	                NVL(wkt_media_id,-1) = nvl(v_wkt_media_id,-1) ;
 	        ELSE
 	        -- we did get coordinates
 	        	-- convert them to decimal
@@ -533,7 +533,7 @@ CREATE OR REPLACE procedure getMakeCollectingEvent (
 	                NVL(MAX_ERROR_DISTANCE,-1) = nvl(v_MAX_ERROR_DISTANCE,-1) AND
 	                locality_name IS NULL AND -- because we tested that above and will use it if it exists
 	                nvl(concatGeologyAttributeDetail(locality.locality_id),'NULL') = nvl(v_cc_geo_attrs,'NULL') and
-	                dbms_lob.compare(nvl(v_WKT_POLYGON,'Null'),nvl(WKT_POLYGON,'Null'))=0;
+	                NVL(wkt_media_id,-1) = nvl(v_wkt_media_id,-1) ;
         	END IF;
         	-- now we should have a locality_id if a good one exists
         	-- if not, make one
@@ -560,7 +560,7 @@ CREATE OR REPLACE procedure getMakeCollectingEvent (
 	                 DATUM,
 	                 georeference_source,
 	                 georeference_protocol,
-	                 wkt_polygon
+	                 wkt_media_id
 	            ) values (
 	                l_locality_id,
 	                l_geog_auth_rec_id,
@@ -579,7 +579,7 @@ CREATE OR REPLACE procedure getMakeCollectingEvent (
 	                v_DATUM,
 	                v_georeference_source,
 	                v_georeference_protocol,
-	                v_wkt_polygon
+	                v_wkt_media_id
 	            );
            	 --dbms_output.put_line('made a locality');
              -- grab any cached geology data 
@@ -1205,7 +1205,6 @@ CREATE OR REPLACE procedure getMakeCollectingEvent (
 	            -- did not find a locality, so make one
 	            -- first verify coordinate data
 	            if v_orig_lat_long_units is null then
-	            	if 
 	            
 	            
 	            

@@ -149,10 +149,6 @@ CREATE OR REPLACE TRIGGER trg_locality_biu
     BEGIN
 	    -- Oracle is making some super-weird distinction between
 	    -- NULL and 0-length (or something) for CLOBs, so....
-	    if dbms_lob.getlength(:NEW.wkt_polygon) = 0 then
-	    	:NEW.wkt_polygon:=NULL;
-	    end if;
-	    
 	    -- set last check date to now so the auto merge procedure won't run for ~30D
 	    if :NEW.last_dup_check_date is null then
 	    	:NEW.last_dup_check_date:=sysdate;

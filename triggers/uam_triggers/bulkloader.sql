@@ -3,9 +3,6 @@ CREATE OR REPLACE TRIGGER TR_bulkloader_BIU
 BEFORE INSERT OR UPDATE ON bulkloader
 FOR EACH ROW
 BEGIN
-	 if dbms_lob.getlength(:NEW.wkt_polygon) = 0 then
-    	:NEW.wkt_polygon:=NULL;
-    end if;
  	IF :new.orig_lat_long_units = 'deg. min. sec.' THEN
             :new.c$lat := :new.LATDEG + (:new.LATMIN / 60) + (nvl(:new.LATSEC,0) / 3600);
             IF :new.LATDIR = 'S' THEN
@@ -569,7 +566,7 @@ BEGIN
 		UTM_ZONE,
 		UTM_EW,
 		UTM_NS,
-		WKT_POLYGON)
+		wkt_media_id)
 	VALUES (
 		:OLD.COLLECTION_OBJECT_ID,
 		:OLD.CAT_NUM,
@@ -844,7 +841,7 @@ BEGIN
 		:OLD.UTM_ZONE,
 		:OLD.UTM_EW,
 		:OLD.UTM_NS,
-		:OLD.WKT_POLYGON);
+		:OLD.wkt_media_id);
 END;
 /
 
