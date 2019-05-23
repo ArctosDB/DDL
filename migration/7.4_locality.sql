@@ -2,7 +2,9 @@
 -- 2018-09-06
 -- https://github.com/ArctosDB/arctos/issues/1672
 -- geology too
-
+-- add this
+-- I guess leave WKT in there because its an archive??
+alter table locality_archive add wkt_media_id number;
 
  alter table geology_archive add  changed_agent_id number;
  update geology_archive set changed_agent_id=getAgentIDFromLogin(whodunit);
@@ -118,7 +120,7 @@ CREATE OR REPLACE TRIGGER trg_geology_archive
 					GEOREFERENCE_SOURCE,
 					GEOREFERENCE_PROTOCOL,
 					LOCALITY_NAME,
-				 	WKT_POLYGON,
+				 	wkt_media_id,
 				 	changed_agent_id,
 				 	changedate
 				 ) (
@@ -142,7 +144,7 @@ CREATE OR REPLACE TRIGGER trg_geology_archive
 						GEOREFERENCE_SOURCE,
 						GEOREFERENCE_PROTOCOL,
 						LOCALITY_NAME,
-					 	WKT_POLYGON,
+					 	wkt_media_id,
 					 	getAgentIDFromLogin(sys_context('USERENV', 'SESSION_USER')),
 						sysdate
 					from
@@ -334,7 +336,7 @@ CREATE OR REPLACE TRIGGER trg_locality_archive
 		    	nvl(:NEW.GEOREFERENCE_SOURCE,'NULL') != nvl(:OLD.GEOREFERENCE_SOURCE,'NULL') or
 		    	nvl(:NEW.GEOREFERENCE_PROTOCOL,'NULL') != nvl(:OLD.GEOREFERENCE_PROTOCOL,'NULL') or
 		    	nvl(:NEW.LOCALITY_NAME,'NULL') != nvl(:OLD.LOCALITY_NAME,'NULL') or
-		    	dbms_lob.compare(nvl(:NEW.WKT_POLYGON,'NULL'),nvl(:OLD.WKT_POLYGON,'NULL')) != 0	
+		    	nvl(:NEW.wkt_media_id,0) != nvl(:OLD.wkt_media_id,0) 
 		    	then
 		    		--dbms_output.put_line('got change');  
 		    		 -- now just grab all of the :OLD values
@@ -359,7 +361,7 @@ CREATE OR REPLACE TRIGGER trg_locality_archive
 						GEOREFERENCE_SOURCE,
 						GEOREFERENCE_PROTOCOL,
 						LOCALITY_NAME,
-					 	WKT_POLYGON,
+					 	wkt_media_id,
 					 	changed_agent_id,
 					 	changedate
 					 ) values (
@@ -382,7 +384,7 @@ CREATE OR REPLACE TRIGGER trg_locality_archive
 						:OLD.GEOREFERENCE_SOURCE,
 						:OLD.GEOREFERENCE_PROTOCOL,
 						:OLD.LOCALITY_NAME,
-					 	:OLD.WKT_POLYGON,
+					 	:OLD.wkt_media_id,
 					 	getAgentIDFromLogin(sys_context('USERENV', 'SESSION_USER')),
 					 	sysdate
 					 );
@@ -410,7 +412,7 @@ CREATE OR REPLACE TRIGGER trg_locality_archive
 				GEOREFERENCE_SOURCE,
 				GEOREFERENCE_PROTOCOL,
 				LOCALITY_NAME,
-			 	WKT_POLYGON,
+			 	wkt_media_id,
 			 	changed_agent_id,
 			 	changedate
 			 ) values (
@@ -433,7 +435,7 @@ CREATE OR REPLACE TRIGGER trg_locality_archive
 				:NEW.GEOREFERENCE_SOURCE,
 				:NEW.GEOREFERENCE_PROTOCOL,
 				:NEW.LOCALITY_NAME,
-			 	:NEW.WKT_POLYGON,
+			 	:NEW.wkt_media_id,
 			 	getAgentIDFromLogin(sys_context('USERENV', 'SESSION_USER')),
 			 	sysdate
 			 );

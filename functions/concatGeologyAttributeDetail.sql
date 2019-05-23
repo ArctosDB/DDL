@@ -36,7 +36,8 @@ CREATE OR REPLACE function concatGeologyAttributeDetail(locid  in number )
 	    from geology_attributes,preferred_agent_name
 	   where
 	   geology_attributes.geo_att_determiner_id=preferred_agent_name.agent_id (+) and
-	   locality_id=locid order by geology_attribute,geo_att_value )
+	   locality_id=locid 
+	   order by geology_attribute,geo_att_value )
 	 LOOP
 	     l_str := l_str || l_sep || r.oneAtt;
            l_sep := '|';
