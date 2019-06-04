@@ -64,7 +64,8 @@ create or replace view digir_query.ggbn_specimen_view as select
 	-- we are getting ALL specimen_event-->geog_auth_rec here
 	-- we are NOT getting geology here. We should be.
 	--------------------------- specimen_event -------------------------------
-   	'http://arctos.database.museum/guid/' || GUID occurrenceID
+   	'http://arctos.database.museum/guid/' || GUID occurrenceID,
+   	COUNTRY
 from
 	filtered_flat
 where
