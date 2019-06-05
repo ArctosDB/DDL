@@ -167,12 +167,14 @@ create or replace view digir_query.ipt_view as select
 	geog_auth_rec.HIGHER_GEOG higherGeography,	
 	replace(replace(INSTITUTION_ACRONYM,'Obs'),'UAMb','UAM') institution,
 	collection,
-	EARLIESTEONORLOWESTEONOTHEM,
-	EARLIESTPERIODORLOWESTSYSTEM,
-	EARLIESTEPOCHORLOWESTSERIES,
-	EARLIESTAGEORLOWESTSTAGE,
-	EARLIESTERAORLOWESTERATHEM,
-	FORMATION,
+	getGeologyForDWC(locality.locality_id,'Erathem/Era') as earliestEraOrLowestErathem,
+	getGeologyForDWC(locality.locality_id,'Eon/Eonothem') as earliestEonOrLowestEonothem,
+	getGeologyForDWC(locality.locality_id,'Series/Epoch') as earliestEpochOrLowestSeries,
+	getGeologyForDWC(locality.locality_id,'Stage/Age') as earliestAgeOrLowestStage,
+	getGeologyForDWC(locality.locality_id,'System/Period') as earliestPeriodOrLowestSystem,
+	getGeologyForDWC(locality.locality_id,'formation') as formation,
+	getGeologyForDWC(locality.locality_id,'group') as geo_group,
+	getGeologyForDWC(locality.locality_id,'member') as member,
 	 'http://arctos.database.museum/guid/'  || filtered_flat.guid || '?seid=' || specimen_event.specimen_event_id occurrenceID2
 	 --,
 	--taxon_rank taxonRank
@@ -181,14 +183,12 @@ from
 	specimen_event,
 	collecting_event,
 	locality,
-	geog_auth_rec,
-	ipt_geology
+	geog_auth_rec
 where
 	filtered_flat.collection_object_id=specimen_event.collection_object_id (+) and
 	--specimen_event.specimen_event_type != 'unaccepted place of collection' and
 	specimen_event.verificationstatus != 'unaccepted' and
 	specimen_event.collecting_event_id=collecting_event.collecting_event_id (+) and
 	collecting_event.locality_id=locality.locality_id (+) and
-	locality.geog_auth_rec_id=geog_auth_rec.geog_auth_rec_id (+) and
-	locality.locality_id=ipt_geology.locality_id (+)
+	locality.geog_auth_rec_id=geog_auth_rec.geog_auth_rec_id (+)
 ;

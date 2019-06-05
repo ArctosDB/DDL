@@ -145,6 +145,12 @@ alter table bak_collecting_event20180405 add merged_into_cid number;
 
 
 CREATE OR REPLACE PROCEDURE auto_merge_collecting_event 
+
+don't use this
+see collecting event attributes 
+migration file
+
+
 IS
 	i number :=0;
 	c number;
