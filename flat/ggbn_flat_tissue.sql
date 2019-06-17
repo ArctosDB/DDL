@@ -34,6 +34,7 @@ collectionCode=Mamm&catalogNumber=299265&accesspoint=http://ipt.vertnet.org:8080
 
 
 set define off;
+
 create or replace view ggbn_tissue as select distinct
 	'http://arctos.database.museum/guid/'  || filtered_flat.guid || '?pid=' || specimen_part.collection_object_id occurrenceID,
  	-- not sure this is needed?? May be necessary to link permits?
@@ -82,7 +83,7 @@ create or replace view ggbn_tissue as select distinct
 	--------------------------- identifiers ---------------------------
 	OTHERCATALOGNUMBERS otherCatalogNumbers,
 	'http://arctos.database.museum/guid/' || GUID individualID,
-	CATALOGNUMBERTEXT catalogNumber,
+	filtered_flat.guid catalogNumber,
 	GENBANKNUM associatedSequences,
 	COLLECTORNUMBER recordNumber, -- I think this is a very incomplete mapping
 	FIELD_NUM fieldNumber, -- also incomplete/incorrect
@@ -269,6 +270,9 @@ BEGIN
   );
 END;
 / 
+
+select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_TEMP_UPDATE_JUNK';
+
 
 select count(*) from ggbn_tissue_tbl;
 drop view digir_query.v_ggbn_tissue_tbl;
