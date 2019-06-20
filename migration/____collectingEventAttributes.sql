@@ -14,6 +14,52 @@ grant select on ctcoll_event_attr_type to public;
 grant insert,update,delete on ctcoll_event_attr_type to manage_codetables;
 
 
+create table log_ctcoll_event_attr_type (
+	username varchar2(60),
+	when date default sysdate,
+	n_event_attribute_type VARCHAR2(255),
+	o_event_attribute_type VARCHAR2(255),
+	n_description VARCHAR2(4000),
+	o_description VARCHAR2(4000)
+);
+
+
+create or replace public synonym log_ctcoll_event_attr_type for log_ctcoll_event_attr_type;
+
+grant select on log_ctcoll_event_attr_type to coldfusion_user;
+
+
+CREATE OR REPLACE TRIGGER TR_log_ctcoll_event_attr_type AFTER INSERT or update or delete ON ctcoll_event_attr_type
+FOR EACH ROW
+BEGIN
+	insert into log_ctcoll_event_attr_type (
+		username,
+		when,
+		n_event_attribute_type,
+		o_event_attribute_type,
+		n_description,
+		o_description
+	) values (
+		SYS_CONTEXT('USERENV','SESSION_USER'),
+		sysdate,
+		:NEW.event_attribute_type,
+		:OLD.event_attribute_type,
+		:NEW.description,
+		:OLD.description
+	);
+END;
+/ 
+sho err;
+
+
+
+
+
+
+
+
+
+
 create table collecting_event_attributes (
 	collecting_event_attribute_id number not null,
 	collecting_event_id number not null,
@@ -25,6 +71,8 @@ create table collecting_event_attributes (
 	event_determination_method varchar2(4000) ,
 	event_determined_date varchar2(30)
 );
+
+alter table collecting_event_attributes modify determined_by_agent_id number null;
 
 
 ALTER TABLE collecting_event_attributes ADD CONSTRAINT pkcollecting_event_attributes PRIMARY KEY (collecting_event_attribute_id);
@@ -42,6 +90,53 @@ grant insert,update,delete,select on collecting_event_attributes to manage_local
 
 
 
+CREATE OR REPLACE TRIGGER tr_ctcoll_event_att_att_biu
+    BEFORE INSERT or update or delete ON ctcoll_event_att_att
+    FOR EACH ROW
+    DECLARE
+		c NUMBER;
+    BEGIN
+	    -- disallow changing stuff that's already in the data
+	    if inserting then
+	    	select count(*) into c from collecting_event_attributes where event_attribute_type=:NEW.event_attribute_type;
+	    	if c>0 then
+	    		raise_application_error(-20001,'You may not add control for used attributes.');
+	    	end if;
+	    end if;
+	    if deleting then
+	    	select count(*) into c from collecting_event_attributes where event_attribute_type=:OLD.event_attribute_type;
+	    	if c>0 then
+	    		raise_application_error(-20001,'You may not delete for used attributes.');
+	    	end if;
+	    end if;
+	    if updating then
+	    	if :OLD.event_attribute_type != :NEW.event_attribute_type then
+	    		raise_application_error(-20001,'Changing attribute type is not allowed; delete and insert.');
+			end if;
+			if :NEW.VALUE_CODE_TABLE is not null and :NEW.VALUE_CODE_TABLE!=:OLD.VALUE_CODE_TABLE then
+	    		select count(*) into c from collecting_event_attributes where event_attribute_type=:OLD.event_attribute_type;
+	    		if c>0 then
+		    		raise_application_error(-20001,'You may not change value control for used attributes.');
+		    	end if;
+		    end if;
+		    if :NEW.UNIT_CODE_TABLE is not null and :NEW.UNIT_CODE_TABLE!=:OLD.UNIT_CODE_TABLE then
+	    		select count(*) into c from collecting_event_attributes where event_attribute_type=:OLD.event_attribute_type;
+	    		if c>0 then
+		    		raise_application_error(-20001,'You may not change unit control for used attributes.');
+		    	end if;
+		    end if;
+		end if;
+	    
+	    if :NEW.VALUE_CODE_TABLE is null and :NEW.UNIT_CODE_TABLE is null then
+	    	raise_application_error(-20001,'Either value or unit code table must be provided.');
+	   	END IF;
+	   	
+	    if :NEW.VALUE_CODE_TABLE is not null and :NEW.UNIT_CODE_TABLE is not null then
+	    	raise_application_error(-20001,'Either value or unit code table must be provided.');
+	   	END IF;
+	end;
+/
+sho err;
 
 
 create TABLE ctcoll_event_att_att (
@@ -58,6 +153,56 @@ grant insert,update,delete on ctcoll_event_att_att to manage_codetables;
 
 
 
+
+
+
+create table log_ctcoll_event_att_att (
+	username varchar2(60),
+	when date default sysdate,
+	n_event_attribute_type VARCHAR2(255),
+	o_event_attribute_type VARCHAR2(255),
+	n_VALUE_code_table VARCHAR2(255),
+	o_VALUE_code_table VARCHAR2(255),
+	n_unit_code_table VARCHAR2(255),
+	o_unit_code_table VARCHAR2(255)
+);
+
+
+create or replace public synonym log_ctcoll_event_att_att for log_ctcoll_event_att_att;
+
+grant select on log_ctcoll_event_att_att to coldfusion_user;
+
+
+CREATE OR REPLACE TRIGGER TR_log_ctcoll_event_att_att AFTER INSERT or update or delete ON ctcoll_event_att_att
+FOR EACH ROW
+BEGIN
+	insert into log_ctcoll_event_att_att (
+		username,
+		when,
+		n_event_attribute_type,
+		o_event_attribute_type,
+		n_VALUE_code_table,
+		o_VALUE_code_table,
+		n_unit_code_table,
+		o_unit_code_table
+	) values (
+		SYS_CONTEXT('USERENV','SESSION_USER'),
+		sysdate,
+		:NEW.event_attribute_type,
+		:OLD.event_attribute_type,
+		:NEW.VALUE_code_table,
+		:OLD.VALUE_code_table,
+		:NEW.unit_code_table,
+		:OLD.unit_code_table
+	);
+END;
+/ 
+sho err;
+
+
+
+
+
 CREATE UNIQUE INDEX iu_ctcoll_event_att_att_all ON ctcoll_event_att_att (event_attribute_type,VALUE_code_table,unit_code_table);
 CREATE UNIQUE INDEX iu_ctevent_att_att ON ctcoll_event_att_att (event_attribute_type);
 
@@ -65,6 +210,8 @@ CREATE UNIQUE INDEX iu_ctevent_att_att ON ctcoll_event_att_att (event_attribute_
 
 
 CREATE SEQUENCE sq_coll_event_attribute_id;
+CREATE PUBLIC SYNONYM sq_coll_event_attribute_id for sq_coll_event_attribute_id;
+GRANT SELECT ON sq_coll_event_attribute_id TO public;
 
 CREATE OR REPLACE TRIGGER tr_coll_event_attr_biu
     BEFORE INSERT or update ON collecting_event_attributes
@@ -77,6 +224,8 @@ CREATE OR REPLACE TRIGGER tr_coll_event_attr_biu
 		status varchar2(255);
 		sqlString varchar2(4000);
     BEGIN
+	    
+	    dbms_output.put_line('hola yo soy tr_coll_event_attr_biu');
         if :new.collecting_event_attribute_id is null then
         	select sq_coll_event_attribute_id.nextval into :new.collecting_event_attribute_id from dual;
         end if;        
@@ -86,13 +235,18 @@ CREATE OR REPLACE TRIGGER tr_coll_event_attr_biu
 	   	       raise_application_error(-20001,'event_determined_date: ' || status);
 	   		END IF;
 	    END IF;
+	    dbms_output.put_line('event_attribute_type:' || :NEW.event_attribute_type);
 		SELECT COUNT(*) INTO numrows FROM ctcoll_event_att_att WHERE event_attribute_type = :NEW.event_attribute_type;
+		
+	    dbms_output.put_line('numrows:' || numrows);
      	IF (numrows = 0) and :new.event_attribute_units IS NOT NULL THEN
             raise_application_error(
                 -20001,
                 'This attribute cannot have units');
         END IF;
         if numrows > 0 then
+        
+	    dbms_output.put_line('its controlled');
         	-- it's controlled   
         	SELECT 
         		upper(VALUE_CODE_TABLE), 
@@ -105,6 +259,8 @@ CREATE OR REPLACE TRIGGER tr_coll_event_attr_biu
         	WHERE 
         		event_attribute_type = :NEW.event_attribute_type;
         	IF vct IS NOT NULL THEN
+        	
+	    dbms_output.put_line('vct IS NOT NULL');
 	    		SELECT 
 	    			column_name 
 	    		INTO 
@@ -127,12 +283,19 @@ CREATE OR REPLACE TRIGGER tr_coll_event_attr_biu
 				END IF;
 			end if;
 			IF (uct IS NOT NULL) THEN
+			
+	    dbms_output.put_line('uct is not null');
 				SELECT IS_number(:new.event_attribute_value) INTO numrows FROM dual;
+				
+	    dbms_output.put_line('numrows isnumber:' || numrows);
+	    
 				IF numrows = 0 THEN
 				    raise_application_error(
 				        -20001,
 				        'Attributes with units must be numeric.');
 				END IF;
+	    dbms_output.put_line('uct:' || uct);
+				
 	    		SELECT 
 	    			column_name
 	    		INTO 
@@ -144,7 +307,13 @@ CREATE OR REPLACE TRIGGER tr_coll_event_attr_biu
 	    			upper(column_name) <> 'COLLECTION_CDE' AND 
 	    			upper(column_name) <> 'DESCRIPTION'
 	    		;
-				sqlString := 'SELECT count(*) FROM ' || vct || 
+	    		
+	    		
+	    dbms_output.put_line('ctctColname' || ctctColname);
+	    
+	    
+	    
+				sqlString := 'SELECT count(*) FROM ' || uct || 
 					' WHERE ' || ctctColname || ' = ''' || 
 					:NEW.event_attribute_units || '''';
 				EXECUTE IMMEDIATE sqlstring INTO numrows;
@@ -350,3 +519,6 @@ BEGIN
 end;
 /
 sho err;
+
+
+-- need to archive environmental attrs
