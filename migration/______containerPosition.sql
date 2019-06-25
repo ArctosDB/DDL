@@ -57,7 +57,7 @@ select count(*) from bak_container20181127;
 
 
 
-
+select NUMBER_POSITIONS from bak_container20181127 where barcode='C89018';
 
 
 

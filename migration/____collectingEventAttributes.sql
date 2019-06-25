@@ -88,7 +88,7 @@ create public synonym collecting_event_attributes for collecting_event_attribute
 
 grant insert,update,delete,select on collecting_event_attributes to manage_locality;
 
-
+grant select on collecting_event_attributes to public;
 
 CREATE OR REPLACE TRIGGER tr_ctcoll_event_att_att_biu
     BEFORE INSERT or update or delete ON ctcoll_event_att_att
@@ -234,6 +234,9 @@ CREATE OR REPLACE TRIGGER tr_coll_event_attr_biu
 	        IF status != 'valid' THEN
 	   	       raise_application_error(-20001,'event_determined_date: ' || status);
 	   		END IF;
+	   		if :NEW.event_determined_date > to_char(sysdate,'YYYY-MM-DD') then
+	   	       raise_application_error(-20001,'Future dates are not allowed.');
+	   	    end if;
 	    END IF;
 	    dbms_output.put_line('event_attribute_type:' || :NEW.event_attribute_type);
 		SELECT COUNT(*) INTO numrows FROM ctcoll_event_att_att WHERE event_attribute_type = :NEW.event_attribute_type;
@@ -330,19 +333,19 @@ sho err;
 
 
 
-
+select getEventAttrSig(11325805) from dual;
+select getEventAttrSig(11325804) from dual;
 
 create or replace function getEventAttrSig(cid in number)
 /* are sum of event attributes same - eg, can events be merged? */
 return varchar2 as
-
 	l_thisstr    varchar2(4000);
 	l_str    varchar2(4000);
 	l_sep    varchar2(30);
 	l_val    varchar2(4000);
 	l_checksum varchar2(4000);
-	all_data clob;
-	temp_data clob;
+	all_data varchar2(32000);
+	temp_data  varchar2(32000);
 begin
 	for r in (
 		select
@@ -368,11 +371,11 @@ begin
 	) loop
 		-- will always fit
 		l_thisstr:=r.determined_by_agent_id||r.event_determined_date||r.event_attribute_type||r.event_attribute_units;
-		dbms_lob.append(temp_data,l_thisstr);
+		temp_data:=temp_data||l_thisstr;
 		-- append individually
-		dbms_lob.append(temp_data,r.event_attribute_value);
-		dbms_lob.append(temp_data,r.event_attribute_remark);
-		dbms_lob.append(temp_data,r.event_determination_method);
+		temp_data:=temp_data||r.event_attribute_value;
+		temp_data:=temp_data||r.event_attribute_remark;
+		temp_data:=temp_data||r.event_determination_method;
 	end loop;
 	-- now grab the hash of ordered-everything
 	select md5hash(temp_data) into l_checksum from dual;
@@ -380,11 +383,21 @@ begin
   end;
 /
 
+
+
+
 -- now we need to rebuild the merger scripts to consider event attributes
 
 
-------- IMPORTANT!!
+select locality_id from collecting_event where  collecting_event_id=11325805;
+select locality_id from collecting_event where  collecting_event_id=11325804;
 
+update collecting_event set locality_id=11007098 where  collecting_event_id=11325804;
+
+
+------- IMPORTANT!!
+	
+				
 
 -- this is NOT in prod
 -- it need to be before this gets used
@@ -522,3 +535,189 @@ sho err;
 
 
 -- need to archive environmental attrs
+-- Upon further reflection: event attrs are metadata - they describe conditions at the place-time, they cannot CHANGE the place-time.
+-- Therefore changing them cannot change the fundamental data associated with other specimens sharing the event
+-- Changing event attributes can only enhance specimen data.
+-- Archives exist to track fundaamental changes (eg, someone changing things that should not have been changed)
+-- Event Attributes therefore should not be archived.
+
+drop function getCollEvtAttrAsJson_abbr;
+
+CREATE OR REPLACE function getCollEvtAttrAsJson_abbr(ceid  in number )
+	-- this is intended to better avoid the 4K character limit
+	-- see getCollEvtAttrAsJson for a less cryptic alternative; albeit one that won't work for most data
+    return varchar2
+    as
+		jsond varchar2(4000) :='[';
+		rsep varchar2(1);
+		dsep varchar2(1);
+   begin
+    FOR r IN (
+              select 
+				event_attribute_type,
+				event_attribute_value,
+				event_attribute_units,
+				event_attribute_remark,
+				event_determination_method,
+				event_determined_date,
+				getPreferredAgentName(determined_by_agent_id) event_determiner
+			from
+				collecting_event_attributes
+			where
+				collecting_event_id=ceid
+			) loop
+				jsond:=jsond || rsep || '{';
+				jsond:=jsond || '"TY":"' || escape_json(r.event_attribute_type) || '"';
+				jsond:=jsond || ',"VU":"' || trim(escape_json(r.event_attribute_value) || ' ' || escape_json(r.event_attribute_units)) ||'"';
+				jsond:=jsond || ',"RK":"' || escape_json(r.event_attribute_remark) || '"';
+				jsond:=jsond || ',"MD":"' || escape_json(r.event_determination_method) || '"';
+				jsond:=jsond || ',"DA":"' || escape_json(r.event_determined_date) || '"';
+				jsond:=jsond || ',"DT":"' || escape_json(r.event_determiner) || '"';
+				jsond:=jsond || '}';
+				rsep:=',';
+		end loop;
+		jsond:=jsond || ']';
+		return jsond;
+	exception when others then
+		jsond:='[{"STATUS":"ERROR CREATING JSON"}]';
+		return jsond;
+end;
+/
+
+
+
+CREATE or replace PUBLIC SYNONYM getCollEvtAttrAsJson_abbr FOR getCollEvtAttrAsJson_abbr;
+GRANT EXECUTE ON getCollEvtAttrAsJson_abbr TO PUBLIC;
+
+
+CREATE OR REPLACE function getGeologyAsJson_abbr(lid  in number )
+	-- this is intended to better avoid the 4K character limit
+    return varchar2
+    as
+		jsond varchar2(4000) :='[';
+		rsep varchar2(1);
+		dsep varchar2(1);
+   begin
+    FOR r IN (
+              select 
+				GEOLOGY_ATTRIBUTE,
+				GEO_ATT_VALUE,
+				GEO_ATT_REMARK,
+				GEO_ATT_DETERMINED_METHOD,
+				GEO_ATT_DETERMINED_DATE,
+				getPreferredAgentName(GEO_ATT_DETERMINER_ID) geo_determiner
+			from
+				geology_attributes
+			where
+				LOCALITY_ID=lid
+			) loop
+				jsond:=jsond || rsep || '{';
+				jsond:=jsond || '"TY":"' || escape_json(r.GEOLOGY_ATTRIBUTE) || '"';
+				jsond:=jsond || ',"VU":"' || escape_json(r.GEO_ATT_VALUE)  ||'"';
+				jsond:=jsond || ',"RK":"' || escape_json(r.GEO_ATT_REMARK) || '"';
+				jsond:=jsond || ',"MD":"' || escape_json(r.GEO_ATT_DETERMINED_METHOD) || '"';
+				jsond:=jsond || ',"DA":"' || escape_json(r.GEO_ATT_DETERMINED_DATE) || '"';
+				jsond:=jsond || ',"DT":"' || escape_json(r.geo_determiner) || '"';
+				jsond:=jsond || '}';
+				rsep:=',';
+		end loop;
+		jsond:=jsond || ']';
+		return jsond;
+	exception when others then
+		jsond:='[{"STATUS":"ERROR CREATING JSON"}]';
+		return jsond;
+end;
+/
+
+CREATE PUBLIC SYNONYM getGeologyAsJson_abbr FOR getGeologyAsJson_abbr;
+GRANT EXECUTE ON getGeologyAsJson_abbr TO PUBLIC;
+
+
+
+-- get general outline of locality stuff for specimenresults
+-- do not pull remarks, other long text fields
+-- in an attempt to not break this thing
+create or replace function getJsonEventBySpecimen.....
+
+
+
+
+
+
+
+
+CREATE PUBLIC SYNONYM getCollEvtAttrAsJson_abbr FOR getCollEvtAttrAsJson_abbr;
+GRANT EXECUTE ON getCollEvtAttrAsJson_abbr TO PUBLIC;
+
+CREATE OR REPLACE function getCollEvtAttrAsJson(ceid  in number )
+	-- this almost always runs into the 4K character limit
+	-- see getCollEvtAttrAsJson_abbr for a more cryptic but more portable alternative
+    return varchar2
+    as
+		jsond varchar2(4000) :='[';
+		rsep varchar2(1);
+		dsep varchar2(1);
+   begin
+    FOR r IN (
+              select 
+				event_attribute_type,
+				event_attribute_value,
+				event_attribute_units,
+				event_attribute_remark,
+				event_determination_method,
+				event_determined_date,
+				getPreferredAgentName(determined_by_agent_id) event_determiner
+			from
+				collecting_event_attributes
+			where
+				collecting_event_id=ceid
+			) loop
+				jsond:=jsond || rsep || '{';
+				jsond:=jsond || '"EVENT_ATTRIBUTE_TYPE":"' || escape_json(r.event_attribute_type) || '"';
+				jsond:=jsond || ',"EVENT_ATTRIBUTE_VALUE":"' || escape_json(r.event_attribute_value) || '"';
+				jsond:=jsond || ',"EVENT_ATTRIBUTE_UNITS":"' || escape_json(r.event_attribute_units) || '"';
+				jsond:=jsond || ',"EVENT_ATTRIBUTE_REMARK":"' || escape_json(r.event_attribute_remark) || '"';
+				jsond:=jsond || ',"EVENT_ATTRIBUTE_METHOD":"' || escape_json(r.event_determination_method) || '"';
+				jsond:=jsond || ',"EVENT_ATTRIBUTE_DATE":"' || escape_json(r.event_determined_date) || '"';
+				jsond:=jsond || ',"EVENT_ATTRIBUTE_DETERMINER":"' || escape_json(r.event_determiner) || '"';
+				jsond:=jsond || '}';
+				rsep:=',';
+		end loop;
+		jsond:=jsond || ']';
+		return jsond;
+	exception when others then
+		jsond:='[{"STATUS":"ERROR CREATING JSON"}]';
+		return jsond;
+end;
+/
+
+CREATE PUBLIC SYNONYM getCollEvtAttrAsJson FOR getCollEvtAttrAsJson;
+GRANT EXECUTE ON getCollEvtAttrAsJson TO PUBLIC;
+
+
+
+select * from 
+select getCollEvtAttrAsJson_abbr(11325805) from dual;
+select getCollEvtAttrAsJson(11325805) from dual;
+
+COLLECTING_EVENT_ID
+-------------------
+	   11316538
+	   11267580
+	   11325804
+	   11325803
+	   11062064
+	   11325805
+
+select * from collecting_event_attributes where COLLECTING_EVENT_ID=11316538;
+select * from collecting_event_attributes where COLLECTING_EVENT_ID=11267580;
+select * from collecting_event_attributes where COLLECTING_EVENT_ID=11325804;
+select * from collecting_event_attributes where COLLECTING_EVENT_ID=11325803;
+select * from collecting_event_attributes where COLLECTING_EVENT_ID=11062064;
+select * from collecting_event_attributes where COLLECTING_EVENT_ID=11316538;
+
+	   
+CREATE PUBLIC SYNONYM concatGeologyAttribute FOR concatGeologyAttribute;
+GRANT EXECUTE ON concatGeologyAttribute TO PUBLIC;
+
+
