@@ -77,7 +77,18 @@ alter table collecting_event_attributes modify determined_by_agent_id number nul
 
 ALTER TABLE collecting_event_attributes ADD CONSTRAINT pkcollecting_event_attributes PRIMARY KEY (collecting_event_attribute_id);
 
-ALTER TABLE collecting_event_attributes ADD CONSTRAINT fk_ceatr_collecting_event FOREIGN KEY (collecting_event_id) references collecting_event(collecting_event_id);
+
+ 
+ -- edit
+ -- no:  ALTER TABLE coll_evt_attr_archive ADD CONSTRAINT fk_cear_collecting_event_id FOREIGN KEY (collecting_event_id) REFERENCES collecting_event(collecting_event_id)  ON DELETE CASCADE; 
+-- https://github.com/ArctosDB/arctos/issues/1270#issuecomment-506049004
+exec pause_maintenance('off');
+ALTER TABLE collecting_event_attributes drop CONSTRAINT fk_ceatr_collecting_event;
+ALTER TABLE collecting_event_attributes ADD CONSTRAINT fk_ceatr_collecting_event FOREIGN KEY (collecting_event_id) references collecting_event(collecting_event_id) ON DELETE CASCADE;
+
+  exec pause_maintenance('on');
+  
+  
 
 ALTER TABLE collecting_event_attributes ADD CONSTRAINT fk_ceatr_determin_agent FOREIGN KEY (determined_by_agent_id) references agent(agent_id);
 
@@ -126,14 +137,15 @@ CREATE OR REPLACE TRIGGER tr_ctcoll_event_att_att_biu
 		    	end if;
 		    end if;
 		end if;
-	    
-	    if :NEW.VALUE_CODE_TABLE is null and :NEW.UNIT_CODE_TABLE is null then
-	    	raise_application_error(-20001,'Either value or unit code table must be provided.');
-	   	END IF;
-	   	
-	    if :NEW.VALUE_CODE_TABLE is not null and :NEW.UNIT_CODE_TABLE is not null then
-	    	raise_application_error(-20001,'Either value or unit code table must be provided.');
-	   	END IF;
+	    if inserting or updating then
+		    if :NEW.VALUE_CODE_TABLE is null and :NEW.UNIT_CODE_TABLE is null then
+		    	raise_application_error(-20001,'Either value or unit code table must be provided.');
+		   	END IF;
+		   	
+		    if :NEW.VALUE_CODE_TABLE is not null and :NEW.UNIT_CODE_TABLE is not null then
+		    	raise_application_error(-20001,'Either value or unit code table must be provided.');
+		   	END IF;
+		END IF;
 	end;
 /
 sho err;
@@ -171,6 +183,9 @@ create table log_ctcoll_event_att_att (
 create or replace public synonym log_ctcoll_event_att_att for log_ctcoll_event_att_att;
 
 grant select on log_ctcoll_event_att_att to coldfusion_user;
+
+
+
 
 
 CREATE OR REPLACE TRIGGER TR_log_ctcoll_event_att_att AFTER INSERT or update or delete ON ctcoll_event_att_att
@@ -395,11 +410,6 @@ select locality_id from collecting_event where  collecting_event_id=11325804;
 update collecting_event set locality_id=11007098 where  collecting_event_id=11325804;
 
 
-------- IMPORTANT!!
-	
-				
-
--- this is NOT in prod
 -- it need to be before this gets used
 CREATE OR REPLACE PROCEDURE auto_merge_collecting_event 
 IS
@@ -540,98 +550,177 @@ sho err;
 -- Changing event attributes can only enhance specimen data.
 -- Archives exist to track fundaamental changes (eg, someone changing things that should not have been changed)
 -- Event Attributes therefore should not be archived.
+-- nevermind: https://github.com/ArctosDB/arctos/issues/1270#issuecomment-505525347
 
-drop function getCollEvtAttrAsJson_abbr;
 
-CREATE OR REPLACE function getCollEvtAttrAsJson_abbr(ceid  in number )
-	-- this is intended to better avoid the 4K character limit
-	-- see getCollEvtAttrAsJson for a less cryptic alternative; albeit one that won't work for most data
-    return varchar2
-    as
-		jsond varchar2(4000) :='[';
-		rsep varchar2(1);
-		dsep varchar2(1);
-   begin
-    FOR r IN (
-              select 
-				event_attribute_type,
-				event_attribute_value,
-				event_attribute_units,
+
+create table coll_evt_attr_archive (
+	coll_evt_attr_archive_id number not null,
+	collecting_event_id number not null,
+	determined_by_agent_id number,
+	event_attribute_type varchar2(255) NOT NULL,
+	event_attribute_value varchar2(4000) NOT NULL,
+	event_attribute_units varchar2(30) ,
+	event_attribute_remark varchar2(4000) ,
+	event_determination_method varchar2(4000) ,
+	event_determined_date varchar2(30),
+ 	changed_agent_id number,
+ 	changedate date,
+ 	triggering_action varchar2(255)
+ );
+--dammit
+ alter table coll_evt_attr_archive modify determined_by_agent_id number null;
+ alter table coll_evt_attr_archive add triggering_action varchar2(255);
+
+  ALTER TABLE coll_evt_attr_archive ADD CONSTRAINT fk_coll_evt_attr_archive_agnt FOREIGN KEY (changed_agent_id) REFERENCES agent(agent_id);
+
+  -- nuke this when the locality goes away
+  exec pause_maintenance('off');
+  ALTER TABLE coll_evt_attr_archive ADD CONSTRAINT fk_cear_collecting_event_id FOREIGN KEY (collecting_event_id) REFERENCES collecting_event(collecting_event_id)  ON DELETE CASCADE;
+  exec pause_maintenance('on');
+  
+
+create sequence sq_coll_evt_attr_archive_id;
+CREATE PUBLIC SYNONYM sq_coll_evt_attr_archive_id FOR sq_coll_evt_attr_archive_id;
+GRANT SELECT ON sq_coll_evt_attr_archive_id TO PUBLIC;
+
+
+
+CREATE PUBLIC SYNONYM coll_evt_attr_archive FOR coll_evt_attr_archive;
+
+grant select on coll_evt_attr_archive to public;
+
+
+
+
+
+
+CREATE OR REPLACE TRIGGER trg_coll_evt_attr_archive
+	-- only care if there's been a successful change
+	after insert or UPDATE or delete ON collecting_event_attributes
+    FOR EACH ROW
+    	declare nkey number;
+    BEGIN
+	    -- first test if we're changing anything - no reason to log
+	    -- "save because there's a button" or webservice cache
+	    -- actions
+	    -- NULL never equals NULL so need NVL
+	    --dbms_output.put_line('trg_coll_evt_attr_archive is firing');
+	    if updating then
+		    if 
+		    	:NEW.collecting_event_id != :OLD.collecting_event_id or
+		    	nvl(:NEW.determined_by_agent_id,0) != nvl(:OLD.determined_by_agent_id,0) or	
+		    	nvl(:NEW.event_attribute_type,'NULL') != nvl(:OLD.event_attribute_type,'NULL') or
+		    	nvl(:NEW.event_attribute_value,'NULL') != nvl(:OLD.event_attribute_value,'NULL') or
+		    	nvl(:NEW.event_attribute_units,'NULL') != nvl(:OLD.event_attribute_units,'NULL') or
+		    	nvl(:NEW.event_attribute_remark,'NULL') != nvl(:OLD.event_attribute_remark,'NULL') or
+		    	nvl(:NEW.event_determination_method,'NULL') != nvl(:OLD.event_determination_method,'NULL') or
+		    	nvl(:NEW.event_determined_date,'NULL') != nvl(:OLD.event_determined_date,'NULL') 
+		    	then
+		    		--dbms_output.put_line('got change');  
+		    		 -- now just grab all of the :OLD values
+			        -- :NEWs are current data in locality, no need to do anything with them 
+			        insert into coll_evt_attr_archive (
+					 	coll_evt_attr_archive_id,
+					 	collecting_event_id,
+					 	determined_by_agent_id,
+					 	event_attribute_type,
+					 	event_attribute_value,
+					 	event_attribute_units,
+						event_attribute_remark,
+						event_determination_method,
+						event_determined_date,
+					 	changed_agent_id,
+					 	changedate,
+					 	triggering_action
+					 ) values (
+					 	sq_coll_evt_attr_archive_id.nextval,
+					 	:OLD.collecting_event_id,
+					 	:OLD.determined_by_agent_id,
+					 	:OLD.event_attribute_type,
+					 	:OLD.event_attribute_value,
+					 	:OLD.event_attribute_units,
+						:OLD.event_attribute_remark,
+						:OLD.event_determination_method,
+						:OLD.event_determined_date,
+					 	getAgentIDFromLogin(sys_context('USERENV', 'SESSION_USER')),
+					 	sysdate,
+					 	'updating (this is OLD values)'
+					 );
+					--dbms_output.put_line('logged OLD values');  
+		    end if;
+		end if;
+		if inserting then
+			  insert into coll_evt_attr_archive (
+			 	coll_evt_attr_archive_id,
+			 	collecting_event_id,
+			 	determined_by_agent_id,
+			 	event_attribute_type,
+			 	event_attribute_value,
+			 	event_attribute_units,
 				event_attribute_remark,
 				event_determination_method,
 				event_determined_date,
-				getPreferredAgentName(determined_by_agent_id) event_determiner
-			from
-				collecting_event_attributes
-			where
-				collecting_event_id=ceid
-			) loop
-				jsond:=jsond || rsep || '{';
-				jsond:=jsond || '"TY":"' || escape_json(r.event_attribute_type) || '"';
-				jsond:=jsond || ',"VU":"' || trim(escape_json(r.event_attribute_value) || ' ' || escape_json(r.event_attribute_units)) ||'"';
-				jsond:=jsond || ',"RK":"' || escape_json(r.event_attribute_remark) || '"';
-				jsond:=jsond || ',"MD":"' || escape_json(r.event_determination_method) || '"';
-				jsond:=jsond || ',"DA":"' || escape_json(r.event_determined_date) || '"';
-				jsond:=jsond || ',"DT":"' || escape_json(r.event_determiner) || '"';
-				jsond:=jsond || '}';
-				rsep:=',';
-		end loop;
-		jsond:=jsond || ']';
-		return jsond;
-	exception when others then
-		jsond:='[{"STATUS":"ERROR CREATING JSON"}]';
-		return jsond;
-end;
+			 	changed_agent_id,
+			 	changedate,
+			 	triggering_action
+			 ) values (
+			 	sq_coll_evt_attr_archive_id.nextval,
+			 	:NEW.collecting_event_id,
+			 	:NEW.determined_by_agent_id,
+			 	:NEW.event_attribute_type,
+			 	:NEW.event_attribute_value,
+			 	:NEW.event_attribute_units,
+				:NEW.event_attribute_remark,
+				:NEW.event_determination_method,
+				:NEW.event_determined_date,
+			 	getAgentIDFromLogin(sys_context('USERENV', 'SESSION_USER')),
+			 	sysdate,
+			 	'inserting (this is NEW values)'
+			 );
+		end if;
+		if deleting then
+		  insert into coll_evt_attr_archive (
+		 	coll_evt_attr_archive_id,
+		 	collecting_event_id,
+		 	determined_by_agent_id,
+		 	event_attribute_type,
+		 	event_attribute_value,
+		 	event_attribute_units,
+			event_attribute_remark,
+			event_determination_method,
+			event_determined_date,
+		 	changed_agent_id,
+		 	changedate,
+		 	triggering_action
+		 ) values (
+		 	sq_coll_evt_attr_archive_id.nextval,
+		 	:OLD.collecting_event_id,
+		 	:OLD.determined_by_agent_id,
+		 	:OLD.event_attribute_type,
+		 	:OLD.event_attribute_value,
+		 	:OLD.event_attribute_units,
+			:OLD.event_attribute_remark,
+			:OLD.event_determination_method,
+			:OLD.event_determined_date,
+		 	getAgentIDFromLogin(sys_context('USERENV', 'SESSION_USER')),
+		 	sysdate,
+		 	'deleting (this is OLD values)'
+		 );
+	end if;
+  end;
 /
+sho err;
 
 
 
-CREATE or replace PUBLIC SYNONYM getCollEvtAttrAsJson_abbr FOR getCollEvtAttrAsJson_abbr;
-GRANT EXECUTE ON getCollEvtAttrAsJson_abbr TO PUBLIC;
 
 
-CREATE OR REPLACE function getGeologyAsJson_abbr(lid  in number )
-	-- this is intended to better avoid the 4K character limit
-    return varchar2
-    as
-		jsond varchar2(4000) :='[';
-		rsep varchar2(1);
-		dsep varchar2(1);
-   begin
-    FOR r IN (
-              select 
-				GEOLOGY_ATTRIBUTE,
-				GEO_ATT_VALUE,
-				GEO_ATT_REMARK,
-				GEO_ATT_DETERMINED_METHOD,
-				GEO_ATT_DETERMINED_DATE,
-				getPreferredAgentName(GEO_ATT_DETERMINER_ID) geo_determiner
-			from
-				geology_attributes
-			where
-				LOCALITY_ID=lid
-			) loop
-				jsond:=jsond || rsep || '{';
-				jsond:=jsond || '"TY":"' || escape_json(r.GEOLOGY_ATTRIBUTE) || '"';
-				jsond:=jsond || ',"VU":"' || escape_json(r.GEO_ATT_VALUE)  ||'"';
-				jsond:=jsond || ',"RK":"' || escape_json(r.GEO_ATT_REMARK) || '"';
-				jsond:=jsond || ',"MD":"' || escape_json(r.GEO_ATT_DETERMINED_METHOD) || '"';
-				jsond:=jsond || ',"DA":"' || escape_json(r.GEO_ATT_DETERMINED_DATE) || '"';
-				jsond:=jsond || ',"DT":"' || escape_json(r.geo_determiner) || '"';
-				jsond:=jsond || '}';
-				rsep:=',';
-		end loop;
-		jsond:=jsond || ']';
-		return jsond;
-	exception when others then
-		jsond:='[{"STATUS":"ERROR CREATING JSON"}]';
-		return jsond;
-end;
-/
 
-CREATE PUBLIC SYNONYM getGeologyAsJson_abbr FOR getGeologyAsJson_abbr;
-GRANT EXECUTE ON getGeologyAsJson_abbr TO PUBLIC;
 
+drop function getCollEvtAttrAsJson_abbr;
+
+CREATE OR REPLACE function getCollEvtAttrAsJson(ceid  in number )....
 
 
 -- get general outline of locality stuff for specimenresults
@@ -644,80 +733,6 @@ create or replace function getJsonEventBySpecimen.....
 
 
 
-
-
-CREATE PUBLIC SYNONYM getCollEvtAttrAsJson_abbr FOR getCollEvtAttrAsJson_abbr;
-GRANT EXECUTE ON getCollEvtAttrAsJson_abbr TO PUBLIC;
-
-CREATE OR REPLACE function getCollEvtAttrAsJson(ceid  in number )
-	-- this almost always runs into the 4K character limit
-	-- see getCollEvtAttrAsJson_abbr for a more cryptic but more portable alternative
-    return varchar2
-    as
-		jsond varchar2(4000) :='[';
-		rsep varchar2(1);
-		dsep varchar2(1);
-   begin
-    FOR r IN (
-              select 
-				event_attribute_type,
-				event_attribute_value,
-				event_attribute_units,
-				event_attribute_remark,
-				event_determination_method,
-				event_determined_date,
-				getPreferredAgentName(determined_by_agent_id) event_determiner
-			from
-				collecting_event_attributes
-			where
-				collecting_event_id=ceid
-			) loop
-				jsond:=jsond || rsep || '{';
-				jsond:=jsond || '"EVENT_ATTRIBUTE_TYPE":"' || escape_json(r.event_attribute_type) || '"';
-				jsond:=jsond || ',"EVENT_ATTRIBUTE_VALUE":"' || escape_json(r.event_attribute_value) || '"';
-				jsond:=jsond || ',"EVENT_ATTRIBUTE_UNITS":"' || escape_json(r.event_attribute_units) || '"';
-				jsond:=jsond || ',"EVENT_ATTRIBUTE_REMARK":"' || escape_json(r.event_attribute_remark) || '"';
-				jsond:=jsond || ',"EVENT_ATTRIBUTE_METHOD":"' || escape_json(r.event_determination_method) || '"';
-				jsond:=jsond || ',"EVENT_ATTRIBUTE_DATE":"' || escape_json(r.event_determined_date) || '"';
-				jsond:=jsond || ',"EVENT_ATTRIBUTE_DETERMINER":"' || escape_json(r.event_determiner) || '"';
-				jsond:=jsond || '}';
-				rsep:=',';
-		end loop;
-		jsond:=jsond || ']';
-		return jsond;
-	exception when others then
-		jsond:='[{"STATUS":"ERROR CREATING JSON"}]';
-		return jsond;
-end;
-/
-
-CREATE PUBLIC SYNONYM getCollEvtAttrAsJson FOR getCollEvtAttrAsJson;
-GRANT EXECUTE ON getCollEvtAttrAsJson TO PUBLIC;
-
-
-
-select * from 
-select getCollEvtAttrAsJson_abbr(11325805) from dual;
-select getCollEvtAttrAsJson(11325805) from dual;
-
-COLLECTING_EVENT_ID
--------------------
-	   11316538
-	   11267580
-	   11325804
-	   11325803
-	   11062064
-	   11325805
-
-select * from collecting_event_attributes where COLLECTING_EVENT_ID=11316538;
-select * from collecting_event_attributes where COLLECTING_EVENT_ID=11267580;
-select * from collecting_event_attributes where COLLECTING_EVENT_ID=11325804;
-select * from collecting_event_attributes where COLLECTING_EVENT_ID=11325803;
-select * from collecting_event_attributes where COLLECTING_EVENT_ID=11062064;
-select * from collecting_event_attributes where COLLECTING_EVENT_ID=11316538;
-
-	   
-CREATE PUBLIC SYNONYM concatGeologyAttribute FOR concatGeologyAttribute;
-GRANT EXECUTE ON concatGeologyAttribute TO PUBLIC;
-
-
+delete from collecting_event_attributes;
+delete from ctcoll_event_att_att;
+delete from ctcoll_event_attr_type;

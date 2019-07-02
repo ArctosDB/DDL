@@ -51,7 +51,7 @@ begin
 			geog_auth_rec.HIGHER_GEOG,
 			--decode(geog_auth_rec.WKT_POLYGON,NULL,'','data available') hasGeographyWKT,
 			getGeologyAsJson_abbr(LOCALITY.LOCALITY_id) GEOLOGY,
-			getCollEvtAttrAsJson_abbr(COLLECTING_EVENT.COLLECTING_EVENT_id) eventAttrs
+			getCollEvtAttrAsJson(COLLECTING_EVENT.COLLECTING_EVENT_id) eventAttrs
 		from
 			SPECIMEN_EVENT,
 			COLLECTING_EVENT,
@@ -75,8 +75,8 @@ begin
 		jsond:=jsond || ',"CS":"' || escape_json(r.COLLECTING_SOURCE) || '"';
 		jsond:=jsond || ',"BD":"' || r.BEGAN_DATE || '"';
 		jsond:=jsond || ',"ED":"' || r.ENDED_DATE || '"';
-		jsond:=jsond || ',"VBD":"' || escape_json(r.VERBATIM_DATE) || '"';
-		jsond:=jsond || ',"VBL":"' || escape_json(r.VERBATIM_LOCALITY) || '"';
+		jsond:=jsond || ',"RD":"' || escape_json(r.VERBATIM_DATE) || '"';
+		jsond:=jsond || ',"RL":"' || escape_json(r.VERBATIM_LOCALITY) || '"';
 		jsond:=jsond || ',"HB":"' || escape_json(r.HABITAT) || '"';
 		jsond:=jsond || ',"SL":"' || escape_json(r.SPEC_LOCALITY) || '"';
 		jsond:=jsond || ',"CD":"' || r.COORDINATES || '"';
@@ -104,6 +104,26 @@ end;
 
 create or replace public synonym getJsonEventBySpecimen for getJsonEventBySpecimen;
 grant execute on getJsonEventBySpecimen to public;
+
+
+select getJsonEventBySpecimen(collection_object_id) from flat where guid='UAMObs:Ento:238566';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
