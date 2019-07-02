@@ -1,5 +1,17 @@
+/*
+ 
+ 	::::::::::::::::IMPORTANT::::::::::::::::
+	
+	Do not modify this function without also updating http://handbook.arctosdb.org/documentation/json.html
+	
+	Input: locality.locality_id
+	
+	Output: Geology as JSON
+ 
+ 
+*/
+
 CREATE OR REPLACE function getGeologyAsJson(lid  in number )
-	-- this is intended to better avoid the 4K character limit
     return varchar2
     as
 		jsond varchar2(4000) :='[';

@@ -1,7 +1,17 @@
+/*
+ 
+ 	::::::::::::::::IMPORTANT::::::::::::::::
+	
+	Do not modify this function without also updating http://handbook.arctosdb.org/documentation/json.html
+	
+	Input: collecting_event.collecting_event_id
+	
+	Output: Collecting Event Attributes as JSON
+ 
+ 
+*/
 
 CREATE OR REPLACE function getCollEvtAttrAsJson(ceid  in number )
-	-- this is intended to better avoid the 4K character limit
-	-- see getCollEvtAttrAsJson for a less cryptic alternative; albeit one that won't work for most data
     return varchar2
     as
 		jsond varchar2(4000) :='[';

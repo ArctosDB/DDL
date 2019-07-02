@@ -1,3 +1,19 @@
+/*
+ 
+ 	::::::::::::::::IMPORTANT::::::::::::::::
+	
+	Do not modify this function without also updating http://handbook.arctosdb.org/documentation/json.html
+	
+	Input: cataloged_item.collection_object_id
+	
+	Output: "Locality stack" as JSON
+	
+	Used By: specimenresults
+ 
+ 
+*/
+
+
 -- get general outline of locality stuff for specimenresults
 -- do not pull remarks, other long text fields
 -- in an attempt to not break this thing
@@ -50,7 +66,7 @@ begin
 			--decode(LOCALITY.WKT_POLYGON,NULL,'','data available') hasLocalityWKT,
 			geog_auth_rec.HIGHER_GEOG,
 			--decode(geog_auth_rec.WKT_POLYGON,NULL,'','data available') hasGeographyWKT,
-			getGeologyAsJson_abbr(LOCALITY.LOCALITY_id) GEOLOGY,
+			getGeologyAsJson(LOCALITY.LOCALITY_id) GEOLOGY,
 			getCollEvtAttrAsJson(COLLECTING_EVENT.COLLECTING_EVENT_id) eventAttrs
 		from
 			SPECIMEN_EVENT,
