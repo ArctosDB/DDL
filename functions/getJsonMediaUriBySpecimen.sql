@@ -1,5 +1,88 @@
--- rewrite this to be "prettier" JSON so we can include it in downloads
+/*
+ 
+ 	::::::::::::::::IMPORTANT::::::::::::::::
+	
+	Do not modify this function without also updating http://handbook.arctosdb.org/documentation/json.html
+	
+	Do not modify this without updating specimenresults js
+	
+	Input: cataloged_item.collection_object_id
+	
+	Output: Media data as JSON
+ 
+ 
+*/
+
+
 create or replace function getJsonMediaUriBySpecimen (colObjId IN number)
+return varchar2
+as
+    jsond varchar2(4000) :='[';
+	rsep varchar2(1);
+	dsep varchar2(1);
+begin
+	for r in (
+		select 
+			'lo' rType,preview_uri,media_uri,mime_type,media_type,media.media_id
+		from 
+			media,
+			media_relations,
+			flat
+		where
+			flat.locality_id = media_relations.related_primary_key and
+			media_relations.media_id=media.media_id and
+			SUBSTR(media_relationship,instr(media_relationship,' ',-1)+1)='locality' and
+			flat.collection_object_id = colObjId
+		union
+		select 
+			'ci' rType,preview_uri,media_uri,mime_type,media_type,media.media_id
+		from 
+			media,
+			media_relations,
+			flat
+		where
+			flat.collection_object_id = media_relations.related_primary_key and
+			media_relations.media_id=media.media_id and
+			SUBSTR(media_relationship,instr(media_relationship,' ',-1)+1)='cataloged_item' and
+			flat.collection_object_id = colObjId
+		union
+		select 
+			'ce' rType,preview_uri,media_uri,mime_type,media_type,media.media_id
+		from 
+			media,
+			media_relations,
+			flat
+		where
+			flat.collecting_event_id = media_relations.related_primary_key and
+			media_relations.media_id=media.media_id and
+			SUBSTR(media_relationship,instr(media_relationship,' ',-1)+1)='collecting_event' and
+			flat.collection_object_id = colObjId
+	) loop
+		jsond:=jsond || rsep || '{';
+		jsond:=jsond || '"MI":"' || r.MEDIA_ID || '"';
+		jsond:=jsond || ',"MT":"' || escape_json(r.MEDIA_TYPE) || '"';
+		jsond:=jsond || ',"PU":"' || escape_json(r.PREVIEW_URI) || '"';
+		jsond:=jsond || ',"MU":"' || escape_json(r.MEDIA_URI) || '"';
+		jsond:=jsond || ',"ME":"' || escape_json(r.MIME_TYPE) || '"';
+		jsond:=jsond || '}';
+		rsep:=',';
+	end loop;
+	jsond:=jsond || ']';
+	return jsond;
+	exception when others then
+		jsond:='[';
+		jsond:=jsond || '{"STATUS":"Error Creating JSON"},';
+		jsond:=jsond || '{"MEDIA_ACCESS_URL" : https://arctos.database.museum/MediaSearch.cfm?collection_object_id=' || colObjId || '"}';
+		jsond:=jsond || ']';
+		return jsond;
+end;
+/
+
+
+
+
+-- rewrite this to be "prettier" JSON so we can include it in downloads
+create or replace function getJsonMediaUriBySpecimen__oldNBusted (colObjId IN number)
 return varchar2
 as
     jsond varchar2(4000) :='[';
