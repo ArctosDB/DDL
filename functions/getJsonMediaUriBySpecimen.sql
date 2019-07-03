@@ -60,10 +60,10 @@ begin
 	) loop
 		jsond:=jsond || rsep || '{';
 		jsond:=jsond || '"MI":"' || r.MEDIA_ID || '"';
-		jsond:=jsond || ',"MT":"' || escape_json(r.MEDIA_TYPE) || '"';
+		jsond:=jsond || ',"MT":"' || escape_json(r.MIME_TYPE) || '"';
 		jsond:=jsond || ',"PU":"' || escape_json(r.PREVIEW_URI) || '"';
 		jsond:=jsond || ',"MU":"' || escape_json(r.MEDIA_URI) || '"';
-		jsond:=jsond || ',"ME":"' || escape_json(r.MIME_TYPE) || '"';
+		jsond:=jsond || ',"MC":"' || escape_json(r.MEDIA_TYPE) || '"';
 		jsond:=jsond || '}';
 		rsep:=',';
 	end loop;
