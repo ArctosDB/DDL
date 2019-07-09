@@ -43,12 +43,11 @@ CREATE OR REPLACE TRIGGER TR_COLLECTINGEVENT_BUID
 	    IF num > 0 THEN
 	    		raise_application_error(-20001,'This collecting event is used in verified specimen/events and may not be changed or deleted.');
 	    END IF;
-	elsif inserting or updating then
-		
+	end if;
+	if inserting or updating then		
  		if :NEW.LAST_DUP_CHECK_DATE is null then
 	    	:new.LAST_DUP_CHECK_DATE:=sysdate;
 	    end if;
-	    
         status:=is_iso8601(:NEW.began_date,1);
         IF status != 'valid' THEN
             raise_application_error(-20001,'Began Date: ' || status);
@@ -61,7 +60,6 @@ CREATE OR REPLACE TRIGGER TR_COLLECTINGEVENT_BUID
             raise_application_error(-20001,'Began Date can not occur after Ended Date.');
         END IF;
  		
-        	
         :new.caclulated_dlat := '';
         :new.calculated_dlong := '';
 
