@@ -3,6 +3,28 @@
 -- some parts are not mapped to events, use https://github.com/ArctosDB/DDL/blob/master/functions/getPrioritySpecimenEvent.sql for them
 -- use  v_part_event_path (DDL inline) to select
 
+
+"
+
+
+institutionCode=MSB&collectionCode=Mamm&catalogNumber=156672         &accesspoint=http://ipt.vertnet.org:8080/ipt/archive.do?r=arctos_ggbn&guid=http://arctos.database.museum/guid/MSB:Mamm:156672
+institutionCode=MSB&collectionCode=Mamm&catalogNumber=MSB:Mamm:156672&accesspoint=http://ipt.vertnet.org:8080/ipt/archive.do?r=arctos_ggbn&guid=http://arctos.database.museum/guid/MSB:Mamm:156672"
+Meanwhile, trying to figure out the grips about BOLD 
+
+
+
+	substr(guid,1,instr(guid,':')-1) ||
+ 		'&collectionCode=' ||
+		 substr(guid,instr(guid,':')+1,instr(guid,':',1,2)-instr(guid,':')-1)  ||
+		 '&catalogNumber='||
+		 guid ||
+	 	'&accesspoint=http://ipt.vertnet.org:8080/ipt/archive.do?r=arctos_ggbn&guid=http://arctos.database.museum/guid/' || guid
+	 AS relatedResourceID,
+	 
+	 
+	 
+
+
 create view v_part_event_path as select
 	specimen_part.collection_object_id part_id,
 	nvl(specimen_event_links.specimen_event_id,getPrioritySpecimenEvent(specimen_part.derived_from_cat_item)) specimen_event_id
@@ -44,7 +66,7 @@ create or replace view ggbn_tissue as select distinct
  		'&collectionCode=' ||
 		 substr(guid,instr(guid,':')+1,instr(guid,':',1,2)-instr(guid,':')-1)  ||
 		 '&catalogNumber='||
-		 cat_num ||
+		 guid ||
 	 	'&accesspoint=http://ipt.vertnet.org:8080/ipt/archive.do?r=arctos_ggbn&guid=http://arctos.database.museum/guid/' || guid
 	 AS relatedResourceID,
 	'tissue' materialSampleType,
@@ -271,7 +293,7 @@ BEGIN
 END;
 / 
 
-select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_TEMP_UPDATE_JUNK';
+select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_REF_GGBN_TBL';
 
 
 select count(*) from ggbn_tissue_tbl;
