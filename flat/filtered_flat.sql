@@ -61,7 +61,344 @@ sho err;
 
 -- procedure to sync filtered_flat
 
+
+
+
+
 CREATE OR REPLACE PROCEDURE update_filtered_flat (collobjid IN NUMBER) IS
+	c number;
+BEGIN
+	-- the comparison thing is a pain to maintain, and gets confused by virtual columns
+	-- do this is a procedure so we can debug easier
+	-- things that trigger flat changes set stale_flag to 1
+	-- is_flat_stale looks for stale_flag=1 
+	-- update_flat set stale_flag to 0 when it's done
+	-- grab things with stale_flag=0 (=updated in flat)
+	-- push them to filtered_flat with this procedure
+	-- set stale_flag to 2
+	
+	-- v2: just delete and, if allowed by encumbrances, insert
+	
+	--dbms_output.put_line('collobjid:' || collobjid);
+	-- see if it's an encumbered record
+	
+	delete from filtered_flat where collection_object_id=collobjid;
+	insert into filtered_flat (
+		flags,
+        cataloged_item_type,
+        LASTDATE,
+        LASTUSER,
+        nature_of_id,
+        collection_object_id,
+        enteredby,
+        entereddate,
+        cat_num,
+        accn_id,
+        institution_acronym,
+        collection_cde,
+        collection_id,
+        collection,
+        minimum_elevation,
+        maximum_elevation,
+        orig_elev_units,
+        identification_id,
+        individualcount,
+        coll_obj_disposition,
+        collectors,
+        preparators,
+        field_num,
+        otherCatalogNumbers,
+        genbankNum,
+        relatedCatalogedItemS,
+        typeStatus,
+        sex,
+        parts, 
+        partdetail,
+        accession,
+        began_date,
+        ended_date,
+        verbatim_date,
+        collecting_event_id,
+        higher_geog,
+        continent_ocean,
+        country,
+        state_prov,
+        county,
+        feature,
+        island,
+        island_group,
+        quad,
+        sea,
+        geog_auth_rec_id,
+        spec_locality,
+        min_elev_in_m,
+        max_elev_in_m ,
+        locality_id,
+        dec_lat,
+        dec_long,
+        datum,
+        orig_lat_long_units,
+        verbatim_coordinates,
+        coordinateuncertaintyinmeters,
+        scientific_name,
+        identifiedby,
+        made_date,
+        remarks,
+        habitat,
+        associated_species,
+        encumbrances,
+        taxa_formula,
+        full_taxon_name,
+        phylClass,
+        kingdom,
+        phylum,
+        phylOrder,
+        family,
+        SUBFAMILY,
+        TRIBE,
+        SUBTRIBE,
+        genus,
+        species,
+        subspecies,
+        infraspecific_rank,
+        author_text,
+        identificationModifier,
+        nomenclatural_code,
+        guid,
+        basisOfRecord,
+        depth_units,
+        min_depth,
+        max_depth,
+        min_depth_in_m,
+        max_depth_in_m,
+        collecting_method,
+        collecting_source,
+        dayOfYear,
+        age_class,
+        attributes,
+		verificationStatus,
+        specimenDetailUrl,
+        imageUrl,
+        fieldNotesUrl,
+        catalogNumberText,
+        RelatedInformation,
+        collectorNumber,
+        verbatimelEvation,
+        year,
+        month,
+        day,
+        id_sensu,
+        verbatim_locality,
+		event_assigned_by_agent,
+		event_assigned_date,
+		specimen_event_remark,
+		specimen_event_type,
+		COLL_EVENT_REMARKS,
+		collecting_event_name,
+		georeference_source,
+		georeference_protocol,
+		locality_name,
+		previousidentifications,
+		use_license_url,
+		IDENTIFICATION_REMARKS,
+		LOCALITY_REMARKS,
+		formatted_scientific_name,
+		ISPUBLISHED,
+        has_tissues,
+        taxon_rank,
+        locality_search_terms
+	)  (
+	 SELECT
+        flags,
+        cataloged_item_type,
+        LASTDATE,
+        LASTUSER,
+        nature_of_id,
+        collection_object_id,
+        'Encumbered',  --enteredby,
+        entereddate,
+        cat_num,
+        accn_id,
+        institution_acronym,
+        collection_cde,
+        collection_id,
+        collection,
+        minimum_elevation,
+        maximum_elevation,
+        orig_elev_units,
+        identification_id,
+        individualcount,
+        coll_obj_disposition,
+        -- mask collector
+        CASE WHEN encumbrances LIKE '%mask collector%' THEN 'Anonymous' ELSE collectors END , --collectors
+        CASE WHEN encumbrances LIKE '%mask preparator%' THEN 'Anonymous' ELSE preparators END , --preparators
+        -- mask original field number
+        CASE WHEN encumbrances LIKE '%mask original field number%' THEN 'Anonymous' ELSE field_num END field_num,
+        CASE WHEN encumbrances LIKE '%mask original field number%' THEN 'Anonymous' ELSE otherCatalogNumbers END otherCatalogNumbers,
+        genbankNum,
+        relatedCatalogedItemS,
+        typeStatus,
+        sex,
+        parts, 
+        CASE
+            WHEN encumbrances LIKE '%mask part attribute%'
+            THEN 'not available'
+            ELSE partdetail
+        END partdetail,
+        accession,
+        -- mask original field number
+        CASE
+            WHEN encumbrances LIKE '%mask year collected%'
+            THEN replace(began_date,substr(began_date,1,4),'8888')
+            ELSE began_date
+        END began_date,
+        CASE
+            WHEN encumbrances LIKE '%mask year collected%'
+            THEN replace(ended_date,substr(ended_date,1,4),'8888')
+            ELSE ended_date
+        END ended_date,
+        CASE
+            WHEN encumbrances LIKE '%mask year collected%'
+            THEN 'Masked'
+            ELSE verbatim_date
+        END verbatim_date,
+        collecting_event_id,
+        higher_geog,
+        continent_ocean,
+        country,
+        state_prov,
+        county,
+        feature,
+        island,
+        island_group,
+        quad,
+        sea,
+        geog_auth_rec_id,
+        spec_locality,
+        min_elev_in_m,
+        max_elev_in_m ,
+        locality_id,
+        -- mask coordinates
+        CASE
+            WHEN encumbrances LIKE '%mask coordinates%'
+            THEN NULL
+            ELSE dec_lat
+        END dec_lat,
+        CASE
+            WHEN encumbrances LIKE '%mask coordinates%'
+            THEN NULL
+            ELSE dec_long
+        END dec_long,
+        datum,
+        orig_lat_long_units,
+        CASE
+            WHEN encumbrances LIKE '%mask coordinates%'
+            THEN 'Masked'
+            ELSE verbatim_coordinates
+        END verbatim_coordinates,
+        coordinateuncertaintyinmeters,
+        scientific_name,
+        identifiedby,
+        made_date,
+        CASE
+            WHEN encumbrances LIKE '%mask specimen remarks%'
+            THEN 'Masked'
+            ELSE remarks
+        END remarks,
+        habitat,
+        associated_species,
+        encumbrances,
+        taxa_formula,
+        full_taxon_name,
+        phylClass,
+        kingdom,
+        phylum,
+        phylOrder,
+        family,
+        SUBFAMILY,
+        TRIBE,
+        SUBTRIBE,
+        genus,
+        species,
+        subspecies,
+        infraspecific_rank,
+        author_text,
+        identificationModifier,
+        nomenclatural_code,
+        guid,
+        basisOfRecord,
+        depth_units,
+        min_depth,
+        max_depth,
+        min_depth_in_m,
+        max_depth_in_m,
+        collecting_method,
+        collecting_source,
+        dayOfYear,
+        age_class,
+         CASE
+            WHEN encumbrances is not null
+            THEN 
+            	--call the caoncatenation function with the flag to force-mask attributes 
+            	CONCATATTRIBUTE(collection_object_id,1)
+            ELSE 
+            	-- just use the data from flat
+            	attributes
+        END attributes,
+		verificationStatus,
+        specimenDetailUrl,
+        imageUrl,
+        fieldNotesUrl,
+        catalogNumberText,
+        '<a href="http://arctos.database.museum/guid/' || guid || '">' || guid || '</a>'  RelatedInformation,
+        collectorNumber,
+        verbatimelEvation,
+        CASE
+            WHEN encumbrances LIKE '%mask year collected%'
+            THEN 8888
+            ELSE year
+        END year,
+        month,
+        day,
+        id_sensu,
+        verbatim_locality,
+		event_assigned_by_agent,
+		event_assigned_date,
+		specimen_event_remark,
+		specimen_event_type,
+		COLL_EVENT_REMARKS,
+		collecting_event_name,
+		georeference_source,
+		georeference_protocol,
+		locality_name,
+		previousidentifications,
+		use_license_url,
+		IDENTIFICATION_REMARKS,
+		LOCALITY_REMARKS,
+		formatted_scientific_name,
+		ISPUBLISHED,
+        has_tissues,
+        taxon_rank,
+        locality_search_terms
+    FROM
+        flat
+    WHERE
+    	collection_object_id=collobjid
+    );
+   -- mark as done 
+    update flat set stale_flag=2 where collection_object_id=collobjid;
+exception when others then
+	dbms_output.put_line(sqlerrm);
+	update flat set STALE_FLAG=-2 where  COLLECTION_OBJECT_ID=collobjid;
+end;
+/
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE update_filtered_flat_v1 (collobjid IN NUMBER) IS
 	c number;
 BEGIN
 	-- the comparison thing is a pain to maintain, and gets confused by virtual columns
@@ -233,7 +570,8 @@ BEGIN
         LASTUSER,
         nature_of_id,
         collection_object_id,
-        enteredby,
+        --enteredby,
+        'withheld'
         entereddate,
         cat_num,
         accn_id,
