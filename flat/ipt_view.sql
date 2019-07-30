@@ -6,9 +6,9 @@ create table temp_iptv2 as select * from digir_query.ipt_view_too where rownum<1
 
 create or replace view digir_query.ipt_view_too as select
 	--------------------------- "specimen gunk" ---------------------------
-	filtered_flat.collection_id grbio_collection_id,
+	filtered_flat.collection_id collectionID,
 	'en' language,
-	use_license_url "dcterms:license", -- not sure this is the right dwc concept
+	use_license_url license, -- not sure this is the right dwc concept
 	--CATALOGED_ITEM_TYPE type, -- what is this again?
 	decode(CATALOGED_ITEM_TYPE,
 		'specimen','PreservedSpecimen',
@@ -28,9 +28,9 @@ create or replace view digir_query.ipt_view_too as select
 	ENCUMBRANCES informationWithheld,
 	INDIVIDUALCOUNT individualCount,
 	--INSTITUTION_ACRONYM institutionCode,
-	LASTDATE "dcterms:modified",
+	LASTDATE modified,
 	RELATEDCATALOGEDITEMS associatedOccurrences,
-	'http://arctos.database.museum/guid/' || GUID "dcterms:references",
+	'http://arctos.database.museum/guid/' || GUID references,
 	REMARKS occurrenceRemarks,
 	TYPESTATUS typeStatus,
 	ASSOCIATED_SPECIES associatedTaxa,
@@ -79,7 +79,7 @@ create or replace view digir_query.ipt_view_too as select
 	decode(specimen_event.SPECIMEN_EVENT_TYPE,
 		'collection','PhysicalObject',
 		'encounter','PhysicalObject',
-		'Event') "dcterms:type",	
+		'Event') type,	
 	specimen_event.COLLECTING_METHOD samplingProtocol,
 	specimen_event.COLLECTING_SOURCE establishmentMeans,
 	getPreferredAgentName(specimen_event.ASSIGNED_BY_AGENT_ID) locationAccordingTo,
@@ -173,7 +173,8 @@ create or replace view digir_query.ipt_view_too as select
 	--geog_auth_rec.FEATURE Feature,	
 	geog_auth_rec.STATE_PROV stateProvince,
 	geog_auth_rec.HIGHER_GEOG higherGeography,	
-	replace(replace(INSTITUTION_ACRONYM,'Obs'),'UAMb','UAM') institutionCode,
+	--replace(replace(INSTITUTION_ACRONYM,'Obs'),'UAMb','UAM') institutionCode,
+	INSTITUTION_ACRONYM institutionCode,
 	collection collectionCode,
 	getGeologyForDWC(locality.locality_id,'Erathem/Era') as earliestEraOrLowestErathem,
 	getGeologyForDWC(locality.locality_id,'Eon/Eonothem') as earliestEonOrLowestEonothem,
@@ -184,7 +185,7 @@ create or replace view digir_query.ipt_view_too as select
 	getGeologyForDWC(locality.locality_id,'group') as "group",
 	getGeologyForDWC(locality.locality_id,'member') as member,
 	'http://arctos.database.museum/guid/'  || filtered_flat.guid || '?seid=' || specimen_event.specimen_event_id occurrenceID,
-	replace(replace(INSTITUTION_ACRONYM,'Obs'),'UAMb','UAM') grbio_institution_id,
+	replace(replace(INSTITUTION_ACRONYM,'Obs'),'UAMb','UAM') institutionID,
 	'http://vertnet.org/resources/norms.html' accessRights
 	--taxon_rank taxonRank
 from

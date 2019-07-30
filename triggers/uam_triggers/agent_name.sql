@@ -2,6 +2,7 @@
 CREATE OR REPLACE TRIGGER trg_agent_name_biu
      BEFORE update or insert ON agent_name
  FOR EACH ROW 
+ DECLARE agtyp varchar2(255);
      BEGIN
      IF :NEW.AGENT_NAME != trim(:NEW.AGENT_NAME) or :NEW.AGENT_NAME like '%  %' THEN
      	RAISE_APPLICATION_ERROR(-20001,'Extraneous spaces detected.');
@@ -22,7 +23,13 @@ CREATE OR REPLACE TRIGGER trg_agent_name_biu
       		( :new.agent_name=upper(:new.agent_name)) or (:new.agent_name=lower(:new.agent_name) ) then
       			RAISE_APPLICATION_ERROR(-20001,'First name cannot be all upper or lower case.');
       	end if;
-   end if;   		
+	end if;
+	if :NEW.agent_name_type ='login' then
+		select AGENT_TYPE into agtyp from agent where agent_id=:NEW.agent_id;
+		if agtyp != 'person' then
+      		RAISE_APPLICATION_ERROR(-20001,'Only person agents may have a login name.');
+      	end if;
+    end if;
  END;
  /
  
