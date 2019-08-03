@@ -128,7 +128,7 @@ BEGIN
 					somerandomsequence.nextval,
 					r.collection_object_id,
 					pan,
-					r.lastdate,
+					nvl(r.lastdate,sysdate),
 					r.last_edited_table
 				);
 

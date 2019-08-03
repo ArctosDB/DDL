@@ -1,3 +1,137 @@
+
+---------------
+
+drop view ipt_media_v2_view;
+
+create view ipt_media_v2_view 
+as select
+	filtered_flat.collection_id collectionid,
+	'http://arctos.database.museum/guid/'  || filtered_flat.guid || '?seid=' || specimen_event.specimen_event_id occurrenceID,
+	'http://arctos.database.museum/media/' || media.media_id identifier,
+	media.media_type type,
+	concatMediaDescription(media.media_id) title,
+	sysdate modified,
+	URI WebStatement,
+	decode(relatedMedia.related_primary_key,null,null,'http://arctos.database.museum/media/' || relatedMedia.related_primary_key) source,
+	concatMediaCreatedByAgent(media.media_id) creator,
+	concatMediaDescription(media.media_id) description,
+	decode(is_iso8601(dcreat.label_value),'valid',dcreat.label_value,NULL) CreateDate,
+	'http://arctos.database.museum/media/' || media.media_id accessURI,
+	media.mime_type format,
+	'http://arctos.database.museum/media/' || media.media_id furtherInformationURL
+from
+	media,
+	(select media_id,related_primary_key from media_relations where media_relationship='shows cataloged_item') catItemMR,
+	(select media_id,label_value from media_labels where media_label='made date') dcreat,
+	ctmedia_license, 
+	filtered_flat,
+	specimen_event,
+	(select media_id,related_primary_key from media_relations where media_relationship='derived from media') relatedMedia
+where
+	media.media_id=catItemMR.media_id and
+	media.media_id=dcreat.media_id (+) and
+	media.media_id=relatedMedia.media_id (+) and
+	media.media_license_id=ctmedia_license.media_license_id (+) and
+	catItemMR.related_primary_key=filtered_flat.collection_object_id and
+	filtered_flat.collection_object_id=specimen_event.collection_object_id and
+	specimen_event.verificationstatus != 'unaccepted' 
+;
+
+
+
+drop table ipt_media_v2;
+
+create table ipt_media_v2 NOLOGGING as select * from ipt_media_v2_view where 1=2;
+
+
+create or replace public synonym ipt_media_v2 for ipt_media_v2;
+grant select on ipt_media_v2 to public;
+create or replace view digir_query.audubonmedia as select * from ipt_media_v2;
+select count(*) from digir_query.audubonmedia;
+
+
+select count(*) from digir_query.audubonmedia where occurrenceID not in (select occurrenceID from digir_query.occurrence);
+
+
+-- refresh
+-- previous: proc_ref_ipt_tbl takes ~2 hours and starts at 11PM
+-- run this as 2AM on the 27th
+-- takes about 10 minutes
+
+CREATE OR REPLACE PROCEDURE proc_ref_ipt_media IS
+BEGIN
+	execute immediate 'truncate table ipt_media_v2';
+	insert  /*+ APPEND */ into ipt_media_v2 ( select * from ipt_media_v2_view);
+end;
+/
+sho err;
+
+BEGIN
+  DBMS_SCHEDULER.drop_job (
+   job_name => 'j_proc_ref_ipt_media',
+   force    => TRUE);
+END;
+/
+
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+    job_name    => 'j_proc_ref_ipt_media',
+    job_type    => 'STORED_PROCEDURE',
+    job_action    => 'proc_ref_ipt_media',
+    enabled     => TRUE,
+    start_date  =>  '27-AUG-17 02.00.00 AM -05:00',
+   repeat_interval    =>  'freq=monthly; bymonthday=27'
+  );
+END;
+/ 
+
+ select STATE,LAST_START_DATE,NEXT_RUN_DATE,LAST_RUN_DURATION from all_scheduler_jobs where lower(JOB_NAME)='j_proc_ref_ipt_media';
+
+
+
+-- immediate refresh
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+    job_name    => 'J_TEMP_UPDATE_JUNK',
+    job_type    => 'STORED_PROCEDURE',
+    job_action    => 'proc_ref_ipt_media',
+    enabled     => TRUE,
+    end_date    => NULL
+  );
+END;
+/ 
+select STATE,LAST_START_DATE,NEXT_RUN_DATE,LAST_RUN_DURATION,systimestamp from all_scheduler_jobs where JOB_NAME='J_TEMP_UPDATE_JUNK';
+
+
+
+
+
+
+
+------------- END ------------
+
+
+
+
+
+
+On to media: we need 
+1) "occurrenceID" to be the new value you were putting in occurrenceID2, 
+2) "identifier" to be what you were putting in references, 
+3) "type" just as it is, 
+4) "title" just as it is, 
+5) "modified" to be what you were putting in last_modified, 
+6) "WebStatement" to be what you were putting in license, 
+7) "source" just as it is,
+8) "creator" just as it is, 
+9) description just as it is, 
+10) "CreateDate" to be what you were putting in created,
+11) "accessURI" as what you were putting in references,
+12) "format" just as it is, and 
+13) "" to be what you were putting in references.
+See if that makes sense as presented.
+
+
 -- have to figure out a way to refresh this table
 -- for now, just rebuild it as necessary
 -- when someone is demonstrably using it, we can add maintenance triggers to media
@@ -28,6 +162,9 @@ create table ipt_better_media_temp as select * from ipt_better_media where 1=2;
 truncate table ipt_better_media_temp;
 -- populate; this is sort of slow
 CREATE OR REPLACE PROCEDURE ins_ipt_better_media_temp IS BEGIN 
+	
+	delete from ipt_better_media_temp;
+	
 	insert into ipt_better_media_temp (
 		collection_id,
 		occurrenceID,

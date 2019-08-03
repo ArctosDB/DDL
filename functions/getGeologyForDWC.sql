@@ -11,7 +11,7 @@ CREATE OR REPLACE function getGeologyForDWC(locid in number,rnk in varchar2 )
        l_val    varchar2(4000);
    begin
     FOR r IN (
-              select distinct geo_att_value
+              select /*+ RESULT_CACHE */ distinct geo_att_value
 	          from 
 	              geology_attributes
 	          where
@@ -22,12 +22,11 @@ CREATE OR REPLACE function getGeologyForDWC(locid in number,rnk in varchar2 )
 	     l_str := l_str || l_sep || r.geo_att_value;
            l_sep := '; ';
     END LOOP;
-   
-             
-     
-
-       return l_str;
+   return l_str;
   end;
 /
 CREATE PUBLIC SYNONYM getGeologyForDWC FOR getGeologyForDWC;
 GRANT EXECUTE ON getGeologyForDWC TO PUBLIC;	
+
+CREATE INdex ix_geo_attr_lid on geology_attributes (locality_id) tablespace uam_idx_1;
+CREATE INdex ix_geo_attr_geoatr on geology_attributes (geology_attribute) tablespace uam_idx_1;

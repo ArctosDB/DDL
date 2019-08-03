@@ -35,13 +35,51 @@ CREATE OR REPLACE PACKAGE BODY bulk_pkg as
  	) 
 is
 begin
-	if sqlMsg != 'User-Defined Exception' then
-		-- unhandled exception
-		error_msg := errMsg || '; called from ' || procName || ': ' || sqlMsg;
+	--dbms_output.put_line('errMsg: ' || errMsg);
+	--dbms_output.put_line('sqlMsg: ' || sqlMsg);
+	--dbms_output.put_line('procName: ' || procName);
+	--dbms_output.put_line('errMsg: ' || errMsg);
+	
+	
+	if procName is not null then
+		error_msg:=procName || ': ';
 	end if;
+	
+	error_msg:=error_msg || errMsg;
+	
+	if sqlMsg != 'User-Defined Exception' then
+		error_msg:=error_msg || ': ' || sqlMsg;
+	end if;
+
+		
+	
+	--error_msg := nvl(errMsg,'') || '; called from ' || nvl(procName,'') || ': ' || nvl(sqlMsg,'');
+	/*
+	if sqlMsg != 'User-Defined Exception' then
+		dbms_output.put_line('sqlMsg is User.... ');
+		
+			dbms_output.put_line('preerror_msg: ' || error_msg);
+
+		-- unhandled exception
+		--error_msg := errMsg || '; called from ' || procName || ': ' || sqlMsg;
+		error_msg := errMsg;
+		
+		
+			dbms_output.put_line('posterror_msg: ' || error_msg);
+
+	end if;
+	*/
+	
+	
+	--dbms_output.put_line('fullaftererror_msg: ' || error_msg);
+	
 	if length(error_msg) > 224 then
 		error_msg := substr(error_msg,1,200) || ' {snip...}';
 	end if;
+	
+	
+	--dbms_output.put_line('error_msg: ' || error_msg);
+	
 	update bulkloader set loaded = error_msg where collection_object_id = collobjid;
 EXCEPTION
 	when others then
@@ -556,6 +594,9 @@ PROCEDURE b_bulkload_coll_event (collobjid IN number) is
 	v_georeference_protocol locality.georeference_protocol%type;
          
 BEGIN
+	
+	--dbms_output.put_line('begin locality');
+	
     -- Do whatever we have to in order to return a collecting_event_id
 	select * into rec from bulkloader where collection_object_id=collobjid;
 	
@@ -566,6 +607,8 @@ BEGIN
 	
     -- user-supplied event ID - we're done here
 	IF rec.collecting_event_id IS NOT NULL THEN
+		--dbms_output.put_line('got collecting_event_id: ' || rec.collecting_event_id);
+
          select 
             count(*) into n
         from
@@ -583,7 +626,9 @@ BEGIN
     END IF;
 
     -- user-supplied event name - check it
-    IF rec.collecting_event_id IS NOT NULL THEN
+    IF rec.collecting_event_name IS NOT NULL THEN
+    
+		--dbms_output.put_line('got collecting_event_name: ' || rec.collecting_event_name);
         select 
             MIN(collecting_event_id) into gcollecting_event_id 
         from
@@ -602,6 +647,9 @@ BEGIN
     -- we need a locality to find or build an event
 
     IF rec.locality_id IS NOT NULL THEN
+    
+    
+		--dbms_output.put_line('got locality_id: ' || rec.locality_id);
         select 
             count(*) into n
         from
@@ -618,6 +666,8 @@ BEGIN
 
     -- did not get a locality id but did get a locality name
     if gLocalityId is null and rec.locality_name is not null then
+    		--dbms_output.put_line('got locality_name: ' || rec.locality_name);
+
         select 
            MIN(locality_id) into gLocalityId
         from
@@ -640,7 +690,13 @@ BEGIN
         -- now we have a geog_auth_rec_id so we can go looking for a locality
         -- check with and without coordinates because the bulkloader assumes that no llunits==no coordinates
         -- that is, ignore coordiante metadata
+        
+        --dbms_output.put_line('locality noexist');
+
         IF rec.orig_lat_long_units IS NULL THEN
+        
+                --dbms_output.put_line('orig_lat_long_units is null');
+
             select 
                 min(locality.locality_id)
             INTO
@@ -662,7 +718,11 @@ BEGIN
                 nvl(concatGeologyAttributeDetail(locality.locality_id),'NULL') = nvl(b_concatGeologyAttributeDetail(rec.collection_object_id),'NULL') and
                 NVL(wkt_media_id,-1) = nvl(rec.wkt_media_id,-1)
             ;
-        ELSE          
+        ELSE  
+        	--dbms_output.put_line('making locality with coordinates');
+        	
+     	
+					
            select 
                 min(locality.locality_id)
             INTO
@@ -694,8 +754,11 @@ BEGIN
             ;
         END IF; 
         if gLocalityId is null then
+        
+            --dbms_output.put_line('gLocalityId is null');
+
             -- did not find a locality, so make one
-            dbms_output.put_line('make locality');
+            --dbms_output.put_line('make locality');
             select sq_locality_id.nextval into gLocalityId from dual;
             if rec.MAX_ERROR_DISTANCE is not null and rec.MAX_ERROR_UNITS is not null then
                 meu:=rec.MAX_ERROR_UNITS;
@@ -721,6 +784,9 @@ BEGIN
             	v_georeference_source:=REC.georeference_source;
             	v_georeference_protocol:=REC.georeference_protocol;
 			end if;
+			
+			        	--dbms_output.put_line('inserting into locality');
+
             INSERT INTO locality (
                  LOCALITY_ID,
                  GEOG_AUTH_REC_ID,
@@ -760,11 +826,14 @@ BEGIN
                 v_georeference_protocol,
                 rec.wkt_media_id
             );
-            --dbms_output.put_line('made a locality');
+            
+            			        	--dbms_output.put_line('inserted into locality');
+
+            ----dbms_output.put_line('made a locality');
             for i IN 1 .. 6 LOOP -- number of geology attributes
                 execute immediate 'select count(*) from bulkloader where geology_attribute_' || i || ' is not null and 
                     geo_att_value_' || i || ' is not null and collection_object_id = ' || collobjid into num;
-                    --dbms_output.put_line ('num: ' || num);
+                    ----dbms_output.put_line ('num: ' || num);
                 if num = 1 then -- there's an attribute - insert it
                     ATTRIBUTE := NULL;
                     ATTRIBUTE_VALUE := NULL;
@@ -1267,3 +1336,9 @@ END;
 /
 
 sho err;
+
+
+
+
+
+
