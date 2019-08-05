@@ -16,7 +16,7 @@ as select
 	concatMediaCreatedByAgent(media.media_id) creator,
 	concatMediaDescription(media.media_id) description,
 	decode(is_iso8601(dcreat.label_value),'valid',dcreat.label_value,NULL) CreateDate,
-	'http://arctos.database.museum/media/' || media.media_id accessURI,
+	'http://arctos.database.museum/media/' || media.media_id || '?open' accessURI,
 	media.mime_type format,
 	'http://arctos.database.museum/media/' || media.media_id furtherInformationURL
 from
@@ -40,17 +40,13 @@ where
 
 
 drop table ipt_media_v2;
-
 create table ipt_media_v2 NOLOGGING as select * from ipt_media_v2_view where 1=2;
 
 
 create or replace public synonym ipt_media_v2 for ipt_media_v2;
 grant select on ipt_media_v2 to public;
 create or replace view digir_query.audubonmedia as select * from ipt_media_v2;
-select count(*) from digir_query.audubonmedia;
 
-
-select count(*) from digir_query.audubonmedia where occurrenceID not in (select occurrenceID from digir_query.occurrence);
 
 
 -- refresh
@@ -115,22 +111,36 @@ select STATE,LAST_START_DATE,NEXT_RUN_DATE,LAST_RUN_DURATION,systimestamp from a
 
 
 
-On to media: we need 
-1) "occurrenceID" to be the new value you were putting in occurrenceID2, 
-2) "identifier" to be what you were putting in references, 
-3) "type" just as it is, 
-4) "title" just as it is, 
-5) "modified" to be what you were putting in last_modified, 
-6) "WebStatement" to be what you were putting in license, 
-7) "source" just as it is,
-8) "creator" just as it is, 
-9) description just as it is, 
-10) "CreateDate" to be what you were putting in created,
-11) "accessURI" as what you were putting in references,
-12) "format" just as it is, and 
-13) "" to be what you were putting in references.
-See if that makes sense as presented.
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+----------------------------------------------------- this is old legacy stuff
+----------------------------------------------------- might be useful for something
+----------------------------------------------------- like figuring out why something works like it does
+----------------------------------------------------- keep it around
+----------------------------------------------------- don't update or try to use
 
 -- have to figure out a way to refresh this table
 -- for now, just rebuild it as necessary
