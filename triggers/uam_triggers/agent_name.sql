@@ -2,7 +2,9 @@
 CREATE OR REPLACE TRIGGER trg_agent_name_biu
      BEFORE update or insert ON agent_name
  FOR EACH ROW 
- DECLARE agtyp varchar2(255);
+ DECLARE 
+ 	agtyp varchar2(255);
+ 	c number;
      BEGIN
      IF :NEW.AGENT_NAME != trim(:NEW.AGENT_NAME) or :NEW.AGENT_NAME like '%  %' THEN
      	RAISE_APPLICATION_ERROR(-20001,'Extraneous spaces detected.');
@@ -24,16 +26,55 @@ CREATE OR REPLACE TRIGGER trg_agent_name_biu
       			RAISE_APPLICATION_ERROR(-20001,'First name cannot be all upper or lower case.');
       	end if;
 	end if;
-	if :NEW.agent_name_type ='login' then
-		select AGENT_TYPE into agtyp from agent where agent_id=:NEW.agent_id;
-		if agtyp != 'person' then
-      		RAISE_APPLICATION_ERROR(-20001,'Only person agents may have a login name.');
-      	end if;
-    end if;
  END;
  /
  
  
+ -- move all login stuff to one place
+ -- and write this with the idea that people with way too much
+ -- power won't read documentation
+ CREATE OR REPLACE TRIGGER trg_agent_name_login_biud
+     BEFORE update or insert or delete ON agent_name
+ FOR EACH ROW 
+ DECLARE 
+ 	agtyp varchar2(255);
+ 	c number;
+BEGIN
+	if :NEW.agent_name_type ='login' or :OLD.agent_name_type ='login'  then
+		if inserting then	 
+			select AGENT_TYPE into agtyp from agent where agent_id=:NEW.agent_id;
+			if agtyp != 'person' then
+	      		RAISE_APPLICATION_ERROR(-20001,'Only person agents may have a login name.');
+	      	end if;
+	      	select count(*) into c from agent_name where agent_id!=:NEW.agent_id and agent_name_type='login' and agent_name=:NEW.agent_name;
+	      	if c>0 then
+	   			RAISE_APPLICATION_ERROR(-20001,'That login is already used.');
+	   		end if;
+	    end if;
+	    if updating then
+	    	if :OLD.agent_name != :NEW.agent_name then
+	    		select count(*) into c from dba_users where username=upper(:OLD.agent_name);
+	    		if c > 0 then
+	   				RAISE_APPLICATION_ERROR(-20001,'Operator login may not be changed.');
+	   			end if;
+	   			select count(*) into c from dba_users where username=upper(:NEW.agent_name);
+				if c > 0 then
+	   				RAISE_APPLICATION_ERROR(-20001,'Login not available');
+	   			end if;
+	   		end if;
+	   	end if;
+	   	if deleting then
+    		select count(*) into c from dba_users where username=upper(:OLD.agent_name);
+    		if c > 0 then
+   				RAISE_APPLICATION_ERROR(-20001,'Operator login may not be deleted.');
+   			end if;
+	   	end if;
+	end if;
+ END;
+ /
+ sho err;
+ 
+
 
 CREATE OR REPLACE TRIGGER PRE_UP_INS_AGENT_NAME 
 BEFORE INSERT ON AGENT_NAME

@@ -178,7 +178,7 @@ BEGIN
 				union
 				select count(*) x from media_relations where media_relationship like '% locality' and related_primary_key =r.locality_id
 				union
-				select count(*) x from bulkloader where locality_id=r.locality_id
+				select count(*) x from bulkloader where locality_id=to_char(r.locality_id)
 			);
 			if c=0 then
 				--dbms_output.put_line('not used deleting');

@@ -1,104 +1,126 @@
-CREATE OR REPLACE TRIGGER TR_SP_ATTRIBUTES_CT_BUI
-BEFORE UPDATE OR INSERT ON specimen_part_attribute
-FOR EACH ROW
-DECLARE
-    numrows NUMBER := 0;
-	collectionCode collection.collection_cde%TYPE;
-	sqlString VARCHAR2(4000);
-	vct VARCHAR2(255);
-	uct VARCHAR2(255);
-	ctctColname VARCHAR2(255);
-	ctctCollCde NUMBER := 0;
-    status varchar2(255);
-	no_problem_go_away EXCEPTION;
-	v VARCHAR2(4000);
+
+CREATE OR REPLACE PROCEDURE auto_merge_locality 
+IS
+	i number :=0;
+	c number;
 BEGIN
-	-- is controlled attribute?
-	SELECT 
-		COUNT(*) 
-	INTO 
-		numrows
-	FROM 
-		CTSPEC_PART_ATT_ATT
-	WHERE 
-		attribute_type = :NEW.attribute_type;
-	
-    IF numrows = 0 THEN
-        IF :new.attribute_units IS NOT NULL THEN
-            raise_application_error(
-                -20001,
-                'This attribute cannot have units'
-            );
-        END IF;
-	else
-  		-- one or the other is controlled
-    	SELECT 
-    		upper(VALUE_CODE_TABLE), 
-    		upper(UNIT_CODE_TABLE) 
-    	INTO 
-    		vct, 
-    		uct
-    	FROM 
-    		CTSPEC_PART_ATT_ATT
-   		WHERE 
-   			attribute_type = :NEW.attribute_type;
-    
-   		IF (vct IS NOT NULL) THEN
-    		-- value is controlled
-    		SELECT 
-    			column_name 
-    		INTO 
-    			ctctColname
-			FROM 
-				user_tab_columns
-			WHERE 
-				upper(table_name) = vct AND 
-				upper(column_name) != 'COLLECTION_CDE' AND 
-				upper(column_name) != 'DESCRIPTION';
-			
-			v:=replace(:NEW.ATTRIBUTE_VALUE,'''','''''');
+	-- run this on new stuff and recheck every month or so
+	-- need to monitor and adjust the "every month or so" bits
+	-- locality_name is unique so those will never be duplicates
+	-- but grab them anyway so we can flag them as being checked
+	for r in (
+		select * from locality where rownum<50 and (last_dup_check_date is null or sysdate-last_dup_check_date > 30) order by last_dup_check_date desc
+	) loop
+			--dbms_output.put_line(r.locality_id);
+			--dbms_output.put_line(r.SPEC_LOCALITY);
+			--dbms_output.put_line(r.last_dup_check_date);
+		for dups in (
+			select * from locality where
+				LOCALITY_ID	!= r.LOCALITY_ID and
+				GEOG_AUTH_REC_ID=r.GEOG_AUTH_REC_ID and
+				nvl(SPEC_LOCALITY,'NULL')=nvl(r.SPEC_LOCALITY,'NULL') and
+				nvl(DEC_LAT,-9999)=nvl(r.DEC_LAT,-9999) and
+				nvl(DEC_LONG,-9999)=nvl(r.DEC_LONG,-9999) and
+				nvl(MINIMUM_ELEVATION,-9999)=nvl(r.MINIMUM_ELEVATION,-9999) and
+				nvl(MAXIMUM_ELEVATION,-9999)=nvl(r.MAXIMUM_ELEVATION,-9999) and
+				nvl(ORIG_ELEV_UNITS,'NULL')=nvl(r.ORIG_ELEV_UNITS,'NULL') and
+				nvl(MIN_DEPTH,-9999)=nvl(r.MIN_DEPTH,-9999) and
+				nvl(MAX_DEPTH,-9999)=nvl(r.MAX_DEPTH,-9999) and
+				nvl(DEPTH_UNITS,'NULL')=nvl(r.DEPTH_UNITS,'NULL') and
+				nvl(MAX_ERROR_DISTANCE,-9999)=nvl(r.MAX_ERROR_DISTANCE,-9999) and
+				nvl(MAX_ERROR_UNITS,'NULL')=nvl(r.MAX_ERROR_UNITS,'NULL') and
+				nvl(DATUM,'NULL')=nvl(r.DATUM,'NULL') and
+				nvl(LOCALITY_REMARKS,'NULL')=nvl(r.LOCALITY_REMARKS,'NULL') and
+				nvl(GEOREFERENCE_SOURCE,'NULL')=nvl(r.GEOREFERENCE_SOURCE,'NULL') and
+				nvl(GEOREFERENCE_PROTOCOL,'NULL')=nvl(r.GEOREFERENCE_PROTOCOL,'NULL') and
+				nvl(LOCALITY_NAME,'NULL')=nvl(r.LOCALITY_NAME,'NULL') and
+				nvl(md5hash(WKT_POLYGON),'NULL')=nvl(md5hash(r.WKT_POLYGON),'NULL') and
+				nvl(concatGeologyAttributeDetail(locality_id),'NULL')=nvl(concatGeologyAttributeDetail(r.locality_id),'NULL')
+		) loop
+			BEGIN
+				i:=i+1;
+				--dbms_output.put_line('dup loc ID: ' || dups.locality_id);
+				-- log; probably won't go to prod
+				-- this seems happy; turn off the logging
+				--update temp_pre_dup_locality set merged_as_duplicate_of_locid = r.locality_id where locality_id=dups.locality_id;
+				-- send the trigger "it''s just me plz ignore"
+				update 
+					collecting_event 
+				set 
+					locality_id=r.locality_id, 
+					admin_flag = 'proc auto_merge_locality' 
+				where 
+					locality_id=dups.locality_id;
+				
+				update 
+					tag 
+				set 
+					locality_id=r.locality_id 
+				where 
+					locality_id=dups.locality_id;
 
-            sqlString := 'SELECT count(*) FROM ' || vct || 
-                ' WHERE ' || ctctColname || ' = ''' || 
-                v || '''';
-                
-            EXECUTE IMMEDIATE sqlstring INTO numrows;
-            
-            IF (numrows = 0) THEN
-                raise_application_error(
-                    -20001,
-                    'Invalid ATTRIBUTE_VALUE for ATTRIBUTE_TYPE ');
-            END IF;
-		
-		ELSIF (uct is not null) THEN
-    		-- attributes with units must be numeric
-			SELECT IS_number(:new.attribute_value) INTO numrows FROM dual;
-		
-	        IF numrows = 0 THEN
-	            raise_application_error(
-	                -20001,
-	                'Attributes with units must be numeric');
-	        END IF;
-            SELECT column_name INTO ctctColname
-		    	FROM user_tab_columns
-				WHERE upper(table_name) = uct
-				AND upper(column_name) <>'COLLECTION_CDE'
-				AND upper(column_name) <>'DESCRIPTION';
-		
-			sqlString := 'SELECT count(*) FROM ' || uct || 
-			    ' WHERE ' || ctctColname || ' = ''' || 
-			    :NEW.ATTRIBUTE_UNITS || '''';
-			    
-       	 	EXECUTE IMMEDIATE sqlstring INTO numrows;
-        
-	        IF (numrows = 0) THEN
-	            raise_application_error(
-	                -20001,
-	                'Invalid ATTRIBUTE_UNITS');
-	        END IF;
-		END IF;
-	END IF; 	
-END;
+				update 
+					media_relations 
+				set 
+					related_primary_key=r.locality_id 
+				where
+					media_relationship like '% locality' and
+					related_primary_key =dups.locality_id;
+
+				update 
+					bulkloader 
+				set 
+					locality_id=r.locality_id 
+				where 
+					locality_id=dups.locality_id;
+
+				-- geology already exists on the "keeper" locality, just delete
+				delete from geology_attributes where locality_id=dups.locality_id;
+
+				-- and delete the duplicate locality
+				delete from locality where locality_id=dups.locality_id;
+			exception when others then
+				null;
+				-- these happen (at least) when the initial query contains the duplicate
+				-- ignore, they'll get caught next time around/eventually
+				--dbms_output.put_line('FAIL ID: ' || dups.locality_id);
+				--dbms_output.put_line(sqlerrm);
+			end;
+		end loop;
+		-- now that we're merged, DELETE if unused and unnamed
+		-- DO NOT delete named localities
+		if r.LOCALITY_NAME is null then
+			select sum(x) into c from (
+				select count(*) x from collecting_event where locality_id=r.locality_id
+				union
+				select count(*) x from tag where locality_id=r.locality_id
+				union
+				select count(*) x from media_relations where media_relationship like '% locality' and related_primary_key =r.locality_id
+				union
+				select count(*) x from bulkloader where locality_id=r.locality_id
+			);
+			if c=0 then
+				--dbms_output.put_line('not used deleting');
+				delete from geology_attributes where locality_id=r.locality_id;
+				delete from locality where locality_id=r.locality_id;
+			end if;
+		end if;
+
+		-- log the last check
+		update locality set last_dup_check_date=sysdate where locality_id=r.locality_id;
+
+		-- if there are a lot of not-so-duplicates found, this can process many per run
+		-- if there are a log of duplicates, it'll get all choked up on trying to update FLAT
+		-- so throttle - if we haven't merged much then keep going, if we have exit and start over next run
+		if i > 100 then
+			--dbms_output.put_line('i maxout: ' || i);
+			return;
+		--else
+			--dbms_output.put_line('i stillsmall: ' || i);
+		end if;
+	end loop;
+end;
 /
+sho err;
 
-
+exec auto_merge_locality;
