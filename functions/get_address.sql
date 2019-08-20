@@ -5,7 +5,7 @@ CREATE OR REPLACE FUNCTION get_address(p_key_val IN NUMBER, atype in varchar2 de
 -- override by setting variable to anything but 1
 	RETURN VARCHAR2
 	AS
-		fa addr.formatted_addr%TYPE;
+		fa varchar2(4000);
 		c NUMBER;
 		l_str varchar2(4000);
 		l_sep varchar2(2);
