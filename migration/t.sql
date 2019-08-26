@@ -39,7 +39,7 @@ BEGIN
 		) loop
 			BEGIN
 				i:=i+1;
-				--dbms_output.put_line('dup loc ID: ' || dups.locality_id);
+				dbms_output.put_line('dup loc ID: ' || dups.locality_id);
 				-- log; probably won't go to prod
 				-- this seems happy; turn off the logging
 				--update temp_pre_dup_locality set merged_as_duplicate_of_locid = r.locality_id where locality_id=dups.locality_id;
@@ -89,6 +89,8 @@ BEGIN
 		end loop;
 		-- now that we're merged, DELETE if unused and unnamed
 		-- DO NOT delete named localities
+		dbms_output.put_line('check delete');
+		dbms_output.put_line('r.locality_id:'||r.locality_id);
 		if r.LOCALITY_NAME is null then
 			select sum(x) into c from (
 				select count(*) x from collecting_event where locality_id=r.locality_id
@@ -100,14 +102,14 @@ BEGIN
 				select count(*) x from bulkloader where locality_id=r.locality_id
 			);
 			if c=0 then
-				--dbms_output.put_line('not used deleting');
-				delete from geology_attributes where locality_id=r.locality_id;
-				delete from locality where locality_id=r.locality_id;
+				dbms_output.put_line('not used deleting');
+				--delete from geology_attributes where locality_id=r.locality_id;
+				--delete from locality where locality_id=r.locality_id;
 			end if;
 		end if;
 
 		-- log the last check
-		update locality set last_dup_check_date=sysdate where locality_id=r.locality_id;
+		--update locality set last_dup_check_date=sysdate where locality_id=r.locality_id;
 
 		-- if there are a lot of not-so-duplicates found, this can process many per run
 		-- if there are a log of duplicates, it'll get all choked up on trying to update FLAT
