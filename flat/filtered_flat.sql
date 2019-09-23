@@ -383,7 +383,8 @@ BEGIN
     FROM
         flat
     WHERE
-    	collection_object_id=collobjid
+    	collection_object_id=collobjid and
+    	(encumbrances is null or encumbrances NOT LIKE '%mask record%')
     );
    -- mark as done 
     update flat set stale_flag=2 where collection_object_id=collobjid;

@@ -1079,7 +1079,6 @@ BEGIN
     	tempStr :=  trim(substr(rec.accn, instr(rec.accn,'[',1,1) + 1,instr(rec.accn,']',1,1) -2));
     	tempStr2 := trim(REPLACE(rec.accn,'['||tempStr||']'));
     	
-        
       ELSE
         tempStr := rec.guid_prefix;
         tempStr2 := rec.accn;

@@ -264,6 +264,16 @@ END;
 
 
 -- immediate refresh
+
+ BEGIN
+  DBMS_SCHEDULER.drop_job (
+   job_name => 'j_proc_ref_ipt_tbl',
+   force    => TRUE);
+END;
+/
+
+
+
 BEGIN
   DBMS_SCHEDULER.CREATE_JOB (
     job_name    => 'J_temp_update_junk',

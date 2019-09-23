@@ -295,6 +295,7 @@ END;
 
 select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where JOB_NAME='J_REF_GGBN_TBL';
 
+select STATE,LAST_START_DATE,NEXT_RUN_DATE from all_scheduler_jobs where lower(JOB_NAME)='j_temp_update_junk';
 
 select count(*) from ggbn_tissue_tbl;
 drop view digir_query.v_ggbn_tissue_tbl;

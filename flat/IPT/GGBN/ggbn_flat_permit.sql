@@ -3,11 +3,12 @@ drop table temp_ggbn_permit;
 alter table temp_ggbn_permit rename column OccurrenceID to OccurrenceID2;
 
 
-create 
+create view temp_ggbn_permit_v
 --or replace 
 --view digir_query.ggbn_flat_permit 
 -- table for performance reasons; this is not a viable long-term solution, we need a way to maintain these data
-table temp_ggbn_permit as select distinct
+--table temp_ggbn_permit 
+as select distinct
 	-- each tissue may have multiple permits
 	-- each permit may apply to multiple tissues
 	-- I don't think these data need a primary key and I have no idea what we'll use if they do
@@ -17,7 +18,7 @@ table temp_ggbn_permit as select distinct
 	filtered_flat.collection_id,
 	-- key to Occurrences; probably don't need this here but why not...
 	-- name OCCURRENCEID2 because reasons
-	'http://arctos.database.museum/guid/' || filtered_flat.guid || '?seid=' || specimen_event.specimen_event_id OccurrenceID2,
+	'http://arctos.database.museum/guid/' || filtered_flat.guid || '?seid=' || specimen_event.specimen_event_id OccurrenceID,
 	-- each permit can have multiple types
 	-- doesn't seem right to normalize this further so concat them in
 	-- this does NOT include permit_regulation
@@ -62,11 +63,42 @@ where
 	specimen_event.collecting_event_id=collecting_event.collecting_event_id
 ;
 
+-- cache table
+drop table temp_ggbn_permit_tbl;
+create table temp_ggbn_permit_tbl NOLOGGING as select * from temp_ggbn_permit_v where 1=2;
+
+create or replace public synonym temp_ggbn_permit_tbl for temp_ggbn_permit_tbl;
+grant select on temp_ggbn_permit_tbl to public;
+
+create or replace view digir_query.occurrence as select * from ipt_tbl;
+
+
 
 -- and a view for digir_query
+drop view digir_query.ggbn_flat_permit;
+create or replace view digir_query.ggbn_flat_permit as select * from temp_ggbn_permit_tbl;
 
-grant select on temp_ggbn_permit to digir_query;
+---and a procedure to refresh
+
+CREATE OR REPLACE PROCEDURE proc_ref_ggbn_pmt_tbl IS
+BEGIN
+	execute immediate 'truncate table temp_ggbn_permit_tbl';
+	insert /*+ APPEND */ into temp_ggbn_permit_tbl ( select * from temp_ggbn_permit_v);
+end;
+/
+sho err;
 
 
-create or replace view digir_query.ggbn_flat_permit as select * from uam.temp_ggbn_permit;
 
+-- refresh
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+    job_name    => 'J_temp_update_junk',
+    job_type    => 'STORED_PROCEDURE',
+    job_action    => 'proc_ref_ggbn_pmt_tbl',
+    enabled     => TRUE,
+    end_date    => NULL
+  );
+END;
+/ 
+select STATE,LAST_START_DATE,NEXT_RUN_DATE,LAST_RUN_DURATION,systimestamp from all_scheduler_jobs where JOB_NAME='J_TEMP_UPDATE_JUNK';
