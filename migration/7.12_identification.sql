@@ -78,19 +78,146 @@ insert into ctnature_of_id (NATURE_OF_ID, DESCRIPTION) values ('unknown','The na
 update ctnature_of_id set description='LEGACY VALUE: not available for new IDs. ' || description where nature_of_id not in ('fine features','function','molecular','geographic distribution','coarse features','karyotype','relationship','audio-visual','taxonomic revision','unknown');
 
 CREATE OR REPLACE TRIGGER temp_tr_id_biu
-before INSERT OR UPDATE ON identification
+before INSERT ON identification
 FOR EACH ROW
 BEGIN
 	-- limit new identifications to the new values
-	IF :NEW.nature_of_id not in ('fine features','function','molecular','geographic distribution','coarse features','karyotype','relationship','audio-visual','taxonomic revision','unknown') then
+	IF :NEW.nature_of_id not in ('features','fine features','function','molecular','geographic distribution','coarse features','karyotype','relationship','audio-visual','revised taxonomy','unknown') then
 		RAISE_APPLICATION_ERROR(-20001,'Legacy nature_of_id terms are disallowed; see https://github.com/ArctosDB/arctos/issues/2170');
 	end if;
 END;
 /
 
+update ctnature_of_id set description='This designation is appropriate only in the presence of an earlier identification. It implies that the specimen has not been reexamined, and only that a different taxonomic name is being applied. In most cases this results from taxonomic synonymization of names.' where nature_of_id='revised taxonomy';
+
+
+create table temp_bak_identifi_20191002 as select * from identification;
+
+--------------------------------
+done
+exec pause_maintenance('off');
+
+update 
+	identification 
+set 
+	IDENTIFICATION_REMARKS=decode(
+		IDENTIFICATION_REMARKS,
+		NULL,'Former nature_of_id: taxonomic revision.',
+		IDENTIFICATION_REMARKS || '; Former nature_of_id: taxonomic revision.'
+	),
+	nature_of_id='revised taxonomy'
+where
+	nature_of_id='taxonomic revision'
+;
+	
+
+delete from ctnature_of_id where nature_of_id='taxonomic revision';
+
+exec pause_maintenance('on');
+--------------------------------
+
+
+create table temp_bak_temp as select * from identification;
+
+
+
+
+--------------------------------
+done
+exec pause_maintenance('off');
+lock table identification in exclusive mode nowait;
+
+-- use IDENTIFICATION_REMARKS to break this up a bit
+
+-- not null must be first
+update 
+	identification 
+set 
+	IDENTIFICATION_REMARKS=IDENTIFICATION_REMARKS || '; Former nature_of_id: legacy.',
+	nature_of_id='unknown'
+where
+	IDENTIFICATION_REMARKS is not null and
+	nature_of_id='legacy'
+;
+
+
+update 
+	identification 
+set 
+	IDENTIFICATION_REMARKS='Former nature_of_id: legacy.',
+	nature_of_id='unknown'
+where
+	IDENTIFICATION_REMARKS is null and 
+	nature_of_id='legacy'
+;
+
+
+
+	
+delete from ctnature_of_id where nature_of_id='legacy';
+commit;
+
+exec pause_maintenance('on');
+--------------------------------
+
+
+--------------------------------
+done
+exec pause_maintenance('off');
+lock table identification in exclusive mode nowait;
+
+
+update 
+	identification 
+set 
+	IDENTIFICATION_REMARKS=decode(
+		IDENTIFICATION_REMARKS,
+		NULL,'Former nature_of_id: molecular data.',
+		IDENTIFICATION_REMARKS || '; Former nature_of_id: molecular data.'
+	),
+	nature_of_id='molecular'
+where
+	nature_of_id='molecular data'
+;
+
+delete from ctnature_of_id where nature_of_id='molecular data';
+
+
+exec pause_maintenance('on');
+
+  --------------------------------
+
+ 
+ 
+
+
+--------------------------------
+todo
+
+exec pause_maintenance('off');
+lock table identification in exclusive mode nowait;
+
+update 
+	identification 
+set 
+	IDENTIFICATION_REMARKS=decode(
+		IDENTIFICATION_REMARKS,
+		NULL,'Former nature_of_id: ID of kin.',
+		IDENTIFICATION_REMARKS || '; Former nature_of_id: ID of kin.'
+	),
+	nature_of_id='relationship'
+where
+	nature_of_id='ID of kin'
+;
+
+delete from ctnature_of_id where nature_of_id='ID of kin';
+
+exec pause_maintenance('on');
+
+
+-----------------------------------------
 
 select * from ctnature_of_id where nature_of_id not in ('fine features','function','molecular','geographic distribution','coarse features','karyotype','relationship','audio-visual','taxonomic revision','unknown');
-
 
 
 CREATE OR REPLACE TRIGGER trg_accn_datecheck
@@ -187,3 +314,5 @@ alter table identification add identification_confidence varchar(30);
 ALTER TABLE identification ADD CONSTRAINT fk_identification_confidence  FOREIGN KEY (identification_confidence)  REFERENCES ctidentification_confidence(identification_confidence);
 
 alter table cf_temp_id add identification_confidence varchar(30);
+
+

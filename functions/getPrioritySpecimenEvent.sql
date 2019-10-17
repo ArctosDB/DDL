@@ -64,6 +64,7 @@ BEGIN
       		specimen_event.collecting_event_id=collecting_event.collecting_event_id and
       		collecting_event.locality_id=locality.locality_id and
       		--specimen_event.verificationstatus != 'unaccepted' and 
+      		not exists (select locality_id from geology_attributes where geology_attributes.locality_id=locality.locality_id and GEOLOGY_ATTRIBUTE='access' and GEO_ATT_VALUE='private') and
       		specimen_event.collection_object_id=coid
      ) 
 	order by  

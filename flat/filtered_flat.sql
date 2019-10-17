@@ -39,7 +39,7 @@ BEGIN
 		    flat 
 		WHERE 
 		    stale_flag = 0 AND 
-		    ROWNUM < 15000
+		    ROWNUM < 1500
 	) LOOP
 			BEGIN
 		--dbms_output.put_line(r.collection_object_id);
