@@ -187,12 +187,24 @@ exec pause_maintenance('on');
 
   --------------------------------
 
+--https://github.com/ArctosDB/arctos/issues/2170#issuecomment-543283212
+update identification set nature_of_id='features' where nature_of_id='coarse features' and identification_id in (
+select identification_id from collection,cataloged_item,identification where 
+nature_of_id ='coarse features' and 
+collection.collection_id=cataloged_item.collection_id and 
+cataloged_item.collection_object_id=identification.collection_object_id and
+collection.guid_prefix='MVZ:Bird'
+) ;
+
  
  
 
 
 --------------------------------
 todo
+
+
+select count(*) from identification where nature_of_id='ID of kin';
 
 exec pause_maintenance('off');
 lock table identification in exclusive mode nowait;
@@ -205,7 +217,8 @@ set
 		NULL,'Former nature_of_id: ID of kin.',
 		IDENTIFICATION_REMARKS || '; Former nature_of_id: ID of kin.'
 	),
-	nature_of_id='relationship'
+	nature_of_id='relationship',
+	IDENTIFICATION_CONFIDENCE='high'
 where
 	nature_of_id='ID of kin'
 ;
@@ -213,6 +226,312 @@ where
 delete from ctnature_of_id where nature_of_id='ID of kin';
 
 exec pause_maintenance('on');
+
+
+
+
+exec pause_maintenance('off');
+lock table identification in exclusive mode nowait;
+
+update 
+	identification 
+set 
+	IDENTIFICATION_REMARKS=decode(
+		IDENTIFICATION_REMARKS,
+		NULL,'Former nature_of_id: ID to species group.',
+		IDENTIFICATION_REMARKS || '; Former nature_of_id: ID to species group.'
+	),
+	nature_of_id='features',
+	IDENTIFICATION_CONFIDENCE='low'
+where
+	nature_of_id='ID to species group'
+;
+
+delete from ctnature_of_id where nature_of_id='ID to species group';
+
+exec pause_maintenance('on');
+
+
+lock table identification in exclusive mode nowait;
+
+update 
+	identification 
+set 
+	IDENTIFICATION_REMARKS=decode(
+		IDENTIFICATION_REMARKS,
+		NULL,'Former nature_of_id: curatorial.',
+		IDENTIFICATION_REMARKS || '; Former nature_of_id: curatorial.'
+	),
+	nature_of_id='features',
+	IDENTIFICATION_CONFIDENCE='high'
+where
+	nature_of_id='curatorial'
+;
+
+delete from ctnature_of_id where nature_of_id='curatorial';
+
+
+
+select count(*) from identification where nature_of_id='erroneous citation';
+lock table identification in exclusive mode nowait;
+
+update 
+	identification 
+set 
+	IDENTIFICATION_REMARKS=decode(
+		IDENTIFICATION_REMARKS,
+		NULL,'Former nature_of_id: erroneous citation.',
+		IDENTIFICATION_REMARKS || '; Former nature_of_id: erroneous citation.'
+	),
+	nature_of_id='unknown',
+	IDENTIFICATION_CONFIDENCE='low'
+where
+	nature_of_id='erroneous citation'
+;
+
+delete from ctnature_of_id where nature_of_id='erroneous citation';
+
+
+
+
+
+select count(*) from identification where nature_of_id='expert';
+lock table identification in exclusive mode nowait;
+
+update 
+	identification 
+set 
+	IDENTIFICATION_REMARKS=decode(
+		IDENTIFICATION_REMARKS,
+		NULL,'Former nature_of_id: expert.',
+		IDENTIFICATION_REMARKS || '; Former nature_of_id: expert.'
+	),
+	nature_of_id='features',
+	IDENTIFICATION_CONFIDENCE='high'
+where
+	nature_of_id='expert'
+;
+
+delete from ctnature_of_id where nature_of_id='expert';
+
+
+select count(*) from identification where nature_of_id='field';
+lock table identification in exclusive mode nowait;
+
+update 
+	identification 
+set 
+	IDENTIFICATION_REMARKS=decode(
+		IDENTIFICATION_REMARKS,
+		NULL,'Former nature_of_id: field.',
+		IDENTIFICATION_REMARKS || '; Former nature_of_id: field.'
+	),
+	nature_of_id='features',
+	IDENTIFICATION_CONFIDENCE='low'
+where
+	nature_of_id='field'
+;
+
+delete from ctnature_of_id where nature_of_id='field';
+
+
+
+
+
+select count(*) from identification where nature_of_id='photograph';
+lock table identification in exclusive mode nowait;
+
+update 
+	identification 
+set 
+	IDENTIFICATION_REMARKS=decode(
+		IDENTIFICATION_REMARKS,
+		NULL,'Former nature_of_id: photograph.',
+		IDENTIFICATION_REMARKS || '; Former nature_of_id: photograph.'
+	),
+	nature_of_id='features',
+	IDENTIFICATION_CONFIDENCE=null
+where
+	nature_of_id='photograph'
+;
+
+delete from ctnature_of_id where nature_of_id='photograph';
+
+
+
+
+select count(*) from identification where nature_of_id='published referral';
+lock table identification in exclusive mode nowait;
+
+update 
+	identification 
+set 
+	IDENTIFICATION_REMARKS=decode(
+		IDENTIFICATION_REMARKS,
+		NULL,'Former nature_of_id: published referral.',
+		IDENTIFICATION_REMARKS || '; Former nature_of_id: published referral.'
+	),
+	nature_of_id='unknown',
+	IDENTIFICATION_CONFIDENCE='high'
+where
+	nature_of_id='published referral'
+;
+
+delete from ctnature_of_id where nature_of_id='published referral';
+
+
+
+
+
+select count(*) from identification where nature_of_id='student';
+lock table identification in exclusive mode nowait;
+
+update 
+	identification 
+set 
+	IDENTIFICATION_REMARKS=decode(
+		IDENTIFICATION_REMARKS,
+		NULL,'Former nature_of_id: student.',
+		IDENTIFICATION_REMARKS || '; Former nature_of_id: student.'
+	),
+	nature_of_id='features',
+	IDENTIFICATION_CONFIDENCE='medium'
+where
+	nature_of_id='student'
+;
+
+delete from ctnature_of_id where nature_of_id='student';
+
+
+
+
+select count(*) from identification where nature_of_id='type specimen';
+lock table identification in exclusive mode nowait;
+
+update 
+	identification 
+set 
+	IDENTIFICATION_REMARKS=decode(
+		IDENTIFICATION_REMARKS,
+		NULL,'Former nature_of_id: type specimen.',
+		IDENTIFICATION_REMARKS || '; Former nature_of_id: type specimen.'
+	),
+	nature_of_id='features',
+	IDENTIFICATION_CONFIDENCE='high'
+where
+	nature_of_id='type specimen'
+;
+
+delete from ctnature_of_id where nature_of_id='type specimen';
+
+
+
+
+
+select nature_of_id,count(*) from identification group by nature_of_id;
+
+select nature_of_id,count(*) from bulkloader group by nature_of_id;
+
+lock table bulkloader in exclusive mode nowait;
+
+update bulkloader set
+	NATURE_OF_ID='features',
+	IDENTIFICATION_REMARKS=decode(
+		IDENTIFICATION_REMARKS,
+		NULL,'Former nature_of_id: student.',
+		IDENTIFICATION_REMARKS || '; Former nature_of_id: student.'
+	)
+where nature_of_id='student';
+
+update bulkloader set
+	NATURE_OF_ID='features',
+	IDENTIFICATION_REMARKS=decode(
+		IDENTIFICATION_REMARKS,
+		NULL,'Former nature_of_id: field.',
+		IDENTIFICATION_REMARKS || '; Former nature_of_id: field.'
+	)
+where nature_of_id='field';
+
+update bulkloader set
+	NATURE_OF_ID='features',
+	IDENTIFICATION_REMARKS=decode(
+		IDENTIFICATION_REMARKS,
+		NULL,'Former nature_of_id: ID to species group.',
+		IDENTIFICATION_REMARKS || '; Former nature_of_id: ID to species group.'
+	)
+where nature_of_id='ID to species group';
+
+
+update bulkloader set
+	NATURE_OF_ID='unknown',
+	IDENTIFICATION_REMARKS=decode(
+		IDENTIFICATION_REMARKS,
+		NULL,'Former nature_of_id: legacy.',
+		IDENTIFICATION_REMARKS || '; Former nature_of_id: legacy.'
+	)
+where nature_of_id='legacy';
+
+
+update bulkloader set
+	NATURE_OF_ID='relationship',
+	IDENTIFICATION_REMARKS=decode(
+		IDENTIFICATION_REMARKS,
+		NULL,'Former nature_of_id: ID of kin.',
+		IDENTIFICATION_REMARKS || '; Former nature_of_id: ID of kin.'
+	)
+where nature_of_id='ID of kin';
+
+
+update bulkloader set
+	NATURE_OF_ID='features',
+	IDENTIFICATION_REMARKS=decode(
+		IDENTIFICATION_REMARKS,
+		NULL,'Former nature_of_id: photograph.',
+		IDENTIFICATION_REMARKS || '; Former nature_of_id: photograph.'
+	)
+where nature_of_id='photograph';
+
+
+update bulkloader set
+	NATURE_OF_ID='unknown',
+	IDENTIFICATION_REMARKS=decode(
+		IDENTIFICATION_REMARKS,
+		NULL,'Former nature_of_id: published referral.',
+		IDENTIFICATION_REMARKS || '; Former nature_of_id: published referral.'
+	)
+where nature_of_id='published referral';
+
+
+update bulkloader set
+	NATURE_OF_ID='features',
+	IDENTIFICATION_REMARKS=decode(
+		IDENTIFICATION_REMARKS,
+		NULL,'Former nature_of_id: expert.',
+		IDENTIFICATION_REMARKS || '; Former nature_of_id: expert.'
+	)
+where nature_of_id='expert';
+
+
+update bulkloader set
+	NATURE_OF_ID='features',
+	IDENTIFICATION_REMARKS=decode(
+		IDENTIFICATION_REMARKS,
+		NULL,'Former nature_of_id: curatorial.',
+		IDENTIFICATION_REMARKS || '; Former nature_of_id: curatorial.'
+	)
+where nature_of_id='curatorial';
+
+																					
+
+
+	
+col guid_prefix format a30;
+select guid_prefix, count(*) c from collection,cataloged_item,identification where 
+collection.collection_id=cataloged_item.collection_id and
+cataloged_item.collection_object_id=identification.collection_object_id
+and identification.nature_of_id='coarse features'
+group by guid_prefix order by guid_prefix;
+
 
 
 -----------------------------------------
@@ -315,4 +634,69 @@ ALTER TABLE identification ADD CONSTRAINT fk_identification_confidence  FOREIGN 
 
 alter table cf_temp_id add identification_confidence varchar(30);
 
+
+
+
+
+
+--- create a publication for type specimen
+
+
+create table temp_needtypes as select 
+   identification.collection_object_id,
+   identification.identification_id
+   from identification 
+   where identification.nature_of_id='type specimen'
+and not exists (select identification_id from citation where citation.identification_id=identification.identification_id)
+;
+-- revision
+-- see http://arctos.database.museum/guid/UAM:Herb:2653 - has an ID that is a type and another that's not, both with NoID
+drop table temp_needtypes;
+
+create table temp_needtypes as select 
+   identification.collection_object_id,
+   identification.identification_id
+   from identification 
+   where identification.nature_of_id='type specimen'
+and not exists (select collection_object_id from citation where citation.collection_object_id=identification.collection_object_id)
+;
+
+
+select collection_object_id from temp_needtypes having count(*) > 1 group by collection_object_id;
+-- just one
+select identification_id from temp_needtypes where collection_object_id=26564567;
+delete from temp_needtypes where identification_id=13152812;
+
+
+select guid from flat,temp_needtypes where flat.collection_object_id=temp_needtypes.collection_object_id order by guid;
+-- looks good, do it
+
+insert into citation (
+  PUBLICATION_ID,
+  COLLECTION_OBJECT_ID,
+  TYPE_STATUS,
+  CITATION_REMARKS,
+  CITATION_ID,
+  IDENTIFICATION_ID
+) ( 
+  select
+    10008933,
+    COLLECTION_OBJECT_ID,
+    'unknown type',
+    'Created as a placeholder and finding aid for records with nature_of_id "type specimen" and no attached publication.',
+    sq_citation_id.nextval,
+    identification_id
+  from
+    temp_needtypes
+);
+
+-- check
+
+select 
+   count(*)
+   from identification 
+   where identification.nature_of_id='type specimen'
+and not exists (select collection_object_id from citation where citation.collection_object_id=identification.collection_object_id)
+;
+--- create a publication for type specimen
 
