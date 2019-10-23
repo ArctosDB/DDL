@@ -99,7 +99,7 @@ BEGIN
 		    flat 
 		WHERE 
 		    stale_flag = 1 AND 
-		    ROWNUM < 500
+		    ROWNUM < 1000
 	) LOOP
 			BEGIN
 				if r.lastuser='UAM' then
@@ -667,3 +667,4 @@ END;
 
 
  select START_DATE,REPEAT_INTERVAL,END_DATE,ENABLED,STATE,RUN_COUNT,FAILURE_COUNT,LAST_START_DATE,LAST_RUN_DURATION,NEXT_RUN_DATE from all_scheduler_jobs where lower(job_name)='j_is_filtered_flat_stale';
+ select START_DATE,REPEAT_INTERVAL,END_DATE,ENABLED,STATE,RUN_COUNT,FAILURE_COUNT,LAST_START_DATE,LAST_RUN_DURATION,NEXT_RUN_DATE from all_scheduler_jobs where lower(job_name)='check_flat_stale';

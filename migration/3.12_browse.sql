@@ -16,6 +16,7 @@ is
 BEGIN
 	insert into browse (link,display) (
 		select link,display from (
+		-- 12 seconds
 		    select link,display from (
 		       select 
 		        '/guid/' || guid link,
@@ -31,6 +32,7 @@ BEGIN
 		        dbms_random.value
 		    )   WHERE rownum <= 500
 			union
+			-- 3 seconds
 		    select link,display from (
 		      select 
 		        full_citation display,
@@ -52,6 +54,7 @@ BEGIN
 		        dbms_random.value
 		    ) WHERE rownum <= 500   
 			 UNION
+			 -- 1 second
 			    select link,display from (
 			      select 
 			        '<img style="max-height:150px;" src="' || preview_uri || '">' display,
@@ -73,6 +76,7 @@ BEGIN
 			    )
 			    WHERE rownum <= 500
 			  UNION
+			  -- 10 s
 			    select link,display from (
 		            select 
 		              '/name/' || taxon_name.scientific_name link,
@@ -83,7 +87,7 @@ BEGIN
 		              identification_taxonomy,
 		              identification,
 		              filtered_flat
-		              sample(0.1)
+		              sample(0.01)
 		            where
 		              taxon_name.taxon_name_id > 0 and
 		              taxon_name.taxon_name_id=taxon_term.taxon_name_id and

@@ -9,6 +9,12 @@ exec DBMS_SCHEDULER.DISABLE_JOB('ARCTOS_AUDIT_JOB');
 
 select JOB_NAME, START_DATE, REPEAT_INTERVAL, LAST_START_DATE, LAST_RUN_DURATION, NEXT_RUN_DATE, RUN_COUNT 
 from all_scheduler_jobs where job_name like '%ARCTOS_AUDIT%';
+
+
+
+2019-10-22: disabling due to performance reasons and a lack of usage
+
+
 */
 
 BEGIN

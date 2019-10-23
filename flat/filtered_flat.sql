@@ -39,7 +39,7 @@ BEGIN
 		    flat 
 		WHERE 
 		    stale_flag = 0 AND 
-		    ROWNUM < 1500
+		    ROWNUM < 300
 	) LOOP
 			BEGIN
 		--dbms_output.put_line(r.collection_object_id);
@@ -393,6 +393,12 @@ exception when others then
 	update flat set STALE_FLAG=-2 where  COLLECTION_OBJECT_ID=collobjid;
 end;
 /
+
+
+
+
+
+
 
 
 

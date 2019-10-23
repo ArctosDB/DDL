@@ -462,11 +462,17 @@ exec ctx_ddl.create_preference( 'idx_tablespace', 'UAM_IDX_1' );
 exec ctx_ddl.set_attribute ( 'idx_tablespace', 'UAM_IDX_1', 'true' );
 
 
-create index  some_text_idx on your_table(text_col)  indextype is ctxsys.context PARAMETERS ('storage your_tablespace sync (on commit)')
 
+			-- this may be messing with performance
+			-- try hourly below
+		--	CREATE INDEX ix_f_txt_tloc_srch_trms ON flat(locality_search_terms) INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS ('sync (on commit)'); 
+		--	CREATE INDEX ix_f_f_txt_tloc_srch_trms ON FILTERED_flat(locality_search_terms) INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS ('sync (on commit)'); 
+			-- hourly
+			drop index ix_f_f_txt_tloc_srch_trms;
+			CREATE INDEX ix_f_f_txt_tloc_srch_trms ON FILTERED_flat(locality_search_terms) INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS ('sync (EVERY "SYSDATE + 1/24")'); 
+			drop index ix_f_txt_tloc_srch_trms;
+			CREATE INDEX ix_f_txt_tloc_srch_trms ON flat(locality_search_terms) INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS ('sync (EVERY "SYSDATE + 1/24")'); 
 
-			CREATE INDEX ix_f_txt_tloc_srch_trms ON flat(locality_search_terms) INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS ('sync (on commit)'); 
-			CREATE INDEX ix_f_f_txt_tloc_srch_trms ON FILTERED_flat(locality_search_terms) INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS ('sync (on commit)'); 
 			
 		CREATE INDEX ix_f_has_tissues ON flat(has_tissues) tablespace uam_idx_1;
 		

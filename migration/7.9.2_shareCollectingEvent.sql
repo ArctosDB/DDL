@@ -160,7 +160,7 @@ BEGIN
 	-- collecting_event_name is unique so those will never be duplicates
 	-- but grab them anyway so we can flag them as being checked
 	for r in (
-		select * from collecting_event where rownum<150 and (last_dup_check_date is null or sysdate-last_dup_check_date > 30)
+		select * from collecting_event where COLLECTING_EVENT_NAME is null and rownum<30 and (last_dup_check_date is null or sysdate-last_dup_check_date > 30)
 	) loop
 			--dbms_output.put_line(r.collecting_event_id);
 			--dbms_output.put_line(r.VERBATIM_LOCALITY);

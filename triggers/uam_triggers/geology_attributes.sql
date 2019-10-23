@@ -16,18 +16,23 @@ BEFORE UPDATE OR INSERT ON GEOLOGY_ATTRIBUTES
 FOR EACH ROW
 DECLARE numrows NUMBER;
 BEGIN
-    SELECT COUNT(*) INTO numrows 
-    FROM geology_attribute_hierarchy 
-    WHERE 
-    	attribute = :NEW.geology_attribute and
-    	ATTRIBUTE_VALUE = :NEW.GEO_ATT_VALUE and
-    	USABLE_VALUE_FG=1;
-    
-	IF (numrows = 0) THEN
-		raise_application_error(
-		    -20001,
-		    'Invalid geology_attribute');
-	END IF;
+	-- these are "locality attributes"
+	-- control the type, not the value
+	if :NEW.geology_attribute NOT IN (
+		'Site Found By',
+		'Site Found Date',
+		'Site Identifier',
+		'Site Collector Number',
+		'Site Field Number',
+		'TRS aliquot'
+	) then
+		SELECT COUNT(*) INTO numrows FROM geology_attribute_hierarchy WHERE attribute=:NEW.geology_attribute and ATTRIBUTE_VALUE=:NEW.GEO_ATT_VALUE and USABLE_VALUE_FG=1;
+		IF (numrows = 0) THEN
+			raise_application_error(
+			    -20001,
+			    'Invalid geology_attribute: ' || :NEW.geology_attribute || '='||:NEW.GEO_ATT_VALUE);
+		END IF;
+	end if;
 END;
 /
 
