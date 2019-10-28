@@ -700,3 +700,8 @@ and not exists (select collection_object_id from citation where citation.collect
 ;
 --- create a publication for type specimen
 
+
+-------------------------------
+-- https://github.com/ArctosDB/arctos/issues/2323
+
+

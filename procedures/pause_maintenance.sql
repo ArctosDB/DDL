@@ -55,8 +55,8 @@ CREATE OR REPLACE procedure pause_maintenance (onoff IN varchar2) is
 	   	if onoff='on' then
 	   		dbms_scheduler.enable('CHECK_FLAT_STALE');
 	   		dbms_scheduler.enable('CHECK_UPDATE_FLAT_TAXONOMY');
-	   		--dbms_scheduler.enable('J_AUTO_MERGE_COLLECTING_EVENT');
-	   		--dbms_scheduler.enable('J_AUTO_MERGE_LOCALITY');
+	   		dbms_scheduler.enable('J_AUTO_MERGE_COLLECTING_EVENT');
+	   		dbms_scheduler.enable('J_AUTO_MERGE_LOCALITY');
 	   		dbms_scheduler.enable('J_BULKLOAD');
 	   		dbms_scheduler.enable('J_BULKLOADER_AUTODELETE');
 	   		dbms_scheduler.enable('J_CF_REPORT_CACHE');
@@ -72,7 +72,7 @@ CREATE OR REPLACE procedure pause_maintenance (onoff IN varchar2) is
 	   		--dbms_scheduler.enable('J_PROC_HIERAC_TAX_NC');
 	   		--dbms_scheduler.enable('J_PROC_REF_TAXON_RELATIONS');
 	   		dbms_scheduler.enable('J_REMOVE_EXPIRED_ENCUMBRANCE');
-	   		--dbms_scheduler.enable('J_SET_BROWSE');
+	   		dbms_scheduler.enable('J_SET_BROWSE');
 	   		dbms_scheduler.enable('J_SET_CONTAINER_HISTORY_STACK');
 	   		dbms_scheduler.enable('J_SET_MEDIA_FLAT');
 	   		--dbms_scheduler.enable('J_UPDATE_CACHE_ANYGEOG');
