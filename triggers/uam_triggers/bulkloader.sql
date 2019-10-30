@@ -566,7 +566,8 @@ BEGIN
 		UTM_ZONE,
 		UTM_EW,
 		UTM_NS,
-		wkt_media_id)
+		wkt_media_id,
+		IDENTIFICATION_CONFIDENCE)
 	VALUES (
 		:OLD.COLLECTION_OBJECT_ID,
 		:OLD.CAT_NUM,
@@ -841,7 +842,9 @@ BEGIN
 		:OLD.UTM_ZONE,
 		:OLD.UTM_EW,
 		:OLD.UTM_NS,
-		:OLD.wkt_media_id);
+		:OLD.wkt_media_id,
+		:OLD.IDENTIFICATION_CONFIDENCE
+	);
 END;
 /
 

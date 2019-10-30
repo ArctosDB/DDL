@@ -703,5 +703,34 @@ and not exists (select collection_object_id from citation where citation.collect
 
 -------------------------------
 -- https://github.com/ArctosDB/arctos/issues/2323
+-- oracle and PG
+-- wheee!!
+
+alter table BULKLOADER_DELETES add IDENTIFICATION_CONFIDENCE VARCHAR2(30);
+alter table BULKLOADER_STAGE add IDENTIFICATION_CONFIDENCE VARCHAR2(30);
+alter table BULKLOADER_CLONE add IDENTIFICATION_CONFIDENCE VARCHAR2(30);
+alter table PRE_BULKLOADER add IDENTIFICATION_CONFIDENCE VARCHAR2(30);
+alter table BULKLOADER add IDENTIFICATION_CONFIDENCE VARCHAR2(30);
+
+
+alter table BULKLOADER_DELETES add IDENTIFICATION_CONFIDENCE VARCHAR(30);
+alter table BULKLOADER_STAGE add IDENTIFICATION_CONFIDENCE VARCHAR(30);
+alter table BULKLOADER_CLONE add IDENTIFICATION_CONFIDENCE VARCHAR(30);
+alter table PRE_BULKLOADER add IDENTIFICATION_CONFIDENCE VARCHAR(30);
+alter table BULKLOADER add IDENTIFICATION_CONFIDENCE VARCHAR(30);
+
+
+
+-- in /DDL/triggers/uam_triggers/bulkloader 
+CREATE OR REPLACE TRIGGER TD_BULKLOADER AFTER DELETE ON BULKLOADER...
+
+-- in /PG_DDL/init_migrate/trigger_built
+CREATE OR REPLACE FUNCTION trigger_fct_td_bulkloader() RETURNS trigger AS $BODY$....
+
+
+
+
+
+
 
 

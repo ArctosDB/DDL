@@ -201,7 +201,8 @@ where
 	specimen_event.verificationstatus != 'unaccepted' and
 	specimen_event.collecting_event_id=collecting_event.collecting_event_id (+) and
 	collecting_event.locality_id=locality.locality_id (+) and
-	locality.geog_auth_rec_id=geog_auth_rec.geog_auth_rec_id (+)
+	locality.geog_auth_rec_id=geog_auth_rec.geog_auth_rec_id (+) and
+	not exists (select locality_id from geology_attributes where geology_attributes.locality_id=locality.locality_id and GEOLOGY_ATTRIBUTE='access' and GEO_ATT_VALUE='private')
 ;
 
 

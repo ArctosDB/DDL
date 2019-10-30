@@ -472,7 +472,8 @@ BEGIN
 			ACCEPTED_ID_FG,
 			IDENTIFICATION_REMARKS,
 			TAXA_FORMULA,
-			SCIENTIFIC_NAME
+			SCIENTIFIC_NAME,
+			IDENTIFICATION_CONFIDENCE
 		) values (
 			someRandomNumber,
 			l_collection_object_id,
@@ -481,7 +482,8 @@ BEGIN
 			1,
 			rec.IDENTIFICATION_REMARKS,
 			l_taxa_formula,
-			someRandomString
+			someRandomString,
+			rec.IDENTIFICATION_CONFIDENCE
 		);
 		
 		insert into identification_taxonomy (
