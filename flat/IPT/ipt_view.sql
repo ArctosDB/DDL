@@ -221,6 +221,7 @@ grant select on ipt_tbl to public;
 -- and a view on the table for query
 drop view digir_query.occurrence;
 create or replace view digir_query.occurrence as select * from ipt_tbl;
+create or replace view digir_query.ipt_view_too as select * from ipt_tbl;
 
 
 
