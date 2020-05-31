@@ -77,6 +77,7 @@ begin
 			SPECIMEN_EVENT.collecting_event_id=COLLECTING_EVENT.collecting_event_id and
 			COLLECTING_EVENT.locality_id=locality.locality_id and
 			locality.geog_auth_rec_id=geog_auth_rec.geog_auth_rec_id and
+			not exists (select locality_id from geology_attributes where geology_attributes.locality_id=locality.locality_id and GEOLOGY_ATTRIBUTE='access' and GEO_ATT_VALUE='private') and
 			SPECIMEN_EVENT.COLLECTION_OBJECT_ID=colObjId
 	) loop
 		jsond:=jsond || rsep || '{';

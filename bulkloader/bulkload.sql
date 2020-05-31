@@ -1007,6 +1007,7 @@ PROCEDURE b_build_keys_table (collobjid IN number) is
 	taxa_two varchar2(255);
 	a_coln varchar2(255);
 	a_instn varchar2(255);
+	errposn varchar2(255);
 BEGIN
 	l_collection_object_id  := NULL;
 	gcollecting_event_id := NULL;
@@ -1021,9 +1022,12 @@ BEGIN
 	l_taxon_name_id_2 := NULL;
 	--l_catalog_number_format := NULL;
 	
+	errposn:='starting';
+	
 	select * into rec from bulkloader where collection_object_id=collobjid;
 	select sq_collection_object_id.nextval into l_collection_object_id from dual;
 	
+	errposn:='got keys';
 	
 	select  /*+ RESULT_CACHE */  count(distinct(collection_id)) into num from collection where guid_prefix=rec.guid_prefix;
 	if num != 1 then
@@ -1037,6 +1041,7 @@ BEGIN
 		from collection where guid_prefix=rec.guid_prefix;
 	end if;
 	
+	errposn:='got CID';
 	
 	if l_catalog_number_format='integer' then
 		if rec.cat_num is null then
@@ -1065,10 +1070,13 @@ BEGIN
 	end if;
 	
 	
+	errposn:='got catnum';
 	
 	
 	select  /*+ RESULT_CACHE */ count(distinct(agent_id)) into num from agent_name where agent_name = rec.ENTEREDBY
 		AND agent_name_type = 'login';
+	
+		
 	
 	if num != 1 then
 		error_msg := 'Bad enteredby (use login)';
@@ -1077,6 +1085,11 @@ BEGIN
 		select  /*+ RESULT_CACHE */ distinct(agent_id) into l_entered_person_id from agent_name where agent_name = rec.ENTEREDBY
     		AND agent_name_type = 'login';
 	end if;
+	
+	
+	errposn:='got agent';
+	
+	
 	IF rec.accn LIKE '[%' AND rec.accn LIKE '%]%' THEN
     	tempStr :=  trim(substr(rec.accn, instr(rec.accn,'[',1,1) + 1,instr(rec.accn,']',1,1) -2));
     	tempStr2 := trim(REPLACE(rec.accn,'['||tempStr||']'));
@@ -1100,6 +1113,9 @@ BEGIN
 	    collection.guid_prefix=tempStr and
 		accn_number = tempStr2;
 	end if;
+	
+	
+	errposn:='got accn';
 	if (instr(rec.taxon_name,' {') > 1 AND instr(rec.taxon_name,'}') > 1) then
 		l_taxa_formula := 'A {string}';
 		taxa_one := regexp_replace(rec.taxon_name,' {.*}$','');
@@ -1162,6 +1178,7 @@ BEGIN
 		end if;
 	end if;
 	
+	errposn:='got taxa';
 
 	select getAgentID(rec.ID_MADE_BY_AGENT) into l_id_made_by_agent_id from dual;
 	if l_id_made_by_agent_id is null then
@@ -1169,6 +1186,7 @@ BEGIN
 		raise failed_validation;
 	end if;
 	
+	errposn:='got idby';
 	
 	
 	--dbms_output.put_line('l_collection_object_id: ' || l_collection_object_id);
@@ -1196,6 +1214,7 @@ BEGIN
 	end if;
 	
 
+	errposn:='passed nice erro';
 	insert into bulkloader_attempts (
 		b_collection_object_id,
  		collection_object_id,
@@ -1209,7 +1228,7 @@ BEGIN
  	commit;
 EXCEPTION
 	when others then
-		bulkload_error (error_msg,SQLERRM,'b_build_keys_table',collobjid);
+		bulkload_error (error_msg,SQLERRM ||errposn ,'b_build_keys_table',collobjid);
 END;
 
 ---------------------------------------------------------------------------------------------------------------------------------------------

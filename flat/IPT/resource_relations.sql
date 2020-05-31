@@ -75,4 +75,22 @@ END;
 
 select STATE,LAST_START_DATE,NEXT_RUN_DATE,LAST_RUN_DURATION from all_scheduler_jobs where lower(JOB_NAME)='j_proc_ref_ipt_relt_resrce';
 
+
+
+-- immediate refresh
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+    job_name    => 'J_TEMP_UPDATE_JUNK',
+    job_type    => 'STORED_PROCEDURE',
+    job_action    => 'j_proc_ref_ipt_relt_resrce',
+    enabled     => TRUE,
+    end_date    => NULL
+  );
+END;
+/ 
+select STATE,LAST_START_DATE,NEXT_RUN_DATE,LAST_RUN_DURATION,systimestamp from all_scheduler_jobs where JOB_NAME='J_TEMP_UPDATE_JUNK';
+
+
+
+
 ----------------------------------------- /NEW TABLE: resource relationship --------------------------------------------
